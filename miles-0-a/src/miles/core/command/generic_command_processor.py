@@ -3,7 +3,8 @@ from xmlrpc.client import Error
 
 from src.miles.core.command.command_processor_error import CommandProcessorError
 from src.miles.core.command.command import Command, RootComponent, \
-    WordComponent, MatchingComponent, ChoiceComponent, ListComponent, OptionalComponent, SequenceComponent
+    WordComponent, MatchingComponent, ChoiceComponent, ListComponent, OptionalComponent, SequenceComponent, \
+    NamedComponent
 from src.miles.core.command.command_processor import CommandProcessor
 
 from lark import Lark, Transformer
@@ -49,6 +50,9 @@ class _GenericCommandTransformer(Transformer):
     def optional(self, items):
         return OptionalComponent(items)
 
+    def named(self, items):
+        return NamedComponent(items[0].value, items[1])
+
 
 class _GenericCommandParser(metaclass=Singleton):
     def __init__(self):
@@ -57,6 +61,7 @@ class _GenericCommandParser(metaclass=Singleton):
             sequence: expr+                     -> sequence
             expr: WORD                          -> word
                 | MATCHING                      -> matching
+                | MATCHING "=" expr             -> named
                 | list                          -> skip
                 | choice                        -> skip
                 | optional                      -> skip

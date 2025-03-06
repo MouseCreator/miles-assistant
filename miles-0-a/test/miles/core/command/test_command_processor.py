@@ -99,3 +99,12 @@ def test_combination():
     g = GenericCommandProcessor()
     command = g.process("DO c {[AND (a, b)]}")
     assert str(command) == 'Command: (ROOT:(SEQUENCE:(WORD:DO),(MATCHING:c),(OPTIONAL:(SEQUENCE:(LIST:(SEQUENCE:(WORD:AND),(CHOICE:(SEQUENCE:(MATCHING:a)),(SEQUENCE:(MATCHING:b)))))))))'
+
+
+def test_named_arg():
+    """
+    Check if command processor can handle nesting of different parameters
+    """
+    g = GenericCommandProcessor()
+    command = g.process("a=[NAMED LIST]")
+    assert str(command) == 'Command: (ROOT:(SEQUENCE:(a=(LIST:(SEQUENCE:(WORD:NAMED),(WORD:LIST))))))'

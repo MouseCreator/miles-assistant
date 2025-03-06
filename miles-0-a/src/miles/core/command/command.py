@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Self, List
 
@@ -19,13 +19,14 @@ class ComponentType(Enum):
 class CommandComponent(ABC):
 
     def get_priority(self) -> int:
-        pass
-
+        return 0
+    @abstractmethod
     def get_type(self) -> ComponentType:
         pass
 
+    @abstractmethod
     def get_content(self) -> str | Self | List[Self]:
-        return None
+        pass
 
     def __str__(self):
         content = self.get_content()
@@ -83,6 +84,25 @@ class ListComponent(CommandComponent):
         return ComponentType.LIST
     def get_content(self) -> List[SequenceComponent]:
         return list(self._content)
+
+class NamedComponent(CommandComponent):
+    def __init__(self, name: str, content: CommandComponent):
+        self._name = name
+        self._content = content
+    def get_type(self) -> ComponentType:
+        return ComponentType.CHOICE
+    def get_content(self) -> CommandComponent:
+        return self._content
+    def get_name(self) -> str:
+        return self._name
+    def __str__(self):
+        content = self.get_content()
+        if isinstance(content, List):
+            t = ','.join(str(x) for x in content)
+        else:
+            t = content
+        return f'({self.get_name()}={t})'
+
 
 class ChoiceComponent(CommandComponent):
     def __init__(self, options: List[SequenceComponent]):
