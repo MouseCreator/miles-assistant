@@ -17,6 +17,8 @@ class _GenericCommandTransformer(Transformer):
 
     def start(self, items):
         return items[0]
+    def skip(self, items):
+        return items[0]
 
     def sequence(self, items):
         return SequenceComponent(items)
@@ -55,9 +57,9 @@ class _GenericCommandParser(metaclass=Singleton):
             sequence: expr+                     -> sequence
             expr: WORD                          -> word
                 | MATCHING                      -> matching
-                | list                          -> list
-                | choice                        -> choice
-                | optional                      -> optional
+                | list                          -> skip
+                | choice                        -> skip
+                | optional                      -> skip
     
             choice: "(" sequence ("," sequence)* ")"    -> choice
             list: "[" sequence "]"                      -> list
