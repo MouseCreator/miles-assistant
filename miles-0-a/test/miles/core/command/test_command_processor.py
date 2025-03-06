@@ -7,8 +7,7 @@ def test_process_single_word():
     """
     g = GenericCommandProcessor()
     command = g.process('HELLO')
-    print()
-    print(command)
+    assert str(command) == 'Command: (ROOT:(SEQUENCE:(WORD:HELLO)))'
 
 
 def test_process_multiple_words():
@@ -17,5 +16,4 @@ def test_process_multiple_words():
     """
     g = GenericCommandProcessor()
     command = g.process('WELCOME TO THE WORLD')
-    print()
-    print(command)
+    assert str(command) == 'Command: (ROOT:(SEQUENCE:(WORD:WELCOME),(WORD:TO),(WORD:THE),(WORD:WORLD)))'

@@ -31,9 +31,9 @@ class CommandComponent(ABC):
         content = self.get_content()
         if isinstance(content, List):
             t = ','.join(str(x) for x in content)
-            return f'({self.get_type().name}, {t})'
+            return f'({self.get_type().name}:{t})'
         else:
-            return f'({self.get_type().name}, {content})'
+            return f'({self.get_type().name}:{content})'
 
 class SequenceComponent(CommandComponent):
     def __init__(self, sequence: List[CommandComponent]):
