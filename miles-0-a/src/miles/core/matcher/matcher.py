@@ -112,8 +112,10 @@ class MatcherFactory:
             return state.update_priority(connection, matching_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, matching_component.get_priority(), new_state)
-    def _move_automatically(self, move_from: _MatchState, move_to: _MatchState):
-        connection = _MatchConnection(_ConnectionType.AUTOMATIC, None, None)
+    def _move_automatically(self, move_from: _MatchState, move_to: _MatchState, plugin: str, label: str):
+        if move_from is None or move_to is None:
+            return
+        connection = _MatchConnection(_ConnectionType.AUTOMATIC, plugin, label)
         if move_from.has_connection(connection):
             return move_to
         move_from.add_connection(connection, self._automatic_priority, move_to)
@@ -130,6 +132,11 @@ class MatcherFactory:
                 self.namespace = namespace
                 self.parent = parent
 
+            def _new_state(self):
+                return self.parent._create_empty_state()
+            def _plugin(self):
+                return self.namespace.plugin_name
+
             def visit_root(self, root: RootComponent):
                 root.get_content().accept_visitor(self)
 
@@ -141,49 +148,86 @@ class MatcherFactory:
 
             def visit_word(self, word: WordComponent):
                 prev = self.previous_state_buffer
-                moved_to = self.parent._move_and_add_word(prev, self.namespace.plugin_name, word)
+                moved_to = self.parent._move_and_add_word(prev, self._plugin(), word)
                 self.previous_state_buffer = moved_to
 
 
             def visit_matching(self, matching: MatchingComponent):
+                matching_name = matching.get_content()
+
                 prev = self.previous_state_buffer
-                moved_to = self.parent._move_and_add_matching(prev, self.namespace.plugin_name, matching)
-                self.previous_state_buffer = moved_to
+                begins_at = self._new_state()
+                self.parent._move_automatically(prev, begins_at, self._plugin(), f'begin matching {matching_name}')
+                self.previous_state_buffer = begins_at
+
+                moved_to = self.parent._move_and_add_matching(prev, self._plugin(), matching)
+
+                ends_at = self._new_state()
+                self.parent._move_automatically(moved_to, ends_at, self._plugin(), f'end matching {matching_name}')
+                self.previous_state_buffer = ends_at
 
             def visit_optional(self, optional: OptionalComponent):
-                begins_at = self.previous_state_buffer
+                prev = self.previous_state_buffer
+                begins_at = self._new_state()
+                ends_at = self._new_state()
+
+                self.parent._move_automatically(prev, ends_at, self._plugin(), 'skip optional')
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin optional')
+
+                self.previous_state_buffer = begins_at
+
                 content = optional.get_content()
                 content.accept_visitor(self)
                 after_optional = self.previous_state_buffer
+                self.parent._move_automatically(after_optional, ends_at, self._plugin(), 'end optional')
 
-                # creates a connection to skip the optional part
-                self.parent._move_automatically(begins_at, after_optional)
+                self.previous_state_buffer = ends_at
+
 
             def visit_list(self, lst: ListComponent):
-                begins_at = self.previous_state_buffer
+                prev = self.previous_state_buffer
+                begins_at = self._new_state()
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin list')
+                self.previous_state_buffer = begins_at
+
                 content = lst.get_content()
                 content.accept_visitor(self)
                 after_list = self.previous_state_buffer
+                ends_at = self._new_state()
 
-                # creates a connection back to the list beginning
-                self.parent._move_automatically(after_list, begins_at)
+                self.parent._move_automatically(after_list, begins_at, self._plugin(), 'repeat list')
+                self.parent._move_automatically(after_list, ends_at, self._plugin(), 'end list')
 
             def visit_choice(self, choice: ChoiceComponent):
-                begins_at = self.previous_state_buffer
+                prev = self.previous_state_buffer
+                begins_at = self._new_state()
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin choice')
+                self.previous_state_buffer = begins_at
+
                 content = choice.get_content()
-                end_state = self.parent._create_empty_state()
+                end_state = self._new_state()
                 for component in content:
                     self.previous_state_buffer = begins_at
                     component.accept_visitor(self)
                     component_ends = self.previous_state_buffer
 
                     # join all choices to the empty state at the end
-                    self.parent._move_automatically(component_ends, end_state)
+                    self.parent._move_automatically(component_ends, end_state, self.namespace.plugin_name, 'end choice')
                 self.previous_state_buffer = end_state
 
             def visit_named(self, named: NamedComponent):
-                # does not record any names
+                name = named.get_name()
+                prev = self.previous_state_buffer
+                begins_at = self._new_state()
+                self.parent._move_automatically(prev, begins_at, self.namespace.plugin_name, f'begin name {name}')
+                self.previous_state_buffer = begins_at
+
                 named.get_content().accept_visitor(self)
+
+                after_named = self.previous_state_buffer
+                ends_at = self._new_state()
+
+                self.parent._move_automatically(after_named, ends_at, self.namespace.plugin_name, f'end name {name}')
 
         sig = SignatureVisitor(from_state, command_def.get_namespace(), self)
         command.accept_visitor(sig)
