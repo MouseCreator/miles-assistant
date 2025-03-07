@@ -26,6 +26,14 @@ def test_process_matching():
     command = g.process('placeholder')
     assert str(command) == 'Command: (ROOT:(SEQUENCE:(MATCHING:placeholder)))'
 
+def test_process_matching_special_names():
+    """
+    Check if command processor is able to read a matching placeholder
+    """
+    g = GenericCommandProcessor()
+    command = g.process('a_b _1 cd2')
+    assert str(command) == 'Command: (ROOT:(SEQUENCE:(MATCHING:a_b),(MATCHING:_1),(MATCHING:cd2)))'
+
 def test_process_multiple_matching():
     """
     Check if command processor is able to read a series of placeholders

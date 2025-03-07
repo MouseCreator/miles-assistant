@@ -1,10 +1,15 @@
-from typing import Callable
+from typing import Callable, List
 
-from src.miles.core.command.command import Command
+from src.miles.core.command.command import Command, WordComponent
 
 
 class CommandNamespace:
-    pass
+    def __init__(self, plugin_name: str, namespace_name: str):
+        self.plugin_name = plugin_name
+        self.namespace_name = namespace_name
+
+    def get_arguments(self) -> List[WordComponent]:
+        return []
 
 class CommandDefinitionContext:
     pass

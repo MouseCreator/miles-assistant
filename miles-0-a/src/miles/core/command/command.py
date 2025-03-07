@@ -16,6 +16,8 @@ class ComponentType(Enum):
     SEQUENCE = 6
 
 
+
+
 class CommandComponent(ABC):
 
     def get_priority(self) -> int:
@@ -35,6 +37,10 @@ class CommandComponent(ABC):
             return f'({self.get_type().name}:{t})'
         else:
             return f'({self.get_type().name}:{content})'
+    @abstractmethod
+    def accept_visitor(self, visitor):
+        pass
+
 
 class SequenceComponent(CommandComponent):
     def __init__(self, sequence: List[CommandComponent]):
@@ -43,6 +49,8 @@ class SequenceComponent(CommandComponent):
         return ComponentType.SEQUENCE
     def get_content(self) -> List[CommandComponent]:
         return list(self._content)
+    def accept_visitor(self, visitor):
+        visitor.visit_sequence(self)
 
 class WordComponent(CommandComponent):
     def __init__(self, word: str):
@@ -51,6 +59,8 @@ class WordComponent(CommandComponent):
         return ComponentType.WORD
     def get_content(self) -> str:
         return self._word
+    def accept_visitor(self, visitor):
+        visitor.visit_word(self)
 
 class MatchingComponent(CommandComponent):
     def __init__(self, matching_key: str):
@@ -60,6 +70,9 @@ class MatchingComponent(CommandComponent):
     def get_content(self) -> str:
         return self._matching_key
 
+    def accept_visitor(self, visitor):
+        visitor.visit_matching(self)
+
 class OptionalComponent(CommandComponent):
     def __init__(self, content: SequenceComponent):
         self._inner = content
@@ -68,6 +81,8 @@ class OptionalComponent(CommandComponent):
         return ComponentType.OPTIONAL
     def get_content(self) -> SequenceComponent:
         return self._inner
+    def accept_visitor(self, visitor):
+        visitor.visit_optional(self)
 
 class RootComponent(CommandComponent):
     def __init__(self, content: CommandComponent):
@@ -76,14 +91,18 @@ class RootComponent(CommandComponent):
         return ComponentType.ROOT
     def get_content(self) -> CommandComponent:
         return self._content
+    def accept_visitor(self, visitor):
+        visitor.visit_root(self)
 
 class ListComponent(CommandComponent):
-    def __init__(self, content: List[SequenceComponent]):
+    def __init__(self, content: SequenceComponent):
         self._content = content
     def get_type(self) -> ComponentType:
         return ComponentType.LIST
-    def get_content(self) -> List[SequenceComponent]:
-        return list(self._content)
+    def get_content(self) -> SequenceComponent:
+        return self._content
+    def accept_visitor(self, visitor):
+        visitor.visit_list(self)
 
 class NamedComponent(CommandComponent):
     def __init__(self, name: str, content: CommandComponent):
@@ -102,6 +121,8 @@ class NamedComponent(CommandComponent):
         else:
             t = content
         return f'({self.get_name()}={t})'
+    def accept_visitor(self, visitor):
+        visitor.visit_named(self)
 
 
 class ChoiceComponent(CommandComponent):
@@ -111,6 +132,8 @@ class ChoiceComponent(CommandComponent):
         return ComponentType.CHOICE
     def get_content(self) -> List[SequenceComponent]:
         return list(self._options)
+    def accept_visitor(self, visitor):
+        visitor.visit_choice(self)
 
 
 class Command:
@@ -118,3 +141,38 @@ class Command:
         self.root = root
     def __str__(self):
         return f"Command: {self.root}"
+    def accept_visitor(self, visitor):
+        self.root.accept_visitor(visitor)
+
+class ComponentVisitor(ABC):
+    @abstractmethod
+    def visit_root(self, root: RootComponent):
+        pass
+
+    @abstractmethod
+    def visit_sequence(self, sequence: SequenceComponent):
+        pass
+
+    @abstractmethod
+    def visit_word(self, word: WordComponent):
+        pass
+
+    @abstractmethod
+    def visit_matching(self, matching: MatchingComponent):
+        pass
+
+    @abstractmethod
+    def visit_optional(self, optional: OptionalComponent):
+        pass
+
+    @abstractmethod
+    def visit_list(self, lst: ListComponent):
+        pass
+
+    @abstractmethod
+    def visit_choice(self, choice: ChoiceComponent):
+        pass
+
+    @abstractmethod
+    def visit_named(self, named: NamedComponent):
+        pass

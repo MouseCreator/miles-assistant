@@ -71,7 +71,7 @@ class _GenericCommandParser(metaclass=Singleton):
             optional: "{" sequence "}"                  -> optional
             
             WORD: /[A-Z]+/
-            MATCHING: /[a-z]+/
+            MATCHING: /[a-z_][a-zA-Z0-9_]*/
     
             %import common.WS
             %ignore WS
