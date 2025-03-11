@@ -59,7 +59,42 @@ def test_two_single_word_commands():
     ]
     )
     actual = print_matcher(matcher)
-    print()
-    print(actual)
+    assert expected == actual
+
+def test_same_prefix():
+    pool_factory = SimpleCommandPoolFactory()
+    pool_factory.append(RootComponent(
+        content=SequenceComponent(
+            sequence=[
+                WordComponent('PRINT'),
+                WordComponent('HELLO')
+            ]
+        )
+    ),
+        namespace=None,
+        plugin='plugin',
+        command_name='print'
+    )
+    pool_factory.append(RootComponent(
+        content=SequenceComponent(
+            sequence=[
+                WordComponent('PRINT'),
+                WordComponent('BYE')
+            ]
+        )
+    ),
+        namespace=None,
+        plugin='plugin',
+        command_name='write'
+    )
+    pool = pool_factory.get()
+    matcher_factory = MatcherFactory(pool)
+    matcher = matcher_factory.create()
+    expected = lines([
+        " [] ---(WORD, plugin, PRINT)--> [] ---(WORD, plugin, HELLO)--> [] ---(AUTOMATIC, plugin, recognize plugin||print)--> [] ",
+        "                                   ---(WORD, plugin, BYE)--> [] ---(AUTOMATIC, plugin, recognize plugin||write)--> [] "
+    ]
+    )
+    actual = print_matcher(matcher)
     assert expected == actual
 
