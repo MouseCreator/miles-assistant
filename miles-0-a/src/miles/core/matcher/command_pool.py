@@ -17,4 +17,4 @@ class CommandPool:
             self.definitions.append(c)
             
     def __iter__(self):
-        return self.definitions
+        return self.definitions.__iter__()

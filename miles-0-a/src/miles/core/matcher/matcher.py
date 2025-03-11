@@ -7,6 +7,8 @@ from src.miles.core.matcher.comand_defintion import CommandDefinition, CommandNa
 from src.miles.core.matcher.command_pool import CommandPool
 from src.miles.core.matcher.matcher_error import MatcherError
 from src.miles.utils.list_utils import index_of
+from src.miles.utils.pretty import PrintableStructure
+from src.miles.utils.strings import plist
 
 
 class ConnectionType(Enum):
@@ -15,11 +17,15 @@ class ConnectionType(Enum):
     MATCHING = 2
 
 
-class MatchConnection:
+class MatchConnection(PrintableStructure):
     def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None):
         self.connection_type = connection_type
         self.plugin = plugin
         self.connection_arg = connection_arg
+
+    def __str__(self):
+        return f"MatchConnection {{ {self.connection_type.name}, {self.plugin}, {self.connection_arg} }}"
+
 
     def __eq__(self, other):
         if not isinstance(other, MatchConnection):
@@ -28,21 +34,42 @@ class MatchConnection:
                 and self.connection_type == other.connection_type
                 and self.connection_arg == other.connection_arg)
 
+    def sprint(self):
+        result = '(' + self.connection_type.name
+        if self.plugin:
+            result += ', '
+            result += self.plugin
+        if self.connection_arg:
+            result += ', '
+            result += self.connection_arg
+        result += ')'
+        return result
+
 class MatchState:
-    state_id: int
+    _state_id: int
     _connections: List[MatchConnection]
     _destinations: List[Self]
     _priorities: List[int]
     def __init__(self, state_id):
-        self.state_id = state_id
+        self._state_id = state_id
         self._connections = []
         self._destinations = []
         self._priorities = []
 
+    def __str__(self):
+        return (f"State {{ id={self._state_id}, "
+                f"connections={plist(self._connections)}, "
+                f"destinations={plist([t._state_id for t in self._destinations])}, "
+                f"priorities={plist(self._priorities)}}}")
 
     @classmethod
     def initial(cls) -> Self:
         return MatchState(0)
+
+    def __eq__(self, other):
+        if not isinstance(other, MatchState):
+            return False
+        return self._state_id == other._state_id
 
     def has_connection(self, connection: MatchConnection, priority: int | None=None):
         index = index_of(self._connections, connection)
@@ -54,16 +81,25 @@ class MatchState:
 
     def get_destination(self, connection):
         index = index_of(self._connections, connection)
+        if index < 0:
+            return None
         return self._destinations[index]
+
+    def get_priority(self, connection: MatchConnection):
+        index = index_of(self._connections, connection)
+        if index < 0:
+            return None
+        return self._priorities[index]
+    def all_connections(self) -> List[MatchConnection]:
+        return list(self._connections)
 
     def update_priority(self, connection: MatchConnection, priority: int):
         index = index_of(self._connections, connection)
         if index == -1:
             return None
 
-        found = self._connections[index]
-        if found.priority < priority:
-            found.priority = priority
+        if self._priorities[index] < priority:
+            self._priorities[index] = priority
         return self._destinations[index]
 
     def add_connection(self, connection: MatchConnection, priority:int, new_state: Self):
@@ -84,7 +120,7 @@ class Matcher:
             self._initial_state = states[0]
             self._all_states = list(states)
 
-    def get_initial_state(self):
+    def get_initial_state(self) -> MatchState:
         return self._initial_state
 
 
@@ -146,7 +182,17 @@ class MatcherFactory:
 
 
             def _format_namespace(self):
-                return f'{self.namespace.plugin_name}'
+                result = ''
+                if self.namespace.plugin_name:
+                    result += self.namespace.plugin_name
+                result += '|'
+                if self.namespace.namespace_name:
+                    result += self.namespace.namespace_name
+                result += '|'
+                if self.namespace.command_name:
+                    result += self.namespace.command_name
+
+                return result
 
             def _new_state(self):
                 return self.parent._create_empty_state()

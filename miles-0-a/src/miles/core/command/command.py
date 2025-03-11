@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Self, List
 
+from src.miles.utils.strings import decapitalize
+
 
 class ComponentType(Enum):
 
@@ -54,7 +56,7 @@ class SequenceComponent(CommandComponent):
 
 class WordComponent(CommandComponent):
     def __init__(self, word: str):
-        self._word = word
+        self._word = word.upper()
     def get_type(self) -> ComponentType:
         return ComponentType.WORD
     def get_content(self) -> str:
@@ -64,7 +66,7 @@ class WordComponent(CommandComponent):
 
 class MatchingComponent(CommandComponent):
     def __init__(self, matching_key: str):
-        self._matching_key = matching_key
+        self._matching_key = decapitalize(matching_key)
     def get_type(self) -> ComponentType:
         return ComponentType.MATCHING
     def get_content(self) -> str:

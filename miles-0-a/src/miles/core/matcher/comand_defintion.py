@@ -16,7 +16,7 @@ class CommandDefinitionContext:
     pass
 
 class CommandDefinition:
-    def __init__(self, namespace: CommandNamespace, command: Command, on_match: Callable):
+    def __init__(self, namespace: CommandNamespace, command: Command, on_match: Callable | None = None):
         self._namespace = namespace
         self._command = command
         self._on_match = on_match
@@ -25,4 +25,5 @@ class CommandDefinition:
     def get_command(self) -> Command:
         return self._command
     def on_match(self, context : CommandDefinitionContext):
-        self._on_match(context)
+        if self._on_match is not None:
+            self._on_match(context)

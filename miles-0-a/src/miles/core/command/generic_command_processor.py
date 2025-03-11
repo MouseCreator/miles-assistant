@@ -9,7 +9,7 @@ from src.miles.core.command.command_processor import CommandProcessor
 
 from lark import Lark, Transformer
 
-from src.miles.utils.Singleton import Singleton
+from src.miles.utils.singleton import Singleton
 
 class _GenericCommandTransformer(Transformer):
 
