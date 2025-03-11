@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import Self, List
 
-from requests import options
-
 from src.miles.core.command.command import WordComponent, ComponentVisitor, NamedComponent, \
     ChoiceComponent, ListComponent, OptionalComponent, MatchingComponent, SequenceComponent, RootComponent
 from src.miles.core.matcher.comand_defintion import CommandDefinition, CommandNamespace
@@ -11,28 +9,28 @@ from src.miles.core.matcher.matcher_error import MatcherError
 from src.miles.utils.list_utils import index_of
 
 
-class _ConnectionType(Enum):
+class ConnectionType(Enum):
     AUTOMATIC = 0
     WORD = 1
     MATCHING = 2
 
 
-class _MatchConnection:
-    def __init__(self, connection_type: _ConnectionType, plugin: str | None, connection_arg: str | None):
+class MatchConnection:
+    def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None):
         self.connection_type = connection_type
         self.plugin = plugin
         self.connection_arg = connection_arg
 
     def __eq__(self, other):
-        if not isinstance(other, _MatchConnection):
+        if not isinstance(other, MatchConnection):
             return False
         return (self.plugin == other.plugin
                 and self.connection_type == other.connection_type
                 and self.connection_arg == other.connection_arg)
 
-class _MatchState:
+class MatchState:
     state_id: int
-    _connections: List[_MatchConnection]
+    _connections: List[MatchConnection]
     _destinations: List[Self]
     _priorities: List[int]
     def __init__(self, state_id):
@@ -44,9 +42,9 @@ class _MatchState:
 
     @classmethod
     def initial(cls) -> Self:
-        return _MatchState(0)
+        return MatchState(0)
 
-    def has_connection(self, connection: _MatchConnection, priority: int | None=None):
+    def has_connection(self, connection: MatchConnection, priority: int | None=None):
         index = index_of(self._connections, connection)
         if index == -1:
             return False
@@ -58,7 +56,7 @@ class _MatchState:
         index = index_of(self._connections, connection)
         return self._destinations[index]
 
-    def update_priority(self, connection: _MatchConnection, priority: int):
+    def update_priority(self, connection: MatchConnection, priority: int):
         index = index_of(self._connections, connection)
         if index == -1:
             return None
@@ -68,7 +66,7 @@ class _MatchState:
             found.priority = priority
         return self._destinations[index]
 
-    def add_connection(self, connection: _MatchConnection, priority:int, new_state: Self):
+    def add_connection(self, connection: MatchConnection, priority:int, new_state: Self):
         if self.has_connection(connection):
             raise MatcherError(f'Cannot add connection, because one already exists: {connection}')
         self._connections.append(connection)
@@ -78,8 +76,17 @@ class _MatchState:
 
 
 class Matcher:
-    def __init__(self):
-        pass
+    def __init__(self, states : None | List[MatchState] = None):
+        if states is None or len(states) == 0:
+            self._initial_state = MatchState.initial()
+            self._all_states = [self._initial_state]
+        else:
+            self._initial_state = states[0]
+            self._all_states = list(states)
+
+    def get_initial_state(self):
+        return self._initial_state
+
 
 
 
@@ -87,50 +94,59 @@ class MatcherFactory:
 
     def __init__(self, pool: CommandPool):
         self._pool = pool
-        self._initial = _MatchState.initial()
+        self._initial = MatchState.initial()
         self._state_index_count = 0
+        self._matcher = None
         self._all_states = [self._initial]
         self._automatic_priority = 0
 
     def _create_empty_state(self):
         self._state_index_count += 1
-        new_state = _MatchState(self._state_index_count)
+        new_state = MatchState(self._state_index_count)
         self._all_states.append(new_state)
         return new_state
 
 
-    def _move_and_add_word(self, state: _MatchState, plugin: str, word_component: WordComponent) -> _MatchState:
-        connection = _MatchConnection(_ConnectionType.WORD, plugin, word_component.get_content())
+    def _move_and_add_word(self, state: MatchState, plugin: str, word_component: WordComponent) -> MatchState:
+        connection = MatchConnection(ConnectionType.WORD, plugin, word_component.get_content())
         if state.has_connection(connection, word_component.get_priority()):
             return state.update_priority(connection, word_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, word_component.get_priority(), new_state)
 
-    def _move_and_add_matching(self, state: _MatchState, plugin: str, matching_component: MatchingComponent) -> _MatchState:
-        connection = _MatchConnection(_ConnectionType.MATCHING, plugin, matching_component.get_content())
+    def _move_and_add_matching(self, state: MatchState, plugin: str, matching_component: MatchingComponent) -> MatchState:
+        connection = MatchConnection(ConnectionType.MATCHING, plugin, matching_component.get_content())
         if state.has_connection(connection, matching_component.get_priority()):
             return state.update_priority(connection, matching_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, matching_component.get_priority(), new_state)
-    def _move_automatically(self, move_from: _MatchState, move_to: _MatchState, plugin: str, label: str):
+    def _move_automatically(self, move_from: MatchState, move_to: MatchState, plugin: str, label: str):
         if move_from is None or move_to is None:
             return
-        connection = _MatchConnection(_ConnectionType.AUTOMATIC, plugin, label)
+        connection = MatchConnection(ConnectionType.AUTOMATIC, plugin, label)
         if move_from.has_connection(connection):
             return move_to
         move_from.add_connection(connection, self._automatic_priority, move_to)
 
-    def _append_command_signature(self, command_def: CommandDefinition, from_state: _MatchState):
+    def _append_command_signature(self, command_def: CommandDefinition, from_state: MatchState):
         command = command_def.get_command()
 
         class SignatureVisitor(ComponentVisitor):
 
-            def __init__(self, initial_state : _MatchState, namespace: CommandNamespace, parent: MatcherFactory):
+            initial_state: MatchState
+            previous_state_buffer: MatchState
+            namespace: CommandNamespace
+            parent: MatcherFactory
+
+            def __init__(self, initial_state : MatchState, namespace: CommandNamespace, parent: MatcherFactory):
                 self.initial_state = initial_state
-                self.current_state = initial_state
-                self.previous_state_buffer = None
+                self.previous_state_buffer = initial_state
                 self.namespace = namespace
                 self.parent = parent
+
+
+            def _format_namespace(self):
+                return f'{self.namespace.plugin_name}'
 
             def _new_state(self):
                 return self.parent._create_empty_state()
@@ -139,6 +155,11 @@ class MatcherFactory:
 
             def visit_root(self, root: RootComponent):
                 root.get_content().accept_visitor(self)
+                prev = self.previous_state_buffer
+                final_state = self._new_state()
+                label = 'recognize ' + self._format_namespace()
+                self.parent._move_automatically(prev, final_state, self._plugin(), label)
+                self.previous_state_buffer = final_state
 
             def visit_sequence(self, sequence: SequenceComponent):
                 content = sequence.get_content()
@@ -232,16 +253,21 @@ class MatcherFactory:
         sig = SignatureVisitor(from_state, command_def.get_namespace(), self)
         command.accept_visitor(sig)
 
-    def _append_namespace(self, command_def: CommandDefinition, from_state :_MatchState):
+    def _format_namespace(self, namespace: CommandNamespace) -> str:
+        return f'{namespace.plugin_name}|{namespace.namespace_name}'
+
+    def _append_namespace(self, command_def: CommandDefinition, from_state :MatchState):
         state = from_state
         namespace = command_def.get_namespace()
-        plugin = namespace.plugin_name
         arguments = namespace.get_arguments()
+        if not arguments:
+            return from_state
+        plugin = namespace.plugin_name
         for arg in arguments:
             state = self._move_and_add_word(state, plugin, arg)
         return state
 
-    def _append_namespace_and_command(self, command_def: CommandDefinition, from_state : _MatchState):
+    def _append_namespace_and_command(self, command_def: CommandDefinition, from_state : MatchState):
         state = self._append_namespace(command_def, from_state)
         self._append_command_signature(command_def, state)
 
@@ -250,9 +276,12 @@ class MatcherFactory:
         self._append_command_signature(command_def, self._initial)
 
 
-    def create(self):
-        for command_definition in self._pool:
-            self._process_definition(command_definition)
+    def create(self) -> Matcher:
+        if self._matcher is None:
+            for command_definition in self._pool:
+                self._process_definition(command_definition)
+            self._matcher = Matcher(self._all_states)
+        return self._matcher
 
 
 
