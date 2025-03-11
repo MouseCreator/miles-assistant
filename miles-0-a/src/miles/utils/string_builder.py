@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Self, List
 
 
 class StringBuilder:
@@ -13,3 +13,8 @@ class StringBuilder:
         return self.append(opt)
     def to_string(self) -> str:
         return self._buffer
+    def __str__(self):
+        return self._buffer
+
+def lines(lines_to_concat: List[str]) -> str:
+    return "\n".join(lines_to_concat)

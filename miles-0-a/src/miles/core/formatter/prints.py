@@ -9,7 +9,7 @@ def _format_connection(connection: MatchConnection) -> str:
 def _print_from_state(sb: StringBuilder, state: MatchState, space_level: int):
     connections = state.all_connections()
     state_str = ' [] '
-    state_len = len(state_str)
+    space_level += len(state_str)
     sb.append(state_str)
     for i in range(len(connections)):
         conn = connections[i]
@@ -17,9 +17,8 @@ def _print_from_state(sb: StringBuilder, state: MatchState, space_level: int):
             sb.append('\n')
             sb.append(' ' * space_level)
         connection_str = _format_connection(conn)
-        state.get_priority(conn)
         sb.append(connection_str)
-        spaces = space_level + len(connection_str) + state_len
+        spaces = space_level + len(connection_str)
         dest = state.get_destination(conn)
         _print_from_state(sb, dest, spaces)
 
