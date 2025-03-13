@@ -76,11 +76,23 @@ class MatchingResult:
         self.move = move
         self.append = append
         self.destroy = destroy
+    def __str__(self):
+        s = '{ '
+        if self.move:
+            s += 'MOVE '
+        if self.append:
+            s += 'APPEND '
+        if self.destroy:
+            s += 'DESTROY '
+        s += '}'
+        return s
 
-class TextRecognizer(Recognizer):
+
+class _TRReader:
     _pointers: List[_Pointer]
     _reached_pointers: List[_Pointer]
-    __token_stream : None | _RecTokenStream
+    __token_stream: None | _RecTokenStream
+
     def __init__(self, matcher: Matcher, text: str, definitions: MatchingDefinitionSet):
         self._matcher = matcher
         self._text = text
@@ -90,6 +102,8 @@ class TextRecognizer(Recognizer):
         self._definitions = definitions
 
     def recognize(self):
+        self._pointers = []
+        self._reached_pointers = []
         self._create_token_stream()
         self._recognize_tokens()
         return list(self._reached_pointers)
@@ -126,8 +140,6 @@ class TextRecognizer(Recognizer):
                         active_pointers.append(p_n)
                         new_pointers.append(p_n)
         self._pointers = new_pointers
-
-
 
     def _run_token_recognition_loop(self):
         while self._token_stream.has_tokens():
@@ -190,7 +202,7 @@ class TextRecognizer(Recognizer):
                 return MatchingResult(move=False, append=True)
             if strategy == MatchingStrategy.UNTIL_MATCHES_WAIT:
                 return MatchingResult(move=True, append=True)
-            if  strategy == MatchingStrategy.UNTIL_MATCHES_KEEP:
+            if strategy == MatchingStrategy.UNTIL_MATCHES_KEEP:
                 return MatchingResult(move=False, append=True)
         else:
             if strategy == MatchingStrategy.MATCH_ONCE:
@@ -201,6 +213,16 @@ class TextRecognizer(Recognizer):
                 return MatchingResult(move=False, append=False)
             if strategy == MatchingStrategy.UNTIL_MATCHES_KEEP:
                 return MatchingResult(move=False, append=True)
+
+class TextRecognizer(Recognizer):
+    _pointers: List[_Pointer]
+    _reached_pointers: List[_Pointer]
+    __token_stream : None | _RecTokenStream
+    def __init__(self, matcher: Matcher, text: str, definitions: MatchingDefinitionSet):
+        self._reader = _TRReader(matcher, text, definitions)
+
+    def recognize(self):
+        reached_pointers = self._reader.recognize()
 
 
 

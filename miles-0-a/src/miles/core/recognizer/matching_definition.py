@@ -20,13 +20,14 @@ def _definition_id(plugin: str | None, name: str | None):
 
 class MatchingDefinition:
 
-    def __init__(self, test_function: Callable[[str], bool], plugin: str, name: str):
+    def __init__(self, test_function: Callable[[str], bool], plugin: str, name: str, strategy: MatchingStrategy):
         self._plugin = plugin
         self._name = name
+        self._strategy = strategy
         self._test_function = test_function
 
     def get_strategy(self) -> MatchingStrategy:
-        return MatchingStrategy.MATCH_ONCE
+        return self._strategy
 
     def matches(self, token: str) -> bool:
         return self._test_function(token)
