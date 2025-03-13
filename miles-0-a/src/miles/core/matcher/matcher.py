@@ -50,11 +50,17 @@ class MatchState:
     _connections: List[MatchConnection]
     _destinations: List[Self]
     _priorities: List[int]
-    def __init__(self, state_id):
+    _final: bool
+
+    def __hash__(self):
+        return self._state_id
+
+    def __init__(self, state_id: int, is_final: bool = False):
         self._state_id = state_id
         self._connections = []
         self._destinations = []
         self._priorities = []
+        self._final = is_final
 
     def __str__(self):
         return (f"State {{ id={self._state_id}, "
@@ -109,6 +115,8 @@ class MatchState:
         self._priorities.append(priority)
         self._destinations.append(new_state)
         return new_state
+    def is_final(self):
+        return self._final
 
 
 class Matcher:
@@ -136,9 +144,9 @@ class MatcherFactory:
         self._all_states = [self._initial]
         self._automatic_priority = 0
 
-    def _create_empty_state(self):
+    def _create_empty_state(self, final: bool = False):
         self._state_index_count += 1
-        new_state = MatchState(self._state_index_count)
+        new_state = MatchState(self._state_index_count, is_final=final)
         self._all_states.append(new_state)
         return new_state
 
@@ -202,7 +210,7 @@ class MatcherFactory:
             def visit_root(self, root: RootComponent):
                 root.get_content().accept_visitor(self)
                 prev = self.previous_state_buffer
-                final_state = self._new_state()
+                final_state = self.parent._create_empty_state(final=True)
                 label = 'recognize ' + self._format_namespace()
                 self.parent._move_automatically(prev, final_state, self._plugin(), label)
                 self.previous_state_buffer = final_state
