@@ -1,12 +1,7 @@
 from enum import Enum
 from typing import Callable, Dict, List
 
-
-class MatchingStrategy(Enum):
-    MATCH_ONCE = 0
-    KEEP_MATCHING = 1
-    UNTIL_MATCHES_WAIT = 2
-    UNTIL_MATCHES_KEEP = 3
+from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer
 
 
 def _definition_id(plugin: str | None, name: str | None):
@@ -20,14 +15,10 @@ def _definition_id(plugin: str | None, name: str | None):
 
 class MatchingDefinition:
 
-    def __init__(self, test_function: Callable[[str], bool], plugin: str, name: str, strategy: MatchingStrategy):
+    def __init__(self, analyzer: GenericContextAnalyzer, plugin: str, name: str):
         self._plugin = plugin
         self._name = name
-        self._strategy = strategy
         self._test_function = test_function
-
-    def get_strategy(self) -> MatchingStrategy:
-        return self._strategy
 
     def matches(self, token: str) -> bool:
         return self._test_function(token)
