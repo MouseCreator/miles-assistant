@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Callable, Dict, List
 
-from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer
+from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 
 
 def _definition_id(plugin: str | None, name: str | None):
@@ -18,10 +18,10 @@ class MatchingDefinition:
     def __init__(self, analyzer: GenericContextAnalyzer, plugin: str, name: str):
         self._plugin = plugin
         self._name = name
-        self._test_function = test_function
+        self._analyzer = analyzer
 
-    def matches(self, token: str) -> bool:
-        return self._test_function(token)
+    def analyzer(self) -> GenericContextAnalyzer:
+        return self._analyzer
 
     def name(self) -> str:
         return self._name

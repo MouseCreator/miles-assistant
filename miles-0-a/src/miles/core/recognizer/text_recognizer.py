@@ -2,8 +2,11 @@ import re
 from typing import List, Self, Set
 
 from src.miles.core.matcher.matcher import Matcher, MatchState, ConnectionType, MatchConnection
+from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer, GenericContextAnalyzer
 from src.miles.core.recognizer.generic_recognizer import Recognizer
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingStrategy
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
+from src.miles.core.recognizer.recognize_context import RecognizeContext
+
 
 class _HistoryItem:
     def __init__(self,
@@ -29,11 +32,14 @@ class _HistoryItem:
 class _Pointer:
 
     _history: List[_HistoryItem]
+    _context: RecognizeContext
 
-    def __init__(self, at_state: MatchState,
+    def __init__(self,
+                 at_state: MatchState,
+                 context: RecognizeContext,
                  history: List[_HistoryItem] | None = None):
         self._at_state = at_state
-
+        self._context = context
         if history is None:
             self._history = []
         else:
@@ -43,23 +49,26 @@ class _Pointer:
         if not isinstance(other, _Pointer):
             return False
         return self._at_state == other._at_state and self._history == other._history
-
-    def is_same_state(self, other : Self):
-        return self._at_state == other._at_state
-
-    def move_to(self,
-                conn: MatchConnection | None,
-                new_state: MatchState,
-                token: str | None,
-                label: str | None = None) -> Self:
-        item = _HistoryItem(self._at_state, conn, token, label)
-        return _Pointer(new_state, self._history + [item])
+    def __str__(self):
+        return f"Pointer {self._at_state}"
 
     def get_state(self) -> MatchState:
         return self._at_state
 
-    def __str__(self):
-        return f"Pointer {self._at_state}"
+    def advance_with_analyzer(self, connection : MatchConnection, analyzer: GenericContextAnalyzer) -> Self | None:
+        index_before = self._context.index()
+        analyzer.process(self._context)
+        index_after = self._context.index()
+        if self._context.is_failed():
+            return None
+        return self._move_to() ### ###
+
+    def auto_advance(self, connection: MatchConnection) -> List[Self]:
+        return []
+
+    def is_finished(self):
+        return self._at_state.is_final() and self._context.is_empty()
+
 
 class _RecTokenStream:
     def __init__(self, arr: List[str]):
@@ -114,7 +123,10 @@ class _TRReader:
 
     def _recognize_tokens(self):
         initial = self._matcher.get_initial_state()
-        self._pointers.append(_Pointer(initial))
+        arr = re.split(r'\s+', self._text)
+        context = RecognizeContext(arr)
+        first_pointer = _Pointer(initial, context)
+        self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
 
@@ -142,77 +154,40 @@ class _TRReader:
         self._pointers = new_pointers
 
     def _run_token_recognition_loop(self):
-        while self._token_stream.has_tokens():
-            current_token = self._token_stream.next_token()
-            self._fill_automatic_paths()
-            new_pointers: List[_Pointer] = []
+        while True:
             for p in self._pointers:
-                state = p.get_state()
+                self._advance_pointer(p)
 
-                for conn in state.all_connections():
-                    # PRIORITY ?
-                    conn_type = conn.connection_type
-                    if conn_type == ConnectionType.AUTOMATIC:
-                        continue
-                    if conn_type == ConnectionType.WORD:
-                        if self._is_word_matches(conn, current_token):
-                            destination = state.get_destination(conn)
-                            p_n = p.move_to(conn, destination, current_token)
-                            new_pointers.append(p_n)
+    def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
 
-                    elif conn_type == ConnectionType.MATCHING:
-                        matching_result = self._on_matchings(conn, current_token)
-                        if matching_result.destroy:
-                            continue
-                        destination = state.get_destination(conn)
-                        if matching_result.append:
-                            label = None
-                        else:
-                            label = 'ignore'
-                        if matching_result.move:
-                            p_n = p.move_to(conn, destination, current_token, label)
-                            new_pointers.append(p_n)
-                        else:
-                            p_n = p.move_to(None, state, current_token, label)
-                            new_pointers.append(p_n)
+        if p.is_finished():
+            self._reached_pointers.append(p)
+            return []
 
-                    else:
-                        raise ValueError(f'Unknown connection type: {conn_type.name}')
-            self._pointers = new_pointers
+        state = p.get_state()
+        next_gen_pointers: List[_Pointer] = []
+        for connection in state.all_connections():
+            if connection.connection_type == ConnectionType.AUTOMATIC:
+                advances = p.auto_advance(connection)
+                next_gen_pointers.extend(advances)
 
-        # autocomplete all automatic paths after all tokens are consumed
-        self._fill_automatic_paths()
+            elif connection.connection_type == ConnectionType.MATCHING:
+                word = connection.connection_arg
+                analyzer = WordContextAnalyzer(word)
+                advance = p.advance_with_analyzer(connection, analyzer)
+                if advance is not None:
+                    next_gen_pointers.append(advance)
+            elif connection.connection_type == ConnectionType.WORD:
+                plugin = connection.plugin
+                name = connection.connection_arg
+                analyzer = self._definitions.get_matching(plugin, name).analyzer()
+                advance = p.advance_with_analyzer(connection, analyzer)
+                if advance is not None:
+                    next_gen_pointers.append(advance)
+            else:
+                raise ValueError(f'Unknown connection type {connection.connection_type.name}')
+        return next_gen_pointers
 
-    def _is_word_matches(self, conn: MatchConnection, current_token: str) -> bool:
-        argument = conn.connection_arg
-        return argument.upper() == current_token.upper()
-
-    def _on_matchings(self, conn: MatchConnection, current_token: str) -> MatchingResult:
-        plugin = conn.plugin
-        name = conn.connection_arg
-        matching = self._definitions.get_matching(plugin, name)
-
-        matched = matching.matches(current_token)
-        strategy = matching.get_strategy()
-
-        if matched:
-            if strategy == MatchingStrategy.MATCH_ONCE:
-                return MatchingResult(move=True, append=True)
-            if strategy == MatchingStrategy.KEEP_MATCHING:
-                return MatchingResult(move=False, append=True)
-            if strategy == MatchingStrategy.UNTIL_MATCHES_WAIT:
-                return MatchingResult(move=True, append=True)
-            if strategy == MatchingStrategy.UNTIL_MATCHES_KEEP:
-                return MatchingResult(move=False, append=True)
-        else:
-            if strategy == MatchingStrategy.MATCH_ONCE:
-                return MatchingResult(destroy=True)
-            if strategy == MatchingStrategy.KEEP_MATCHING:
-                return MatchingResult(destroy=True)
-            if strategy == MatchingStrategy.UNTIL_MATCHES_WAIT:
-                return MatchingResult(move=False, append=False)
-            if strategy == MatchingStrategy.UNTIL_MATCHES_KEEP:
-                return MatchingResult(move=False, append=True)
 
 class TextRecognizer(Recognizer):
     _pointers: List[_Pointer]

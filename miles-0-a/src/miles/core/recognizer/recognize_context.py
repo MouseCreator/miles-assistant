@@ -1,16 +1,14 @@
-from typing import List, Self
+from typing import List, Self, Callable
 
 
 class RecognizeContext:
 
-    def __init__(self, tokens: List[str], start_at=0, failed=False):
+    def __init__(self, tokens: List[str], on_interrupt: Callable, start_at=0, failed=False):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
         self._fail_flag = failed
-
-    def clone(self) -> Self:
-        return RecognizeContext(list(self._tokens), self._position)
+        self._on_interrupt = on_interrupt
 
     def current(self) -> str | None:
         if self.is_empty():
@@ -23,8 +21,13 @@ class RecognizeContext:
     def lookahead(self, items: int) -> List[str]:
         return self._tokens[self._position:self._position + items]
 
-    def consume(self, items:int = 1) -> None:
+    def interrupt(self):
+        self._on_interrupt()
+
+    def consume(self, items:int = 1, interrupted: bool = False) -> None:
         self._position = min(self._total, self._position + items)
+        if interrupted:
+            self.interrupt()
 
     def remaining_count(self) -> int:
         return self._total - self._position
@@ -40,3 +43,6 @@ class RecognizeContext:
 
     def fail(self):
         self._fail_flag = True
+
+    def all_tokens(self) -> List[str]:
+        return list(self._tokens)
