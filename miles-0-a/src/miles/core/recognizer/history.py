@@ -1,8 +1,9 @@
 from typing import List, Self
 
 from src.miles.core.matcher.matcher import MatchState, MatchConnection
+from src.miles.utils.decorators import auto_str
 
-
+@auto_str
 class HistoryItem:
     def __init__(self,
                  prev_state: MatchState,
@@ -27,6 +28,10 @@ class HistoryItem:
                 and self.next_point == other.next_point
                 )
 
+    def __str__(self):
+        return super().__str__()
+
+@auto_str
 class RecHistory:
     _items: List[HistoryItem]
     def __init__(self, items: List[HistoryItem] | None=None):

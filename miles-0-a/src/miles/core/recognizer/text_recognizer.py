@@ -115,6 +115,10 @@ class _Pointer:
     def is_finished(self):
         return self._at_state.is_final() and self._current_position >= self._token_collection.size()
 
+    def get_history(self):
+        return self._history
+
+
 class MatchingResult:
     def __init__(self, move: bool = False, append: bool = False, destroy: bool = False):
         self.move = move
