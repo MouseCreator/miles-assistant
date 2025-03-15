@@ -1,9 +1,9 @@
 from src.miles.core.matcher.matcher import MatchConnection, ConnectionType
-from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer, TextContextAnalyzer
+from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
+from src.miles.core.recognizer.optimization import TextOptimizationStrategy
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.core.recognizer.text_recognizer import _TRReader
-from src.miles.utils.strings import print_list
 from test.miles.core.recognizer.simple_history_scanner import scan_history
 from test.miles.core.recognizer.simple_matcher_factory import create_simple_matcher
 
@@ -20,7 +20,7 @@ def test_word_sequence():
 
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
-    assert len(reached) == 1
+    assert reached is not None
     assert scan_history(text, reached[0]) == ['hello', 'world', '!recognize COMMAND']
 
 def test_analyzer():
@@ -47,8 +47,8 @@ def test_analyzer():
 
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
-    assert len(reached) == 1
-    assert scan_history(text, reached[0]) == ['hello hi hola', 'world', '!recognize COMMAND']
+    assert reached is not None
+    assert scan_history(text, reached) == ['hello hi hola', 'world', '!recognize COMMAND']
 
 def test_loop():
     matcher_origin = [
@@ -63,14 +63,14 @@ def test_loop():
 
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
-    assert len(reached) == 1
-    assert scan_history(text, reached[0]) == ['repeat', '!loop back',
+    assert reached is not None
+    assert scan_history(text, reached) == ['repeat', '!loop back',
                                               'repeat', '!loop back',
                                               'repeat', 'again',
                                               '!recognize COMMAND']
 
 
-def test_text_bomb():
+def test_shortest_first():
     matcher_origin = [
         (0, 1, 0, MatchConnection(ConnectionType.MATCHING, 'plugin', 'text')),
         (1, 0, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'loop back')),
@@ -80,14 +80,52 @@ def test_text_bomb():
     text = 'a b c d e'
     definition_set = MatchingDefinitionSet()
 
-    text_rule = MatchingDefinition(TextContextAnalyzer(), 'plugin', 'text')
+    class ShortestContextAnalyzer(GenericContextAnalyzer):
+        def __init__(self):
+            pass
+
+        def invoke(self, context: RecognizeContext):
+            while context.has_any():
+                context.consume(interrupted=True)
+
+        def optimization_strategy(self) -> TextOptimizationStrategy:
+            return TextOptimizationStrategy.SHORTEST_FIRST
+    text_rule = MatchingDefinition(ShortestContextAnalyzer(), 'plugin', 'text')
     definition_set.append_definition(text_rule)
 
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
 
-    for p in reached:
-        s = print_list(scan_history(text, p))
-        print(s)
+    assert scan_history(text, reached) == ['a', '!loop back',
+                                           'b', '!loop back',
+                                           'c', '!loop back',
+                                           'd', '!loop back',
+                                           'e', '!recognize COMMAND']
 
-    assert len(reached) == 2 ** len( text.split(' ') )
+def test_longest_first():
+    matcher_origin = [
+        (0, 1, 0, MatchConnection(ConnectionType.MATCHING, 'plugin', 'text')),
+        (1, 0, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'loop back')),
+        (1, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'recognize COMMAND'))
+    ]
+    matcher = create_simple_matcher(matcher_origin)
+    text = 'a b c d e'
+    definition_set = MatchingDefinitionSet()
+
+    class LongestContextAnalyzer(GenericContextAnalyzer):
+        def __init__(self):
+            pass
+
+        def invoke(self, context: RecognizeContext):
+            while context.has_any():
+                context.consume(interrupted=True)
+
+        def optimization_strategy(self) -> TextOptimizationStrategy:
+            return TextOptimizationStrategy.SHORTEST_FIRST
+    text_rule = MatchingDefinition(LongestContextAnalyzer(), 'plugin', 'text')
+    definition_set.append_definition(text_rule)
+
+    r = _TRReader(matcher, text, definition_set)
+    reached = r.recognize()
+
+    assert scan_history(text, reached) == ['a b c d e', '!recognize COMMAND']

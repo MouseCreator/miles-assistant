@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from src.miles.core.recognizer.optimization import TextOptimizationStrategy
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 
 
@@ -14,6 +15,9 @@ class GenericContextAnalyzer(ABC):
             context.fail()
         else:
             self.invoke(context)
+
+    def optimization_strategy(self) -> TextOptimizationStrategy:
+        return TextOptimizationStrategy.NONE
 
 
 class WordContextAnalyzer(GenericContextAnalyzer):
@@ -42,10 +46,13 @@ class TextContextAnalyzer(GenericContextAnalyzer):
         while context.has_any():
             context.consume(interrupted=True)
 
+    def optimization_strategy(self) -> TextOptimizationStrategy:
+        return TextOptimizationStrategy.SHORTEST_FIRST
+
 class AutomaticContextAnalyzer(GenericContextAnalyzer):
     """
-   Automatic Context Analyzer implements matching for automatic transitions, e.g. unconditional pointer moving with no token consumption
-   """
+    Automatic Context Analyzer implements matching for automatic transitions, e.g. unconditional pointer moving with no token consumption
+    """
     def __init__(self):
         pass
 

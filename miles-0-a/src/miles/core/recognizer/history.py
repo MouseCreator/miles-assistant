@@ -32,6 +32,8 @@ class HistoryItem:
 
     def __str__(self):
         return super().__str__()
+    def step(self) -> int:
+        return self.next_point - self.prev_point
 
 class RecHistory:
     _items: List[HistoryItem]
@@ -53,3 +55,6 @@ class RecHistory:
         return self._items == other._items
     def __str__(self):
         return print_list(self._items)
+
+    def last(self) -> HistoryItem:
+        return self._items[-1]

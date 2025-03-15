@@ -1,4 +1,5 @@
 import re
+from random import shuffle
 from typing import List, Self, Set, Tuple
 
 from src.miles.core.matcher.matcher import Matcher, MatchState, ConnectionType, MatchConnection
@@ -7,8 +8,11 @@ from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer, Gene
 from src.miles.core.recognizer.generic_recognizer import Recognizer
 from src.miles.core.recognizer.history import HistoryItem, RecHistory
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
+from src.miles.core.recognizer.optimization import TextOptimizationStrategy
+from src.miles.core.recognizer.priority import PriorityManager
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.utils.decorators import auto_str
+from src.miles.utils.strings import print_list
 
 
 class _TokenCollection:
@@ -18,6 +22,9 @@ class _TokenCollection:
 
     def __len__(self):
         return len(self._tokens)
+
+    def __str__(self):
+        return print_list(self._tokens)
 
     def tokens(self) -> List[str]:
         return list(self._tokens)
@@ -100,7 +107,6 @@ class _Pointer:
     def advance_with_analyzer(self, connection : MatchConnection, analyzer: GenericContextAnalyzer) -> List[Self]:
 
         result_pointers: List[_Pointer] = []
-        index_before = self._current_position
 
         def _on_interrupt(ctx: RecognizeContext):
             if ctx.is_failed():
@@ -140,20 +146,31 @@ class MatchingResult:
 @auto_str
 class _TRReader:
     _pointers: List[_Pointer]
-    _reached_pointers: List[_Pointer]
+    _reached_pointer: _Pointer | None
 
-    def __init__(self, matcher: Matcher, text: str, definitions: MatchingDefinitionSet):
+    def __init__(self,
+                 matcher: Matcher,
+                 text: str,
+                 definitions: MatchingDefinitionSet | None = None,
+                 priority_manager: PriorityManager | None = None):
         self._matcher = matcher
         self._text = text
         self._pointers = []
-        self._reached_pointers = []
+        self._reached_pointer = None
+
+        if definitions is None:
+            definitions = MatchingDefinitionSet()
         self._definitions = definitions
+
+        if priority_manager is None:
+            priority_manager = PriorityManager()
+        self._priority_manager = priority_manager
 
     def recognize(self):
         self._pointers = []
-        self._reached_pointers = []
+        self._reached_pointer = None
         self._recognize_tokens()
-        return list(self._reached_pointers)
+        return self._reached_pointer
 
     def _create_token_collection(self) -> _TokenCollection:
         arr = re.split(r'\s+', self._text)
@@ -165,11 +182,6 @@ class _TRReader:
         self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
-
-        for pointer in self._pointers:
-            if pointer.get_state().is_final():
-                # keep only the pointers that reached a FINAL state after all tokens were consumed
-                self._reached_pointers.append(pointer)
 
     def _fill_automatic_paths(self):
         visited_states: Set[MatchState] = set()
@@ -190,44 +202,44 @@ class _TRReader:
         self._pointers = new_pointers
 
     def _run_token_recognition_loop(self):
-        while len(self._pointers) > 0:
-            next_gen: List[_Pointer] = []
-            for p in self._pointers:
-                advanced = self._advance_pointer(p)
-                next_gen.extend(advanced)
+        while len(self._pointers) > 0 and self._reached_pointer is None:
+            first = self._pointers.pop(0)
+            advanced = self._advance_pointer(first)
+            self._add_to_pointers(advanced)
 
-            self._pointers = self._optimize_next_gen(next_gen)
-
-    def _optimize_next_gen(self, pointers: List[_Pointer]) -> List[_Pointer]:
-        remaining: List[_Pointer] = []
-        for p in pointers:
+    def _add_to_pointers(self, new_pointers: List[_Pointer]):
+        new_items: List[_Pointer] = []
+        for p in new_pointers:
             add = True
-            for r in remaining:
+            for r in self._pointers:
                 if p == r:
                     add = False
                     break
             if add:
-                remaining.append(p)
-        return remaining
+                new_items.append(p)
+        self._pointers[:0] = new_items
 
     def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
 
         if p.is_finished():
-            self._reached_pointers.append(p)
+            self._reached_pointer = p
             return []
 
         state = p.get_state()
         next_gen_pointers: List[_Pointer] = []
-        for connection in state.all_connections():
+        ordered_connection = self._all_connections_ordered(state.all_connections())
+        for connection in ordered_connection:
             if connection.connection_type == ConnectionType.AUTOMATIC:
                 analyzer = AutomaticContextAnalyzer()
                 advance = p.advance_with_analyzer(connection, analyzer)
+                advance = self._optimized_route(advance, analyzer)
                 next_gen_pointers.extend(advance)
 
             elif connection.connection_type == ConnectionType.WORD:
                 word = connection.connection_arg
                 analyzer = WordContextAnalyzer(word)
                 advance = p.advance_with_analyzer(connection, analyzer)
+                advance = self._optimized_route(advance, analyzer)
                 next_gen_pointers.extend(advance)
 
             elif connection.connection_type == ConnectionType.MATCHING:
@@ -235,11 +247,38 @@ class _TRReader:
                 name = connection.connection_arg
                 analyzer = self._definitions.get_matching(plugin, name).analyzer()
                 advance = p.advance_with_analyzer(connection, analyzer)
+                advance = self._optimized_route(advance, analyzer)
                 next_gen_pointers.extend(advance)
 
             else:
                 raise ValueError(f'Unknown connection type {connection.connection_type.name}')
         return next_gen_pointers
+
+    def _all_connections_ordered(self, connection_arr: List[MatchConnection]) -> List[MatchConnection]:
+        lst = list(connection_arr)
+        sorted(lst, key=lambda c: self._priority_manager.get_priority(c))
+        return lst
+
+
+    def _optimized_route(self, next_gen_pointers: List[_Pointer], analyzer: GenericContextAnalyzer) -> List[_Pointer]:
+        lst = list(next_gen_pointers)
+        optimization_strategy = analyzer.optimization_strategy()
+        if optimization_strategy == TextOptimizationStrategy.NONE or optimization_strategy is None:
+            return lst
+        elif optimization_strategy == TextOptimizationStrategy.SHORTEST_FIRST:
+            sorted(lst, key=lambda p: p.get_history().last().step())
+            return lst
+        elif optimization_strategy == TextOptimizationStrategy.LONGEST_FIRST:
+            sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
+            return lst
+        elif optimization_strategy == TextOptimizationStrategy.RANDOMIZE:
+            shuffle(lst)
+            return lst
+        else:
+            raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
+
+
+
 
 
 class TextRecognizer(Recognizer):
