@@ -72,8 +72,8 @@ class _Pointer:
     def get_state(self) -> MatchState:
         return self._at_state
 
-    def _create_next_pointer(self, advanced_by: int, connection: MatchConnection) -> Self:
-        new_position = self._current_position + advanced_by
+    def _create_next_pointer(self, context: RecognizeContext, connection: MatchConnection) -> Self:
+        new_position = context.index()
         destination = self._at_state.get_destination(connection)
 
         if self._visited.is_visited(destination, new_position):
@@ -83,7 +83,8 @@ class _Pointer:
             prev_state=self._at_state,
             connection=connection,
             prev_point=self._current_position,
-            step=advanced_by
+            included=context.get_consumed(),
+            next_point=new_position
         )
         return _Pointer(
             at_state=destination,
@@ -102,9 +103,7 @@ class _Pointer:
         def _on_interrupt(ctx: RecognizeContext):
             if ctx.is_failed():
                 return
-            index_after = ctx.index()
-
-            next_pointer = self._create_next_pointer(index_after - index_before, connection)
+            next_pointer = self._create_next_pointer(ctx, connection)
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
@@ -185,9 +184,13 @@ class _TRReader:
         self._pointers = new_pointers
 
     def _run_token_recognition_loop(self):
-        while True:
+        while len(self._pointers) > 0:
+            next_gen: List[_Pointer] = []
             for p in self._pointers:
-                self._advance_pointer(p)
+                advanced = self._advance_pointer(p)
+                next_gen.extend(advanced)
+            self._pointers = next_gen
+
 
     def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
 
@@ -203,13 +206,13 @@ class _TRReader:
                 advance = p.advance_with_analyzer(connection, analyzer)
                 next_gen_pointers.extend(advance)
 
-            elif connection.connection_type == ConnectionType.MATCHING:
+            elif connection.connection_type == ConnectionType.WORD:
                 word = connection.connection_arg
                 analyzer = WordContextAnalyzer(word)
                 advance = p.advance_with_analyzer(connection, analyzer)
                 next_gen_pointers.extend(advance)
 
-            elif connection.connection_type == ConnectionType.WORD:
+            elif connection.connection_type == ConnectionType.MATCHING:
                 plugin = connection.plugin
                 name = connection.connection_arg
                 analyzer = self._definitions.get_matching(plugin, name).analyzer()

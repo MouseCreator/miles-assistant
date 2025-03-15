@@ -1,5 +1,7 @@
 from src.miles.core.matcher.matcher import MatchConnection, ConnectionType
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition, MatchingStrategy
+from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
+from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.core.recognizer.text_recognizer import _TRReader
 from test.miles.core.recognizer.simple_matcher_factory import create_simple_matcher
 
@@ -18,7 +20,7 @@ def test_word_sequence():
     reached = r.recognize()
     assert len(reached) == 1
 
-def test_keep_matching():
+def test_analyzer():
     matcher_origin = [
         (0, 1, 0, MatchConnection(ConnectionType.MATCHING, 'plugin', 'h_rule')),
         (1, 2, 0, MatchConnection(ConnectionType.WORD, 'plugin', 'WORLD')),
@@ -28,10 +30,16 @@ def test_keep_matching():
     text = 'hello hi hola world'
     definition_set = MatchingDefinitionSet()
 
-    def starts_with_h(word: str):
-        return word.startswith('h')
+    class HAnalyzer(GenericContextAnalyzer):
 
-    h_rule = MatchingDefinition(starts_with_h, 'plugin', 'h_rule', MatchingStrategy.KEEP_MATCHING)
+        def invoke(self, context: RecognizeContext):
+            while context.has_any():
+                if context.current().startswith('h'):
+                   context.consume()
+                else:
+                    break
+
+    h_rule = MatchingDefinition(HAnalyzer(), 'plugin', 'h_rule')
     definition_set.append_definition(h_rule)
 
     r = _TRReader(matcher, text, definition_set)

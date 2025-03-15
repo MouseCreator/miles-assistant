@@ -2,13 +2,14 @@ from typing import List, Callable, Self
 
 
 class RecognizeContext:
-
+    _consumed: List[int]
     def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
         self._fail_flag = failed
         self._on_interrupt = on_interrupt
+        self._consumed = []
 
     def current(self) -> str | None:
         if self.is_empty():
@@ -25,8 +26,15 @@ class RecognizeContext:
         self._on_interrupt(self)
 
     def consume(self, items:int = 1, interrupted: bool = False) -> None:
+        self._consumed.extend(range(self._position, self._position + items))
+
         self._position = min(self._total, self._position + items)
         if interrupted:
+            self.interrupt()
+
+    def ignore(self, items: int = 1, interruped: bool = False) -> None:
+        self._position = min(self._total, self._position + items)
+        if interruped:
             self.interrupt()
 
     def remaining_count(self) -> int:
@@ -46,3 +54,6 @@ class RecognizeContext:
 
     def all_tokens(self) -> List[str]:
         return list(self._tokens)
+
+    def get_consumed(self) -> List[int]:
+        return list(self._consumed)

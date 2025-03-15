@@ -8,11 +8,13 @@ class HistoryItem:
                  prev_state: MatchState,
                  connection: MatchConnection,
                  prev_point: int,
-                 step: int):
+                 included: List[int],
+                 next_point: int):
         self.prev_state = prev_state
         self.connection = connection
         self.prev_point = prev_point
-        self.step = step
+        self.included = included
+        self.next_point = next_point
 
     def __eq__(self, other):
         if not isinstance(other, HistoryItem):
@@ -21,7 +23,8 @@ class HistoryItem:
                 self.prev_state == other.prev_state
                 and self.connection == other.connection
                 and self.prev_point == other.prev_point
-                and self.step == other.step
+                and self.included == other.included
+                and self.next_point == other.next_point
                 )
 
 class RecHistory:

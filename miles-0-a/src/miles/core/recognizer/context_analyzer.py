@@ -17,7 +17,10 @@ class GenericContextAnalyzer(ABC):
 
 
 class WordContextAnalyzer(GenericContextAnalyzer):
-
+    """
+    Word Context Analyzer implements matching for a single word
+    It checks if the current token equals to the expected one. The token is consumed if it is expected, else the recognition fails
+    """
     def __init__(self, word: str):
         self.word = word.lower()
 
@@ -29,7 +32,9 @@ class WordContextAnalyzer(GenericContextAnalyzer):
             context.fail()
 
 class TextContextAnalyzer(GenericContextAnalyzer):
-
+    """
+    Text Context Analyzer implements matching for unbounded text
+    """
     def __init__(self):
         pass
 
@@ -38,12 +43,14 @@ class TextContextAnalyzer(GenericContextAnalyzer):
             context.consume(interrupted=True)
 
 class AutomaticContextAnalyzer(GenericContextAnalyzer):
-
+    """
+   Automatic Context Analyzer implements matching for automatic transitions, e.g. unconditional pointer moving with no token consumption
+   """
     def __init__(self):
         pass
+
     def process(self, context: RecognizeContext):
-        if context.is_empty():
-            context.fail()
+        pass
 
     def invoke(self, context: RecognizeContext):
         pass
