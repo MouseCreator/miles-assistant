@@ -37,3 +37,13 @@ class TextContextAnalyzer(GenericContextAnalyzer):
         while context.has_any():
             context.consume(interrupted=True)
 
+class AutomaticContextAnalyzer(GenericContextAnalyzer):
+
+    def __init__(self):
+        pass
+    def process(self, context: RecognizeContext):
+        if context.is_empty():
+            context.fail()
+
+    def invoke(self, context: RecognizeContext):
+        pass

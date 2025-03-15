@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import Callable, Dict, List
+from typing import Dict, List
 
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 

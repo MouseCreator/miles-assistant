@@ -37,3 +37,7 @@ class RecHistory:
 
     def all_items(self):
         return list(self._items)
+    def __eq__(self, other):
+        if not isinstance(other, RecHistory):
+            return False
+        return self._items == other._items

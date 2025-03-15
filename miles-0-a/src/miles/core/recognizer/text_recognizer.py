@@ -1,8 +1,9 @@
 import re
-from typing import List, Self, Set
+from typing import List, Self, Set, Tuple
 
 from src.miles.core.matcher.matcher import Matcher, MatchState, ConnectionType, MatchConnection
-from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer, GenericContextAnalyzer
+from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer, GenericContextAnalyzer, \
+    AutomaticContextAnalyzer
 from src.miles.core.recognizer.generic_recognizer import Recognizer
 from src.miles.core.recognizer.history import HistoryItem, RecHistory
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
@@ -22,29 +23,49 @@ class _TokenCollection:
     def size(self):
         return len(self._tokens)
 
+class _VisitedStates:
+    def __init__(self, states: None | Set[Tuple[MatchState, int]] = None):
+        if states is None:
+            states = set()
+        self._states = set(states)
+
+    def extend(self, state: MatchState, position: int) -> Self:
+        return _VisitedStates( self._states | {(state, position)} )
+
+    def is_visited(self, state: MatchState, position: int):
+        pair = (state, position)
+        return pair in self._states
 
 class _Pointer:
 
     _history: RecHistory
     _token_collection: _TokenCollection
+    _visited: _VisitedStates
 
     def __init__(self,
                  at_state: MatchState,
                  tokens: _TokenCollection,
                  current_position = 0,
-                 history: RecHistory | None = None):
+                 history: RecHistory | None = None,
+                 visited: _VisitedStates | None = None):
         self._at_state = at_state
+        self._visited = visited
         self._token_collection = tokens
         self._current_position = current_position
+
         if history is None:
-            self._history = RecHistory()
-        else:
-            self._history = history
+            history = RecHistory()
+        self._history = history
+
+        if visited is None:
+            visited = _VisitedStates()
+        self._visited = visited
 
     def __eq__(self, other):
         if not isinstance(other, _Pointer):
             return False
         return self._at_state == other._at_state and self._history == other._history
+
     def __str__(self):
         return f"Pointer {self._at_state}"
 
@@ -54,6 +75,10 @@ class _Pointer:
     def _create_next_pointer(self, advanced_by: int, connection: MatchConnection) -> Self:
         new_position = self._current_position + advanced_by
         destination = self._at_state.get_destination(connection)
+
+        if self._visited.is_visited(destination, new_position):
+            return None
+
         new_item = HistoryItem(
             prev_state=self._at_state,
             connection=connection,
@@ -64,7 +89,8 @@ class _Pointer:
             at_state=destination,
             tokens=self._token_collection,
             current_position=new_position,
-            history=self._history.extend(new_item)
+            history=self._history.extend(new_item),
+            visited=self._visited.extend(destination, new_position)
         )
 
 
@@ -77,16 +103,15 @@ class _Pointer:
             if ctx.is_failed():
                 return
             index_after = ctx.index()
+
             next_pointer = self._create_next_pointer(index_after - index_before, connection)
-            result_pointers.append(next_pointer)
+            if next_pointer is not None:
+                result_pointers.append(next_pointer)
 
         context = RecognizeContext(self._token_collection.tokens(), _on_interrupt, start_at=self._current_position)
         analyzer.process(context)
         _on_interrupt(context)
         return result_pointers
-
-    def auto_advance(self, connection: MatchConnection) -> List[Self]:
-        return []
 
     def is_finished(self):
         return self._at_state.is_final() and self._current_position >= self._token_collection.size()
@@ -111,12 +136,10 @@ class MatchingResult:
 class _TRReader:
     _pointers: List[_Pointer]
     _reached_pointers: List[_Pointer]
-    __token_stream: None | _TokenCollection
 
     def __init__(self, matcher: Matcher, text: str, definitions: MatchingDefinitionSet):
         self._matcher = matcher
         self._text = text
-        self._token_stream = None
         self._pointers = []
         self._reached_pointers = []
         self._definitions = definitions
@@ -124,19 +147,16 @@ class _TRReader:
     def recognize(self):
         self._pointers = []
         self._reached_pointers = []
-        self._create_token_stream()
         self._recognize_tokens()
         return list(self._reached_pointers)
 
-    def _create_token_stream(self):
+    def _create_token_collection(self) -> _TokenCollection:
         arr = re.split(r'\s+', self._text)
-        self._token_stream = _TokenCollection(arr)
+        return _TokenCollection(arr)
 
     def _recognize_tokens(self):
         initial = self._matcher.get_initial_state()
-        arr = re.split(r'\s+', self._text)
-        context = RecognizeContext(arr)
-        first_pointer = _Pointer(initial, context)
+        first_pointer = _Pointer(initial, self._create_token_collection())
         self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
@@ -179,22 +199,23 @@ class _TRReader:
         next_gen_pointers: List[_Pointer] = []
         for connection in state.all_connections():
             if connection.connection_type == ConnectionType.AUTOMATIC:
-                advances = p.auto_advance(connection)
-                next_gen_pointers.extend(advances)
+                analyzer = AutomaticContextAnalyzer()
+                advance = p.advance_with_analyzer(connection, analyzer)
+                next_gen_pointers.extend(advance)
 
             elif connection.connection_type == ConnectionType.MATCHING:
                 word = connection.connection_arg
                 analyzer = WordContextAnalyzer(word)
                 advance = p.advance_with_analyzer(connection, analyzer)
-                if advance is not None:
-                    next_gen_pointers.append(advance)
+                next_gen_pointers.extend(advance)
+
             elif connection.connection_type == ConnectionType.WORD:
                 plugin = connection.plugin
                 name = connection.connection_arg
                 analyzer = self._definitions.get_matching(plugin, name).analyzer()
                 advance = p.advance_with_analyzer(connection, analyzer)
-                if advance is not None:
-                    next_gen_pointers.append(advance)
+                next_gen_pointers.extend(advance)
+
             else:
                 raise ValueError(f'Unknown connection type {connection.connection_type.name}')
         return next_gen_pointers
