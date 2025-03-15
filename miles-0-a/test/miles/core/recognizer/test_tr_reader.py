@@ -48,3 +48,22 @@ def test_analyzer():
     reached = r.recognize()
     assert len(reached) == 1
     assert scan_history(text, reached[0]) == ['hello hi hola', 'world', '!recognize COMMAND']
+
+def test_loop():
+    matcher_origin = [
+        (0, 1, 0, MatchConnection(ConnectionType.WORD, 'plugin', 'REPEAT')),
+        (1, 0, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'loop back')),
+        (1, 2, 0, MatchConnection(ConnectionType.WORD, 'plugin', 'AGAIN')),
+        (2, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'recognize COMMAND'))
+    ]
+    matcher = create_simple_matcher(matcher_origin)
+    text = 'repeat repeat repeat again'
+    definition_set = MatchingDefinitionSet()
+
+    r = _TRReader(matcher, text, definition_set)
+    reached = r.recognize()
+    assert len(reached) == 1
+    assert scan_history(text, reached[0]) == ['repeat', '!loop back',
+                                              'repeat', '!loop back',
+                                              'repeat', 'again',
+                                              '!recognize COMMAND']
