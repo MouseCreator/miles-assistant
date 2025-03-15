@@ -1,4 +1,4 @@
-from src.miles.core.command.command import RootComponent, SequenceComponent, WordComponent
+from src.miles.core.command.command import RootComponent, SequenceComponent, WordComponent, ListComponent
 from src.miles.core.formatter.prints import print_matcher
 from src.miles.core.matcher.matcher import MatcherFactory
 from src.miles.utils.string_builder import lines
@@ -23,6 +23,39 @@ def test_single_word():
     matcher = matcher_factory.create()
     expected = " [] ---(WORD, plugin, PRINT)--> [] ---(AUTOMATIC, plugin, recognize plugin||print)--> [] "
     actual = print_matcher(matcher)
+    assert expected == actual
+
+
+def test_list_of_words():
+    pool_factory = SimpleCommandPoolFactory()
+    pool_factory.append(RootComponent(
+        content=SequenceComponent(
+            sequence=[
+                ListComponent(
+                    content=SequenceComponent(
+                        sequence=[
+                            WordComponent('REPEAT')
+                        ]
+                    )
+                )
+            ]
+        )
+    ),
+        namespace=None,
+        plugin='plugin',
+        command_name='repeat'
+    )
+    pool = pool_factory.get()
+    matcher_factory = MatcherFactory(pool)
+    matcher = matcher_factory.create()
+    expected = lines([
+        ' [] ---(AUTOMATIC, plugin, begin list)--> [] ---(WORD, plugin, REPEAT)--> [] ---(AUTOMATIC, plugin, repeat list)--> [1] ',
+        '                                                                             ---(AUTOMATIC, plugin, end list)--> [] ',
+        '                                                                             ---(AUTOMATIC, plugin, recognize plugin||repeat)--> [] '
+    ]
+    )
+    actual = print_matcher(matcher)
+    print(actual)
     assert expected == actual
 
 
