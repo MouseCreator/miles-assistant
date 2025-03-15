@@ -1,9 +1,9 @@
-from typing import List, Self, Callable
+from typing import List, Callable, Self
 
 
 class RecognizeContext:
 
-    def __init__(self, tokens: List[str], on_interrupt: Callable, start_at=0, failed=False):
+    def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
@@ -22,7 +22,7 @@ class RecognizeContext:
         return self._tokens[self._position:self._position + items]
 
     def interrupt(self):
-        self._on_interrupt()
+        self._on_interrupt(self)
 
     def consume(self, items:int = 1, interrupted: bool = False) -> None:
         self._position = min(self._total, self._position + items)

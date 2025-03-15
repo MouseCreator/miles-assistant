@@ -28,3 +28,12 @@ class WordContextAnalyzer(GenericContextAnalyzer):
         else:
             context.fail()
 
+class TextContextAnalyzer(GenericContextAnalyzer):
+
+    def __init__(self):
+        pass
+
+    def invoke(self, context: RecognizeContext):
+        while context.has_any():
+            context.consume(interrupted=True)
+
