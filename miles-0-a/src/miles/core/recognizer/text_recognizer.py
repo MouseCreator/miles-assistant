@@ -219,7 +219,6 @@ class _TRReader:
         self._pointers[:0] = new_items
 
     def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
-        print(p)
         if p.is_finished():
             self._reached_pointer = p
             return []
