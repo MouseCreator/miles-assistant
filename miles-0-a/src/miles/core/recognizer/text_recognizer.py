@@ -18,7 +18,6 @@ from src.miles.utils.strings import print_list
 class _TokenCollection:
     def __init__(self, arr: List[str]):
         self._tokens = arr
-        self.current = -1
 
     def __len__(self):
         return len(self._tokens)
@@ -173,7 +172,7 @@ class _TRReader:
         return self._reached_pointer
 
     def _create_token_collection(self) -> _TokenCollection:
-        arr = re.split(r'\s+', self._text)
+        arr = re.split(r'\s+', self._text.strip()) if self._text.strip() else []
         return _TokenCollection(arr)
 
     def _recognize_tokens(self):
@@ -220,7 +219,7 @@ class _TRReader:
         self._pointers[:0] = new_items
 
     def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
-
+        print(p)
         if p.is_finished():
             self._reached_pointer = p
             return []
@@ -256,8 +255,7 @@ class _TRReader:
 
     def _all_connections_ordered(self, connection_arr: List[MatchConnection]) -> List[MatchConnection]:
         lst = list(connection_arr)
-        sorted(lst, key=lambda c: self._priority_manager.get_priority(c))
-        return lst
+        return sorted(lst, key=lambda c: self._priority_manager.get_priority(c), reverse=True)
 
 
     def _optimized_route(self, next_gen_pointers: List[_Pointer], analyzer: GenericContextAnalyzer) -> List[_Pointer]:
@@ -266,11 +264,9 @@ class _TRReader:
         if optimization_strategy == TextOptimizationStrategy.NONE or optimization_strategy is None:
             return lst
         elif optimization_strategy == TextOptimizationStrategy.SHORTEST_FIRST:
-            sorted(lst, key=lambda p: p.get_history().last().step())
-            return lst
+            return sorted(lst, key=lambda p: p.get_history().last().step())
         elif optimization_strategy == TextOptimizationStrategy.LONGEST_FIRST:
-            sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
-            return lst
+            return sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
         elif optimization_strategy == TextOptimizationStrategy.RANDOMIZE:
             shuffle(lst)
             return lst

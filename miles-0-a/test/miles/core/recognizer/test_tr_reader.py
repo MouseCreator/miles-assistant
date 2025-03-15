@@ -2,6 +2,7 @@ from src.miles.core.matcher.matcher import MatchConnection, ConnectionType
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
 from src.miles.core.recognizer.optimization import TextOptimizationStrategy
+from src.miles.core.recognizer.priority import PriorityManager
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.core.recognizer.text_recognizer import _TRReader
 from test.miles.core.recognizer.simple_history_scanner import scan_history
@@ -129,3 +130,26 @@ def test_longest_first():
     reached = r.recognize()
 
     assert scan_history(text, reached) == ['a b c d e', '!recognize COMMAND']
+
+
+def test_priorities():
+    matcher_origin = [
+        (0, 1, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'path 1')),
+        (0, 2, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'path 2')),
+        (0, 3, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'path 3')),
+        (1, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'recognize COMMAND')),
+        (2, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'recognize COMMAND')),
+        (3, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'recognize COMMAND'))
+    ]
+    matcher = create_simple_matcher(matcher_origin)
+    text = ''
+    priority_manager = PriorityManager()
+    priority_manager.set_priority('plugin', ConnectionType.AUTOMATIC, 'path 1', 1000)
+    priority_manager.set_priority('plugin', ConnectionType.AUTOMATIC, 'path 2', 1001)
+    priority_manager.set_priority('plugin', ConnectionType.AUTOMATIC, 'path 3', 1002)
+
+    r = _TRReader(matcher, text, priority_manager=priority_manager)
+    reached = r.recognize()
+
+    assert reached is not None
+    assert scan_history(text, reached) == ['!path 3', '!recognize COMMAND']
