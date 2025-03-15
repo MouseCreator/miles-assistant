@@ -18,14 +18,18 @@ class ConnectionType(Enum):
 
 
 class MatchConnection(PrintableStructure):
-    def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None):
+    connection_type: ConnectionType
+    plugin: str | None
+    connection_arg: str | None
+    name: str
+    def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None, name: str | None):
         self.connection_type = connection_type
         self.plugin = plugin
         self.connection_arg = connection_arg
+        self.name = name
 
     def __str__(self):
-        return f"MatchConnection {{ {self.connection_type.name}, {self.plugin}, {self.connection_arg} }}"
-
+        return f"MatchConnection {{ {self.connection_type.name}, {self.plugin}, {self.connection_arg}, {self.name} }}"
 
     def __eq__(self, other):
         if not isinstance(other, MatchConnection):
@@ -40,6 +44,9 @@ class MatchConnection(PrintableStructure):
             result += ', '
             result += self.plugin
         if self.connection_arg:
+            result += ', '
+            result += self.connection_arg
+        if self.name:
             result += ', '
             result += self.connection_arg
         result += ')'
@@ -151,23 +158,23 @@ class MatcherFactory:
         return new_state
 
 
-    def _move_and_add_word(self, state: MatchState, plugin: str, word_component: WordComponent) -> MatchState:
-        connection = MatchConnection(ConnectionType.WORD, plugin, word_component.get_content())
+    def _move_and_add_word(self, state: MatchState, plugin: str, word_component: WordComponent, name: str | None) -> MatchState:
+        connection = MatchConnection(ConnectionType.WORD, plugin, word_component.get_content(), name)
         if state.has_connection(connection, word_component.get_priority()):
             return state.update_priority(connection, word_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, word_component.get_priority(), new_state)
 
-    def _move_and_add_matching(self, state: MatchState, plugin: str, matching_component: MatchingComponent) -> MatchState:
-        connection = MatchConnection(ConnectionType.MATCHING, plugin, matching_component.get_content())
+    def _move_and_add_matching(self, state: MatchState, plugin: str, matching_component: MatchingComponent, name: str | None) -> MatchState:
+        connection = MatchConnection(ConnectionType.MATCHING, plugin, matching_component.get_content(), name)
         if state.has_connection(connection, matching_component.get_priority()):
             return state.update_priority(connection, matching_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, matching_component.get_priority(), new_state)
-    def _move_automatically(self, move_from: MatchState, move_to: MatchState, plugin: str, label: str):
+    def _move_automatically(self, move_from: MatchState, move_to: MatchState, plugin: str, label: str, name: str | None):
         if move_from is None or move_to is None:
             return
-        connection = MatchConnection(ConnectionType.AUTOMATIC, plugin, label)
+        connection = MatchConnection(ConnectionType.AUTOMATIC, plugin, label, name)
         if move_from.has_connection(connection):
             return move_to
         move_from.add_connection(connection, self._automatic_priority, move_to)
@@ -187,6 +194,7 @@ class MatcherFactory:
                 self.previous_state_buffer = initial_state
                 self.namespace = namespace
                 self.parent = parent
+                self.name_buffer = None
 
 
             def _format_namespace(self):
@@ -206,13 +214,20 @@ class MatcherFactory:
                 return self.parent._create_empty_state()
             def _plugin(self):
                 return self.namespace.plugin_name
+            def _use_buffered_name(self):
+                if self.name_buffer is not None:
+                    result = self.name_buffer
+                    self.name_buffer = None
+                else:
+                    result = None
+                return result
 
             def visit_root(self, root: RootComponent):
                 root.get_content().accept_visitor(self)
                 prev = self.previous_state_buffer
                 final_state = self.parent._create_empty_state(final=True)
                 label = 'recognize ' + self._format_namespace()
-                self.parent._move_automatically(prev, final_state, self._plugin(), label)
+                self.parent._move_automatically(prev, final_state, self._plugin(), label, None)
                 self.previous_state_buffer = final_state
 
             def visit_sequence(self, sequence: SequenceComponent):
@@ -222,47 +237,42 @@ class MatcherFactory:
 
 
             def visit_word(self, word: WordComponent):
+                connection_name = self._use_buffered_name()
                 prev = self.previous_state_buffer
-                moved_to = self.parent._move_and_add_word(prev, self._plugin(), word)
+                moved_to = self.parent._move_and_add_word(prev, self._plugin(), word, connection_name)
                 self.previous_state_buffer = moved_to
 
 
             def visit_matching(self, matching: MatchingComponent):
-                matching_name = matching.get_content()
-
+                connection_name = self._use_buffered_name()
                 prev = self.previous_state_buffer
-                begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, self._plugin(), f'begin matching {matching_name}')
-                self.previous_state_buffer = begins_at
-
-                moved_to = self.parent._move_and_add_matching(prev, self._plugin(), matching)
-
-                ends_at = self._new_state()
-                self.parent._move_automatically(moved_to, ends_at, self._plugin(), f'end matching {matching_name}')
-                self.previous_state_buffer = ends_at
+                moved_to = self.parent._move_and_add_matching(prev, self._plugin(), matching, connection_name)
+                self.previous_state_buffer = moved_to
 
             def visit_optional(self, optional: OptionalComponent):
+                name = self._use_buffered_name()
                 prev = self.previous_state_buffer
                 begins_at = self._new_state()
                 ends_at = self._new_state()
 
-                self.parent._move_automatically(prev, ends_at, self._plugin(), 'skip optional')
-                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin optional')
+                self.parent._move_automatically(prev, ends_at, self._plugin(), 'skip optional', name)
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin optional', name)
 
                 self.previous_state_buffer = begins_at
 
                 content = optional.get_content()
                 content.accept_visitor(self)
                 after_optional = self.previous_state_buffer
-                self.parent._move_automatically(after_optional, ends_at, self._plugin(), 'end optional')
+                self.parent._move_automatically(after_optional, ends_at, self._plugin(), 'end optional', name)
 
                 self.previous_state_buffer = ends_at
 
 
             def visit_list(self, lst: ListComponent):
+                name = self._use_buffered_name()
                 prev = self.previous_state_buffer
                 begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin list')
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin list', name)
                 self.previous_state_buffer = begins_at
 
                 content = lst.get_content()
@@ -270,13 +280,14 @@ class MatcherFactory:
                 after_list = self.previous_state_buffer
                 ends_at = self._new_state()
 
-                self.parent._move_automatically(after_list, begins_at, self._plugin(), 'repeat list')
-                self.parent._move_automatically(after_list, ends_at, self._plugin(), 'end list')
+                self.parent._move_automatically(after_list, begins_at, self._plugin(), 'repeat list', name)
+                self.parent._move_automatically(after_list, ends_at, self._plugin(), 'end list', name)
 
             def visit_choice(self, choice: ChoiceComponent):
+                name = self._use_buffered_name()
                 prev = self.previous_state_buffer
                 begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin choice')
+                self.parent._move_automatically(prev, begins_at, self._plugin(), 'begin choice', name)
                 self.previous_state_buffer = begins_at
 
                 content = choice.get_content()
@@ -287,22 +298,12 @@ class MatcherFactory:
                     component_ends = self.previous_state_buffer
 
                     # join all choices to the empty state at the end
-                    self.parent._move_automatically(component_ends, end_state, self.namespace.plugin_name, 'end choice')
+                    self.parent._move_automatically(component_ends, end_state, self.namespace.plugin_name, 'end choice', name)
                 self.previous_state_buffer = end_state
 
             def visit_named(self, named: NamedComponent):
-                name = named.get_name()
-                prev = self.previous_state_buffer
-                begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, self.namespace.plugin_name, f'begin name {name}')
-                self.previous_state_buffer = begins_at
-
+                self.name_buffer = named.get_name()
                 named.get_content().accept_visitor(self)
-
-                after_named = self.previous_state_buffer
-                ends_at = self._new_state()
-
-                self.parent._move_automatically(after_named, ends_at, self.namespace.plugin_name, f'end name {name}')
 
         sig = SignatureVisitor(from_state, command_def.get_namespace(), self)
         command.accept_visitor(sig)
@@ -318,7 +319,7 @@ class MatcherFactory:
             return from_state
         plugin = namespace.plugin_name
         for arg in arguments:
-            state = self._move_and_add_word(state, plugin, arg)
+            state = self._move_and_add_word(state, plugin, arg, None)
         return state
 
     def _append_namespace_and_command(self, command_def: CommandDefinition, from_state : MatchState):
