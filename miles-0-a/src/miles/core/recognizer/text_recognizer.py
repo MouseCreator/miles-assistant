@@ -115,7 +115,7 @@ class _Pointer:
     def is_finished(self):
         return self._at_state.is_final() and self._current_position >= self._token_collection.size()
 
-    def get_history(self):
+    def get_history(self) -> RecHistory:
         return self._history
 
 

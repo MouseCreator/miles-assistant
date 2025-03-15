@@ -3,6 +3,7 @@ from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.core.recognizer.text_recognizer import _TRReader
+from test.miles.core.recognizer.simple_history_scanner import scan_history
 from test.miles.core.recognizer.simple_matcher_factory import create_simple_matcher
 
 
@@ -19,6 +20,7 @@ def test_word_sequence():
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
     assert len(reached) == 1
+    assert scan_history(text, reached[0]) == ['hello', 'world', '!recognize COMMAND']
 
 def test_analyzer():
     matcher_origin = [
@@ -45,3 +47,4 @@ def test_analyzer():
     r = _TRReader(matcher, text, definition_set)
     reached = r.recognize()
     assert len(reached) == 1
+    assert scan_history(text, reached[0]) == ['hello hi hola', 'world', '!recognize COMMAND']
