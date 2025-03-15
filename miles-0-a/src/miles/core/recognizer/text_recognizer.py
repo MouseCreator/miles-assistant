@@ -8,6 +8,8 @@ from src.miles.core.recognizer.generic_recognizer import Recognizer
 from src.miles.core.recognizer.history import HistoryItem, RecHistory
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.recognize_context import RecognizeContext
+from src.miles.utils.decorators import auto_str
+
 
 class _TokenCollection:
     def __init__(self, arr: List[str]):
@@ -135,7 +137,7 @@ class MatchingResult:
         s += '}'
         return s
 
-
+@auto_str
 class _TRReader:
     _pointers: List[_Pointer]
     _reached_pointers: List[_Pointer]
@@ -193,8 +195,20 @@ class _TRReader:
             for p in self._pointers:
                 advanced = self._advance_pointer(p)
                 next_gen.extend(advanced)
-            self._pointers = next_gen
 
+            self._pointers = self._optimize_next_gen(next_gen)
+
+    def _optimize_next_gen(self, pointers: List[_Pointer]) -> List[_Pointer]:
+        remaining: List[_Pointer] = []
+        for p in pointers:
+            add = True
+            for r in remaining:
+                if p == r:
+                    add = False
+                    break
+            if add:
+                remaining.append(p)
+        return remaining
 
     def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
 

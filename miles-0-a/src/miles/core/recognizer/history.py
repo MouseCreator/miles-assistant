@@ -2,6 +2,8 @@ from typing import List, Self
 
 from src.miles.core.matcher.matcher import MatchState, MatchConnection
 from src.miles.utils.decorators import auto_str
+from src.miles.utils.strings import print_list
+
 
 @auto_str
 class HistoryItem:
@@ -31,7 +33,6 @@ class HistoryItem:
     def __str__(self):
         return super().__str__()
 
-@auto_str
 class RecHistory:
     _items: List[HistoryItem]
     def __init__(self, items: List[HistoryItem] | None=None):
@@ -45,7 +46,10 @@ class RecHistory:
 
     def all_items(self):
         return list(self._items)
+
     def __eq__(self, other):
         if not isinstance(other, RecHistory):
             return False
         return self._items == other._items
+    def __str__(self):
+        return print_list(self._items)

@@ -8,7 +8,7 @@ from src.miles.core.matcher.command_pool import CommandPool
 from src.miles.core.matcher.matcher_error import MatcherError
 from src.miles.utils.list_utils import index_of
 from src.miles.utils.pretty import PrintableStructure
-from src.miles.utils.strings import plist
+from src.miles.utils.strings import print_list
 
 
 class ConnectionType(Enum):
@@ -64,9 +64,9 @@ class MatchState:
 
     def __str__(self):
         return (f"State {{ id={self._state_id}, "
-                f"connections={plist(self._connections)}, "
-                f"destinations={plist([t._state_id for t in self._destinations])}, "
-                f"priorities={plist(self._priorities)}}}")
+                f"connections={print_list(self._connections)}, "
+                f"destinations={print_list([t._state_id for t in self._destinations])}, "
+                f"priorities={print_list(self._priorities)}}}")
 
     @classmethod
     def initial(cls) -> Self:
