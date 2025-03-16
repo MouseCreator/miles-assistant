@@ -25,32 +25,23 @@ class MatchingDefinition:
     def name(self) -> str:
         return self._name
 
-    def plugin(self) -> str:
-        return self._plugin
-
-    def definition_id(self) -> str:
-        return _definition_id(self._plugin, self._name)
-
-
 class MatchingDefinitionSet:
     _def_dict: Dict[str, MatchingDefinition]
     def __init__(self):
         self._def_dict = {}
 
     def append_definition(self, definition: MatchingDefinition):
-        d_id = definition.definition_id()
-        self._def_dict[d_id] = definition
+        self._def_dict[definition.name()] = definition
 
     def append_all_definitions(self, definitions: List[MatchingDefinition]):
         for d in definitions:
             self.append_definition(d)
 
 
-    def get_matching(self, plugin: str, name: str) -> MatchingDefinition:
-        identifier = _definition_id(plugin, name)
-        definition = self._def_dict.get(identifier)
+    def get_matching(self, name: str) -> MatchingDefinition:
+        definition = self._def_dict.get(name)
         if definition is None:
-            raise KeyError(f'No matching definition found for {identifier}')
+            raise KeyError(f'No matching definition found for {name}')
         return definition
 
 

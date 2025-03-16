@@ -79,6 +79,9 @@ class NormalizedState:
     def get_id(self) -> int:
         return self._id
 
+    def is_final(self) -> bool:
+        return self._final
+
     def __eq__(self, other):
         if not isinstance(other, NormalizedState):
             return False
