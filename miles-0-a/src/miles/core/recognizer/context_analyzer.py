@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from src.miles.core.recognizer.optimization import TextOptimizationStrategy
-from src.miles.core.recognizer.recognize_context import RecognizeContext
+from src.miles.core.context.recognize_context import TextRecognizeContext, RecognizeContext
+from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 
 
 class GenericContextAnalyzer(ABC):
@@ -16,38 +16,8 @@ class GenericContextAnalyzer(ABC):
         else:
             self.invoke(context)
 
-    def optimization_strategy(self) -> TextOptimizationStrategy:
-        return TextOptimizationStrategy.NONE
-
-
-class WordContextAnalyzer(GenericContextAnalyzer):
-    """
-    Word Context Analyzer implements matching for a single word
-    It checks if the current token equals to the expected one. The token is consumed if it is expected, else the recognition fails
-    """
-    def __init__(self, word: str):
-        self.word = word.lower()
-
-    def invoke(self, context: RecognizeContext):
-        current_token = context.current()
-        if current_token == self.word:
-            context.consume()
-        else:
-            context.fail()
-
-class TextContextAnalyzer(GenericContextAnalyzer):
-    """
-    Text Context Analyzer implements matching for unbounded text
-    """
-    def __init__(self):
-        pass
-
-    def invoke(self, context: RecognizeContext):
-        while context.has_any():
-            context.consume(interrupted=True)
-
-    def optimization_strategy(self) -> TextOptimizationStrategy:
-        return TextOptimizationStrategy.SHORTEST_FIRST
+    def optimization_strategy(self) -> RecOptimizationStrategy:
+        return RecOptimizationStrategy.NONE
 
 class AutomaticContextAnalyzer(GenericContextAnalyzer):
     """
@@ -56,8 +26,62 @@ class AutomaticContextAnalyzer(GenericContextAnalyzer):
     def __init__(self):
         pass
 
-    def process(self, context: RecognizeContext):
+    def process(self, context: TextRecognizeContext):
         pass
 
-    def invoke(self, context: RecognizeContext):
+    def invoke(self, context: TextRecognizeContext):
         pass
+
+class TypedContextAnalyzer(GenericContextAnalyzer):
+
+    @abstractmethod
+    def invoke(self, context: TextRecognizeContext):
+        pass
+
+    def process(self, context: TextRecognizeContext):
+        if context.is_empty():
+            context.fail()
+        else:
+            self.invoke(context)
+
+    def optimization_strategy(self) -> RecOptimizationStrategy:
+        return RecOptimizationStrategy.NONE
+
+
+class WordContextAnalyzer(TypedContextAnalyzer):
+    """
+    Word Context Analyzer implements matching for a single word
+    It checks if the current token equals to the expected one. The token is consumed if it is expected, else the recognition fails
+    """
+    def __init__(self, word: str):
+        self.word = word.lower()
+
+    def invoke(self, context: TextRecognizeContext):
+        current_token = context.current()
+        if current_token == self.word:
+            context.consume()
+        else:
+            context.fail()
+
+class SoundContextAnalyzer(GenericContextAnalyzer):
+    def __init__(self, word: str):
+        self.word = word.lower()
+
+    def invoke(self, context: TextRecognizeContext):
+        raise NotImplementedError('TODO: implement matching for sound')
+
+class TextContextAnalyzer(TypedContextAnalyzer):
+    """
+    Text Context Analyzer implements matching for unbounded text
+    """
+    def __init__(self):
+        pass
+
+    def invoke(self, context: TextRecognizeContext):
+        while context.has_any():
+            context.consume(interrupted=True)
+
+    def optimization_strategy(self) -> RecOptimizationStrategy:
+        return RecOptimizationStrategy.SHORTEST_FIRST
+
+

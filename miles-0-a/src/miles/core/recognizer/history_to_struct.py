@@ -1,7 +1,7 @@
 from typing import List
 
 from src.miles.core.matcher.matcher import ConnectionType
-from src.miles.core.recognizer.history import RecHistory
+from src.miles.core.normalized.history import NorHistory
 from src.miles.core.structure.command_structure import CommandStructure
 
 
@@ -21,7 +21,7 @@ class StructFactory:
     def _process_labels(self, label: str):
         pass
 
-    def convert(self, tokens: List[str], history: RecHistory) -> CommandStructure:
+    def convert(self, tokens: List[str], history: NorHistory) -> CommandStructure:
         items = history.all_items()
         stack = _ProtoNodeStack()
         for item in items:

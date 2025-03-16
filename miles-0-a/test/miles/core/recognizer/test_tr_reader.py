@@ -1,9 +1,9 @@
 from src.miles.core.matcher.matcher import MatchConnection, ConnectionType
-from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
+from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
-from src.miles.core.recognizer.optimization import TextOptimizationStrategy
+from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 from src.miles.core.recognizer.priority import PriorityManager
-from src.miles.core.recognizer.recognize_context import RecognizeContext
+from src.miles.core.data.recognize_context import RecognizeContext
 from src.miles.core.recognizer.text_recognizer import _TRReader
 from test.miles.core.recognizer.simple_history_scanner import scan_history
 from test.miles.core.recognizer.simple_matcher_factory import create_simple_matcher
@@ -34,7 +34,7 @@ def test_analyzer():
     text = 'hello hi hola world'
     definition_set = MatchingDefinitionSet()
 
-    class HAnalyzer(GenericContextAnalyzer):
+    class HAnalyzer(TypedContextAnalyzer):
 
         def invoke(self, context: RecognizeContext):
             while context.has_any():
@@ -81,7 +81,7 @@ def test_shortest_first():
     text = 'a b c d e'
     definition_set = MatchingDefinitionSet()
 
-    class ShortestContextAnalyzer(GenericContextAnalyzer):
+    class ShortestContextAnalyzer(TypedContextAnalyzer):
         def __init__(self):
             pass
 
@@ -89,8 +89,8 @@ def test_shortest_first():
             while context.has_any():
                 context.consume(interrupted=True)
 
-        def optimization_strategy(self) -> TextOptimizationStrategy:
-            return TextOptimizationStrategy.SHORTEST_FIRST
+        def optimization_strategy(self) -> RecOptimizationStrategy:
+            return RecOptimizationStrategy.SHORTEST_FIRST
     text_rule = MatchingDefinition(ShortestContextAnalyzer(), 'plugin', 'text')
     definition_set.append_definition(text_rule)
 
@@ -113,7 +113,7 @@ def test_longest_first():
     text = 'a b c d e'
     definition_set = MatchingDefinitionSet()
 
-    class LongestContextAnalyzer(GenericContextAnalyzer):
+    class LongestContextAnalyzer(TypedContextAnalyzer):
         def __init__(self):
             pass
 
@@ -121,8 +121,8 @@ def test_longest_first():
             while context.has_any():
                 context.consume(interrupted=True)
 
-        def optimization_strategy(self) -> TextOptimizationStrategy:
-            return TextOptimizationStrategy.SHORTEST_FIRST
+        def optimization_strategy(self) -> RecOptimizationStrategy:
+            return RecOptimizationStrategy.SHORTEST_FIRST
     text_rule = MatchingDefinition(LongestContextAnalyzer(), 'plugin', 'text')
     definition_set.append_definition(text_rule)
 
