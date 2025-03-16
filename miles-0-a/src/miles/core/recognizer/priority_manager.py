@@ -1,16 +1,25 @@
+from enum import Enum
 from typing import Dict, Tuple
 
 from src.miles.core.recognizer.normalized_matcher import NodeType, NormalizedNode
 
-
+class PriorityStrategy(Enum):
+    FIRST = 0
+    FIND_MAX = 1
+    ALL_DEFAULT = 2
 class PriorityManager:
     _def_priority: int
+    _strategy: PriorityStrategy
     _named_priorities: Dict[Tuple[str, str], int]
     _node_priorities: Dict[Tuple[str, NodeType, str], int]
-    def __init__(self, default_priority = 0):
+    def __init__(self, strategy: PriorityStrategy = PriorityStrategy.FIND_MAX, default_priority = 0):
         self._node_priorities = {}
         self._named_priorities = {}
+        self._strategy = strategy
         self._def_priority = default_priority
+
+    def get_strategy(self):
+        return self._strategy
 
     def get_priority(self, plugin: str, node : NormalizedNode) -> int:
         node_key = (plugin, node.node_type, node.argument)

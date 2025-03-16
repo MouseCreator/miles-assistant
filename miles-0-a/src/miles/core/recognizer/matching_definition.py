@@ -5,8 +5,7 @@ from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
 
 class MatchingDefinition:
 
-    def __init__(self, analyzer: TypedContextAnalyzer, plugin: str, datatype: InputDataType, name: str):
-        self._plugin = plugin
+    def __init__(self, analyzer: TypedContextAnalyzer, datatype: InputDataType, name: str):
         self._name = name
         self._analyzer = analyzer
         self._datatype = datatype
@@ -19,24 +18,22 @@ class MatchingDefinition:
 
     def datatype(self) -> InputDataType:
         return self._datatype
-    def plugin(self) -> str:
-        return self._plugin
 
 class MatchingDefinitionSet:
-    _def_dict: Dict[Tuple[str, InputDataType, str], MatchingDefinition]
+    _def_dict: Dict[Tuple[InputDataType, str], MatchingDefinition]
     def __init__(self):
         self._def_dict = {}
 
 
     def append_definition(self, definition: MatchingDefinition):
-        self._def_dict[ (definition.plugin(), definition.datatype(), definition.name() ) ] = definition
+        self._def_dict[ (definition.datatype(), definition.name() ) ] = definition
 
     def append_all_definitions(self, definitions: List[MatchingDefinition]):
         for d in definitions:
             self.append_definition(d)
 
-    def get_matching(self, plugin: str, datatype: InputDataType, name: str) -> MatchingDefinition:
-        _key = (plugin, datatype, name)
+    def get_matching(self, datatype: InputDataType, name: str) -> MatchingDefinition:
+        _key = (datatype, name)
         definition = self._def_dict.get( _key )
         if definition is None:
             raise KeyError(f'No matching definition found for {_key}')

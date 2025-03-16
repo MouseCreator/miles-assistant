@@ -1,14 +1,12 @@
 from src.miles.core.command.command import WordComponent, ComponentVisitor, NamedComponent, \
     ChoiceComponent, ListComponent, OptionalComponent, MatchingComponent, SequenceComponent, RootComponent, Command
 from src.miles.core.matcher.comand_defintion import CommandNamespace
-from src.miles.core.matcher.command_pool import CommandPool
 from src.miles.core.matcher.matcher import Matcher, MatchState, MatchConnection, ConnectionType
 
 
 class MatcherFactory:
 
-    def __init__(self, pool: CommandPool):
-        self._pool = pool
+    def __init__(self):
         self._initial = MatchState.initial()
         self._state_index_count = 0
         self._matcher = None
@@ -171,3 +169,11 @@ class MatcherFactory:
         initial = self._create_empty_state()
         self._append_command_signature(command, name, initial)
         return Matcher(initial)
+
+    def empty_matcher(self):
+        initial = self._create_empty_state()
+        return Matcher(initial) # does not match anything
+
+    def add_command(self, matcher: Matcher, command: Command, name: str):
+        initial = matcher.get_initial_state()
+        self._append_command_signature(command, name, initial)

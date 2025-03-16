@@ -1,20 +1,14 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import List
 
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
-from src.miles.core.recognizer.priority_manager import PriorityManager
+from src.miles.core.recognizer.priority_manager import PriorityManager, PriorityStrategy
 
 
 class _Path:
     def __init__(self, state: NormalizedState, connection: NormalizedConnection):
         self.state = state
         self.connection = connection
-
-class PriorityStrategy(Enum):
-    FIRST = 0
-    FIND_MAX = 1
-    ALL_DEFAULT = 2
 
 class ConnectionPrioritizer(ABC):
     @abstractmethod
@@ -93,9 +87,9 @@ class PriorityAssigner:
             for conn in state.all_connections():
                 state.update_priority(conn, self._priority_manager.default_priority())
 
-    def assign_all(self, plugin: str, matcher: NormalizedMatcher, strategy: PriorityStrategy):
+    def assign_all(self, plugin: str, matcher: NormalizedMatcher):
         self._refresh_priorities(matcher)
-        self._assign_priorities(plugin, matcher, strategy)
+        self._assign_priorities(plugin, matcher, self._priority_manager.get_strategy())
 
 
 

@@ -1,6 +1,6 @@
 from typing import List
 
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 
 
@@ -11,7 +11,7 @@ class NamespaceComponent:
         self.command_matcher = command_mather
 
 class PluginStructure:
-    def __init__(self, plugin_name : str, namespaces: List[NormalizedConnection], definitions: MatchingDefinitionSet):
+    def __init__(self, plugin_name : str, namespaces: List[NamespaceComponent], definitions: MatchingDefinitionSet):
         self.plugin_name = plugin_name
         self.namespaces = namespaces
         self.definitions = definitions

@@ -20,11 +20,9 @@ class _TRReader:
     _reached_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
     def __init__(self,
-                 plugin: str,
                  matcher: NormalizedMatcher,
                  input_data: InputDataHolder,
                  analyzer_provider: AnalyzerProvider | None = None):
-        self._plugin = plugin
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
@@ -85,8 +83,7 @@ class _TRReader:
         for node in nodes:
             this_generation = []
             for p in previous_generation:
-                analyzer = self._analyzers.provide_analyzer(self._plugin,
-                                                            self._input_data.type(),
+                analyzer = self._analyzers.provide_analyzer(self._input_data.type(),
                                                             node.node_type,
                                                             node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
@@ -120,8 +117,8 @@ class _TRReader:
 class TextRecognizer(Recognizer):
     _pointers: List[RecPointer]
     _reached_pointers: List[RecPointer]
-    def __init__(self, plugin: str, matcher: NormalizedMatcher, of_data: InputDataHolder, provider: AnalyzerProvider):
-        self._reader = _TRReader(plugin, matcher, of_data, provider, plugin)
+    def __init__(self, matcher: NormalizedMatcher, of_data: InputDataHolder, provider: AnalyzerProvider):
+        self._reader = _TRReader(matcher, of_data, provider)
 
     def recognize(self):
         reached_pointers = self._reader.recognize()
