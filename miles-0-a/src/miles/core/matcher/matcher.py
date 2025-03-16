@@ -22,7 +22,7 @@ class MatchConnection(PrintableStructure):
     plugin: str | None
     connection_arg: str | None
     name: str
-    def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None, name: str | None):
+    def __init__(self, connection_type: ConnectionType, plugin: str | None, connection_arg: str | None, name: str | None=None):
         self.connection_type = connection_type
         self.plugin = plugin
         self.connection_arg = connection_arg
@@ -124,6 +124,9 @@ class MatchState:
         return new_state
     def is_final(self):
         return self._final
+
+    def get_id(self) -> int:
+        return self._state_id
 
 
 class Matcher:
