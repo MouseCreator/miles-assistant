@@ -1,5 +1,5 @@
 from src.miles.core.matcher.matcher import MatchConnection, ConnectionType
-from src.miles.core.normalized.matcher_normalizer import normalize
+from src.miles.core.normalized.matcher_normalizer import _get_normalized_collection
 from src.miles.utils.string_builder import lines
 from test.miles.core.recognizer.simple_matcher_factory import create_simple_matcher
 
@@ -12,7 +12,7 @@ def test_normalizer_two_auto_ways():
         (2, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'd')),
     ]
     matcher = create_simple_matcher(matcher_origin)
-    n = normalize(matcher)
+    n = _get_normalized_collection(matcher)
     assert (
             lines(
                 ["0 ->",
@@ -29,7 +29,7 @@ def test_normalizer_two_ways():
         (2, 101, 0, MatchConnection(ConnectionType.WORD, 'plugin', 'd')),
     ]
     matcher = create_simple_matcher(matcher_origin)
-    n = normalize(matcher)
+    n = _get_normalized_collection(matcher)
     assert (
             lines(
                 ["0 ->",
@@ -45,7 +45,7 @@ def test_normalizer_loop():
         (1, 101, 0, MatchConnection(ConnectionType.WORD, 'plugin', 'c')),
     ]
     matcher = create_simple_matcher(matcher_origin)
-    n = normalize(matcher)
+    n = _get_normalized_collection(matcher)
     assert (
             lines(
                 ["0 ->",
@@ -64,7 +64,7 @@ def test_normalizer_empty_loop():
         (2, 101, 0, MatchConnection(ConnectionType.AUTOMATIC, 'plugin', 'e')),
     ]
     matcher = create_simple_matcher(matcher_origin)
-    n = normalize(matcher)
+    n = _get_normalized_collection(matcher)
     assert (
     lines(
         ["0 ->",

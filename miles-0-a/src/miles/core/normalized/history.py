@@ -1,6 +1,6 @@
 from typing import List, Self
 
-from src.miles.core.normalized.normalized_matcher import NormalizedNode
+from src.miles.core.recognizer.normalized_matcher import NormalizedNode
 from src.miles.utils.decorators import auto_str
 from src.miles.utils.strings import print_list
 

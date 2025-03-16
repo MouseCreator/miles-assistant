@@ -1,6 +1,6 @@
 from typing import List
 
-from src.miles.core.normalized.normalized_matcher import NormalizedMatcher, NormalizedConnection
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 
 

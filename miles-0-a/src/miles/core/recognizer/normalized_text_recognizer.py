@@ -1,15 +1,15 @@
 import re
 from random import shuffle
-from typing import List, Self, Set, Tuple
+from typing import List, Self
 
-from src.miles.core.matcher.matcher import Matcher, MatchState, ConnectionType, MatchConnection
-from src.miles.core.recognizer.context_analyzer import WordContextAnalyzer, GenericContextAnalyzer, \
-    AutomaticContextAnalyzer
+from src.miles.core.normalized.history import NorHistory, HistoryItem
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NodeType, \
+    NormalizedState, NormalizedNode
+from src.miles.core.recognizer.context_analyzer import AutomaticContextAnalyzer, WordContextAnalyzer, \
+    GenericContextAnalyzer
 from src.miles.core.recognizer.generic_recognizer import Recognizer
-from src.miles.core.recognizer.history import HistoryItem, RecHistory
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.optimization import TextOptimizationStrategy
-from src.miles.core.recognizer.priority import PriorityManager
 from src.miles.core.recognizer.recognize_context import RecognizeContext
 from src.miles.utils.decorators import auto_str
 from src.miles.utils.strings import print_list
@@ -31,43 +31,23 @@ class _TokenCollection:
     def size(self):
         return len(self._tokens)
 
-class _VisitedStates:
-    def __init__(self, states: None | Set[Tuple[MatchState, int]] = None):
-        if states is None:
-            states = set()
-        self._states = set(states)
-
-    def extend(self, state: MatchState, position: int) -> Self:
-        return _VisitedStates( self._states | {(state, position)} )
-
-    def is_visited(self, state: MatchState, position: int):
-        pair = (state, position)
-        return pair in self._states
-
 class _Pointer:
 
-    _history: RecHistory
+    _history: NorHistory
     _token_collection: _TokenCollection
-    _visited: _VisitedStates
 
     def __init__(self,
-                 at_state: MatchState,
+                 at_state: NormalizedState,
                  tokens: _TokenCollection,
                  current_position = 0,
-                 history: RecHistory | None = None,
-                 visited: _VisitedStates | None = None):
+                 history: NorHistory | None = None):
         self._at_state = at_state
-        self._visited = visited
         self._token_collection = tokens
         self._current_position = current_position
 
         if history is None:
-            history = RecHistory()
+            history = NorHistory()
         self._history = history
-
-        if visited is None:
-            visited = _VisitedStates()
-        self._visited = visited
 
     def __eq__(self, other):
         if not isinstance(other, _Pointer):
@@ -77,40 +57,40 @@ class _Pointer:
     def __str__(self):
         return f"Pointer {self._at_state}"
 
-    def get_state(self) -> MatchState:
+    def get_state(self) -> NormalizedState:
         return self._at_state
 
-    def _create_next_pointer(self, context: RecognizeContext, connection: MatchConnection) -> Self:
-        new_position = context.index()
-        destination = self._at_state.get_destination(connection)
+    def move_to(self, state: NormalizedState) -> Self:
+        return _Pointer(
+            at_state=state,
+            tokens=self._token_collection,
+            current_position=self._current_position,
+            history=self._history
+        )
 
-        if self._visited.is_visited(destination, new_position):
-            return None
+    def _create_next_pointer(self, context: RecognizeContext, node: NormalizedNode) -> Self:
+        new_position = context.index()
 
         new_item = HistoryItem(
-            prev_state=self._at_state,
-            connection=connection,
+            node=node,
             prev_point=self._current_position,
             included=context.get_consumed(),
             next_point=new_position
         )
         return _Pointer(
-            at_state=destination,
+            at_state=self._at_state,
             tokens=self._token_collection,
             current_position=new_position,
-            history=self._history.extend(new_item),
-            visited=self._visited.extend(destination, new_position)
+            history=self._history.extend(new_item)
         )
 
-
-    def advance_with_analyzer(self, connection : MatchConnection, analyzer: GenericContextAnalyzer) -> List[Self]:
+    def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
 
         result_pointers: List[_Pointer] = []
-
         def _on_interrupt(ctx: RecognizeContext):
             if ctx.is_failed():
                 return
-            next_pointer = self._create_next_pointer(ctx, connection)
+            next_pointer = self._create_next_pointer(ctx, node)
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
@@ -122,9 +102,8 @@ class _Pointer:
     def is_finished(self):
         return self._at_state.is_final() and self._current_position >= self._token_collection.size()
 
-    def get_history(self) -> RecHistory:
+    def get_history(self) -> NorHistory:
         return self._history
-
 
 class MatchingResult:
     def __init__(self, move: bool = False, append: bool = False, destroy: bool = False):
@@ -148,10 +127,9 @@ class _TRReader:
     _reached_pointer: _Pointer | None
 
     def __init__(self,
-                 matcher: Matcher,
+                 matcher: NormalizedMatcher,
                  text: str,
-                 definitions: MatchingDefinitionSet | None = None,
-                 priority_manager: PriorityManager | None = None):
+                 definitions: MatchingDefinitionSet | None = None):
         self._matcher = matcher
         self._text = text
         self._pointers = []
@@ -160,10 +138,6 @@ class _TRReader:
         if definitions is None:
             definitions = MatchingDefinitionSet()
         self._definitions = definitions
-
-        if priority_manager is None:
-            priority_manager = PriorityManager()
-        self._priority_manager = priority_manager
 
     def recognize(self):
         self._pointers = []
@@ -176,29 +150,11 @@ class _TRReader:
         return _TokenCollection(arr)
 
     def _recognize_tokens(self):
-        initial = self._matcher.get_initial_state()
+        initial = self._matcher.initial_state()
         first_pointer = _Pointer(initial, self._create_token_collection())
         self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
-
-    def _fill_automatic_paths(self):
-        visited_states: Set[MatchState] = set()
-        active_pointers = list(self._pointers)
-        new_pointers = list(self._pointers)
-        while len(active_pointers) > 0:
-            p = active_pointers.pop(0)
-            state = p.get_state()
-            if state in visited_states:
-                continue
-            for conn in state.all_connections():
-                if conn.connection_type == ConnectionType.AUTOMATIC:
-                    destination = state.get_destination(conn)
-                    if destination not in visited_states:
-                        p_n = p.move_to(conn, destination, None)
-                        active_pointers.append(p_n)
-                        new_pointers.append(p_n)
-        self._pointers = new_pointers
 
     def _run_token_recognition_loop(self):
         while len(self._pointers) > 0 and self._reached_pointer is None:
@@ -218,43 +174,54 @@ class _TRReader:
                 new_items.append(p)
         self._pointers[:0] = new_items
 
-    def _advance_pointer(self, p: _Pointer) -> List[_Pointer]:
-        if p.is_finished():
-            self._reached_pointer = p
+    def _advance_pointer(self, pointer: _Pointer) -> List[_Pointer]:
+        if pointer.is_finished():
+            self._reached_pointer = pointer
             return []
 
-        state = p.get_state()
+        state = pointer.get_state()
         next_gen_pointers: List[_Pointer] = []
-        ordered_connection = self._all_connections_ordered(state.all_connections())
+        ordered_connection = self._all_connections_ordered(state)
         for connection in ordered_connection:
-            if connection.connection_type == ConnectionType.AUTOMATIC:
-                analyzer = AutomaticContextAnalyzer()
-                advance = p.advance_with_analyzer(connection, analyzer)
-                advance = self._optimized_route(advance, analyzer)
-                next_gen_pointers.extend(advance)
+            self._go_through_connection(pointer, connection)
 
-            elif connection.connection_type == ConnectionType.WORD:
-                word = connection.connection_arg
-                analyzer = WordContextAnalyzer(word)
-                advance = p.advance_with_analyzer(connection, analyzer)
-                advance = self._optimized_route(advance, analyzer)
-                next_gen_pointers.extend(advance)
-
-            elif connection.connection_type == ConnectionType.MATCHING:
-                name = connection.connection_arg
-                plugin = None ################################## TODO: replace with real plugin
-                analyzer = self._definitions.get_matching(plugin, name).analyzer()
-                advance = p.advance_with_analyzer(connection, analyzer)
-                advance = self._optimized_route(advance, analyzer)
-                next_gen_pointers.extend(advance)
-
-            else:
-                raise ValueError(f'Unknown connection type {connection.connection_type.name}')
         return next_gen_pointers
 
-    def _all_connections_ordered(self, connection_arr: List[MatchConnection]) -> List[MatchConnection]:
-        lst = list(connection_arr)
-        return sorted(lst, key=lambda c: self._priority_manager.get_priority(c), reverse=True)
+    def _go_through_connection(self, pointer: _Pointer, connection: NormalizedConnection) -> List[_Pointer]:
+        nodes = connection.get_nodes()
+        previous_generation = [ pointer ]
+
+        for node in nodes:
+            this_generation = []
+            for p in previous_generation:
+                if node.node_type == NodeType.AUTOMATIC:
+                    analyzer = AutomaticContextAnalyzer()
+                    advance = p.advance_with_analyzer(node, analyzer)
+                    advance = self._optimized_route(advance, analyzer)
+                    this_generation.extend(advance)
+
+                elif node.node_type == NodeType.WORD:
+                    word = node.argument
+                    analyzer = WordContextAnalyzer(word)
+                    advance = p.advance_with_analyzer(node, analyzer)
+                    advance = self._optimized_route(advance, analyzer)
+                    this_generation.extend(advance)
+
+                elif node.node_type == NodeType.MATCHING:
+                    name = node.argument
+                    analyzer = self._definitions.get_matching(name).analyzer()
+                    advance = p.advance_with_analyzer(node, analyzer)
+                    advance = self._optimized_route(advance, analyzer)
+                    this_generation.extend(advance)
+                else:
+                    raise ValueError(f'Unknown node type {node.node_type.name}')
+            previous_generation = this_generation
+
+        return previous_generation
+
+    def _all_connections_ordered(self, state: NormalizedState) -> List[NormalizedConnection]:
+        lst = state.all_connections()
+        return sorted(lst, key=lambda c: state.get_priority(c), reverse=True)
 
 
     def _optimized_route(self, next_gen_pointers: List[_Pointer], analyzer: GenericContextAnalyzer) -> List[_Pointer]:
@@ -274,21 +241,12 @@ class _TRReader:
 
 
 
-
-
 class TextRecognizer(Recognizer):
     _pointers: List[_Pointer]
     _reached_pointers: List[_Pointer]
     __token_stream : None | _TokenCollection
-    def __init__(self, matcher: Matcher, text: str, definitions: MatchingDefinitionSet):
+    def __init__(self, matcher: NormalizedMatcher, text: str, definitions: MatchingDefinitionSet):
         self._reader = _TRReader(matcher, text, definitions)
 
     def recognize(self):
         reached_pointers = self._reader.recognize()
-
-
-
-
-
-
-

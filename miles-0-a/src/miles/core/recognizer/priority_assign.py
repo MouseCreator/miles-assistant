@@ -1,53 +1,69 @@
-from typing import List, Self
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import List
 
-from src.miles.core.matcher.matcher import Matcher, MatchState, ConnectionType, MatchConnection
-from src.miles.core.recognizer.priority import PriorityManager
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
+from src.miles.core.recognizer.priority_manager import PriorityManager
 
 
 class _Path:
-    def __init__(self, from_state: MatchState, connection: MatchConnection):
-        self.from_state = from_state
+    def __init__(self, state: NormalizedState, connection: NormalizedConnection):
+        self.state = state
         self.connection = connection
-    def __eq__(self, other):
-        if not isinstance(other, _Path):
-            return False
-        return self.from_state == other.from_state and self.connection == other.connection
 
-class _PriorityTraceBuilder:
-    def __init__(self, history: List[_Path]):
-        self._history = history
+class PriorityStrategy(Enum):
+    FIRST = 0
+    FIND_MAX = 1
+    ALL_DEFAULT = 2
 
-    def extend(self, path: _Path) -> Self:
-        return _PriorityTraceBuilder( self._history + [path] )
+class ConnectionPrioritizer(ABC):
+    @abstractmethod
+    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+        pass
 
-    def get_history(self):
-        return list (self._history)
+class FirstConnectionPrioritizer(ConnectionPrioritizer):
+    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+        if connection.empty():
+            return priority_manager.default_priority()
+        first = connection.get_nodes()[0]
+        return priority_manager.get_priority(plugin, first)
+
+class FindMaxConnectionPrioritizer(ConnectionPrioritizer):
+    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+        if connection.empty():
+            return priority_manager.default_priority()
+        priorities = map(lambda c: priority_manager.get_priority(plugin, c) ,connection.get_nodes())
+        return max(priorities)
+
+class AllDefaultConnectionPrioritizer(ConnectionPrioritizer):
+    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+        return priority_manager.default_priority()
+
+
+def _prioritizer(strategy: PriorityStrategy) -> ConnectionPrioritizer:
+    if strategy == PriorityStrategy.FIRST:
+        return FirstConnectionPrioritizer()
+    if strategy == PriorityStrategy.FIND_MAX:
+        return FindMaxConnectionPrioritizer()
+    if strategy == PriorityStrategy.ALL_DEFAULT:
+        return AllDefaultConnectionPrioritizer()
+    raise ValueError(f'Unknown strategy prioritizer strategy: {strategy}')
 
 class PriorityAssigner:
 
-    def __init__(self, matcher: Matcher, priority_manager: PriorityManager):
-        self._matcher = matcher
+    def __init__(self, priority_manager: PriorityManager):
         self._priority_manager = priority_manager
 
-    def _all_auto_paths(self) -> List[_Path]:
-        initial_state = self._matcher.get_initial_state()
-        visited_states = { initial_state }
-        queue = [ initial_state ]
-        result = []
-        while len(queue) > 0:
-            current = queue.pop(0)
-            all_connections = current.all_connections()
-            for connection in all_connections:
-                if connection.connection_type == ConnectionType.AUTOMATIC:
-                    result.append(_Path(current, connection))
-                dest = current.get_destination(connection)
-                if dest not in visited_states:
-                    visited_states.add(dest)
-                    queue.append(dest)
+    def _all_paths(self, matcher: NormalizedMatcher) -> List[_Path]:
+        states = self._all_states(matcher)
+        result: List[_Path] = []
+        for state in states:
+            for connection in state.all_connections():
+                result.append(_Path(state, connection))
         return result
 
-    def _all_states(self) -> List[MatchState]:
-        initial_state = self._matcher.get_initial_state()
+    def _all_states(self, matcher) -> List[NormalizedState]:
+        initial_state = matcher.initial_state()
         visited_states = {initial_state}
         queue = [initial_state]
         while len(queue) > 0:
@@ -60,36 +76,28 @@ class PriorityAssigner:
                     queue.append(dest)
         return list(visited_states)
 
-    def _refresh_priorities(self):
-        states = self._all_states()
+    def _assign_priorities(self, plugin: str, matcher: NormalizedMatcher, strategy: PriorityStrategy):
+        paths = self._all_paths(matcher)
+        for path in paths:
+            priority = self._get_priority_for(plugin, path.connection, strategy)
+            path.state.update_priority(path.connection, priority)
+
+    def _get_priority_for(self, plugin: str, connection: NormalizedConnection, strategy: PriorityStrategy) -> int:
+        prioritizer = _prioritizer(strategy)
+        return prioritizer.get_priority(plugin, self._priority_manager, connection)
+
+
+    def _refresh_priorities(self, matcher):
+        states: List[NormalizedState] = self._all_states(matcher)
         for state in states:
             for conn in state.all_connections():
-                state.update_priority(conn, 0)
+                state.update_priority(conn, self._priority_manager.default_priority())
 
-    def _set_individual_priorities(self):
-        paths = self._all_auto_paths()
-        for path in paths:
-            priority = self._priority_manager.get_priority(path.connection)
-            path.from_state.update_priority(path.connection, priority)
+    def assign_all(self, plugin: str, matcher: NormalizedMatcher, strategy: PriorityStrategy):
+        self._refresh_priorities(matcher)
+        self._assign_priorities(plugin, matcher, strategy)
 
-    def _trace_priorities(self):
-        initial_state = self._matcher.get_initial_state()
-        visited_states = {initial_state}
-        queue = [initial_state]
-        while len(queue) > 0:
-            current = queue.pop(0)
-            all_connections = current.all_connections()
-            for connection in all_connections:
-                dest = current.get_destination(connection)
-                if dest not in visited_states:
-                    visited_states.add(dest)
-                    queue.append(dest)
-        return list(visited_states)
 
-    def assign_all(self):
-        self._refresh_priorities()
-        self._set_individual_priorities()
-        self._trace_priorities()
 
 
 

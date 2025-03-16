@@ -41,6 +41,10 @@ class NormalizedConnection:
     def get_nodes(self):
         return list(self._nodes)
 
+    def empty(self):
+        return len(self._nodes) == 0
+
+
 class NormalizedState:
     _id: int
     _connections: List[NormalizedConnection]
@@ -86,6 +90,13 @@ class NormalizedState:
         if not isinstance(other, NormalizedState):
             return False
         return self._id == other._id
+
+    def update_priority(self, connection: NormalizedConnection, priority: int):
+        index = self._connection_index(connection)
+        if index < 0:
+            return
+        self._priorities[index] = priority
+
 
 class NormalizedMatcher:
     _initial: NormalizedState
