@@ -146,6 +146,7 @@ class Command:
     def accept_visitor(self, visitor):
         self.root.accept_visitor(visitor)
 
+
 class ComponentVisitor(ABC):
     @abstractmethod
     def visit_root(self, root: RootComponent):
