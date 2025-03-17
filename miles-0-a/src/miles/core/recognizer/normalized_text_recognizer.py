@@ -66,6 +66,7 @@ class _TRReader:
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
         first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
+        self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
@@ -79,14 +80,7 @@ class _TRReader:
     def _add_to_pointers(self, new_pointers: List[RecPointer]):
         new_items: List[RecPointer] = []
         for p in new_pointers:
-            add = True
-            if p in self._cache:
-                add = False
-            for r in self._pointers:
-                if p == r:
-                    add = False
-                    break
-            if add:
+            if p not in self._cache:
                 new_items.append(p)
 
         for item in new_items:
