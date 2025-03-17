@@ -14,14 +14,14 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
     plugin_name = plugin_definition.name()
     priority_manager = plugin_definition.get_priority_manager()
     priority_assigner = PriorityAssigner(priority_manager)
-    match_factory = MatcherFactory()
+    matcher_factory = MatcherFactory()
     namespace_components: List[NamespaceComponent] = []
     for namespace in plugin_definition.namespaces():
-        namespace_matcher = match_factory.create_namespace(namespace.as_command_namespace())
-        matcher = match_factory.empty_matcher()
+        namespace_matcher = matcher_factory.create_namespace(namespace.as_command_namespace())
+        matcher = matcher_factory.empty_matcher()
         for stored_command in namespace.commands:
-            command = GenericCommandProcessor().process(stored_command.name)
-            match_factory.add_command(matcher, command, stored_command.name)
+            command = GenericCommandProcessor().process(stored_command.syntax)
+            matcher_factory.add_command(matcher, command, stored_command.name)
         normalized_matcher = normalize(matcher)
         normalized_namespace_matcher = normalize(namespace_matcher)
         priority_assigner.assign_all(plugin_name, normalized_matcher)

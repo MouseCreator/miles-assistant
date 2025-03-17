@@ -24,7 +24,6 @@ class MatchingDefinitionSet:
     def __init__(self):
         self._def_dict = {}
 
-
     def append_definition(self, definition: MatchingDefinition):
         self._def_dict[ (definition.datatype(), definition.name() ) ] = definition
 
