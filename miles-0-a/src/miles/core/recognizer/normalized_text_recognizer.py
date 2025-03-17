@@ -34,6 +34,10 @@ class _DynamicCache:
             return False
         return self.is_in_cache(item)
 
+    def clear(self):
+        self._cache = set()
+
+
 @auto_str
 class _TRReader:
     _pointers: List[RecPointer]
@@ -61,6 +65,7 @@ class _TRReader:
         self._pointers = []
         self._reached_pointer = None
         self._recognize_tokens()
+        self._cache.clear()
         return self._reached_pointer
 
     def _recognize_tokens(self):
