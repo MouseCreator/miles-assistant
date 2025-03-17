@@ -43,7 +43,8 @@ class RecPointer:
             current_position=self._current_position,
             history=self._history
         )
-
+    def get_position(self):
+        return self._current_position
     def _create_next_pointer(self, context: RecognizeContext, node: NormalizedNode) -> Self:
         new_position = context.index()
 

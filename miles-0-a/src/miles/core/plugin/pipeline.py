@@ -22,6 +22,7 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
         for stored_command in namespace.commands:
             command = GenericCommandProcessor().process(stored_command.syntax)
             matcher_factory.add_command(matcher, command, stored_command.name)
+
         normalized_matcher = normalize(matcher)
         normalized_namespace_matcher = normalize(namespace_matcher)
         priority_assigner.assign_all(plugin_name, normalized_matcher)

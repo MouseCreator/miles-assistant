@@ -1,6 +1,6 @@
 
 from random import shuffle
-from typing import List
+from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import InputDataHolder
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
@@ -13,12 +13,33 @@ from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.decorators import auto_str
 
 
+class _DynamicCache:
+    _cache: Set[Tuple[int, int]]
+    def __init__(self):
+        self._cache = set()
+
+    def _pair(self, pointer: RecPointer):
+        state_id = pointer.get_state().get_id()
+        position = pointer.get_position()
+        return (state_id, position)
+
+    def add_to_cache(self, pointer: RecPointer):
+
+        self._cache.add(self._pair(pointer))
+    def is_in_cache(self, pointer: RecPointer):
+        return self._pair(pointer) in self._cache
+
+    def __contains__(self, item):
+        if not isinstance(item, RecPointer):
+            return False
+        return self.is_in_cache(item)
 
 @auto_str
 class _TRReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
+    _cache: _DynamicCache
 
     def __init__(self,
                  matcher: NormalizedMatcher,
@@ -28,6 +49,7 @@ class _TRReader:
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
+        self._dynamic_cache = _DynamicCache
         self._reached_pointer = None
         self._start_from = start_from
 
@@ -58,6 +80,8 @@ class _TRReader:
         new_items: List[RecPointer] = []
         for p in new_pointers:
             add = True
+            if p in self._cache:
+                add = False
             for r in self._pointers:
                 if p == r:
                     add = False
