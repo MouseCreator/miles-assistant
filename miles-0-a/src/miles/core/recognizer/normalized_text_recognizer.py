@@ -19,14 +19,17 @@ class _TRReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
+
     def __init__(self,
                  matcher: NormalizedMatcher,
                  input_data: InputDataHolder,
-                 analyzer_provider: AnalyzerProvider | None = None):
+                 start_from: int,
+                 analyzer_provider: AnalyzerProvider):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
         self._reached_pointer = None
+        self._start_from = start_from
 
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
@@ -40,7 +43,7 @@ class _TRReader:
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
-        first_pointer = RecPointer(initial, self._input_data)
+        first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
         self._pointers.append(first_pointer)
 
         self._run_token_recognition_loop()
@@ -117,8 +120,8 @@ class _TRReader:
 class TextRecognizer(Recognizer):
     _pointers: List[RecPointer]
     _reached_pointers: List[RecPointer]
-    def __init__(self, matcher: NormalizedMatcher, of_data: InputDataHolder, provider: AnalyzerProvider):
-        self._reader = _TRReader(matcher, of_data, provider)
+    def __init__(self, matcher: NormalizedMatcher, of_data: InputDataHolder, provider: AnalyzerProvider, start_from: int):
+        self._reader = _TRReader(matcher, of_data, start_from, provider)
 
     def recognize(self):
         reached_pointers = self._reader.recognize()

@@ -16,8 +16,8 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
     priority_assigner = PriorityAssigner(priority_manager)
     match_factory = MatcherFactory()
     namespace_components: List[NamespaceComponent] = []
-    for namespace in plugin_definition._namespaces:
-        namespace_matcher = match_factory.create_namespace(namespace)
+    for namespace in plugin_definition.namespaces():
+        namespace_matcher = match_factory.create_namespace(namespace.as_command_namespace())
         matcher = match_factory.empty_matcher()
         for stored_command in namespace.commands:
             command = GenericCommandProcessor().process(stored_command.name)

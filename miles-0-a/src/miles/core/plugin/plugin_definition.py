@@ -1,5 +1,7 @@
 from typing import List
 
+from src.miles.core.command.command import WordComponent
+from src.miles.core.matcher.comand_defintion import CommandNamespace
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.priority_manager import PriorityManager
 
@@ -15,6 +17,16 @@ class NamespaceOfCommands:
         self.prefix = prefix
         self.commands = commands
 
+    def as_command_namespace(self):
+        words = self.prefix.split() if self.prefix.strip() else []
+        components = []
+        for word in words:
+            components.append(WordComponent(word))
+        return CommandNamespace(
+            namespace_name=self.name,
+            arguments=components
+        )
+
 class PluginDefinition:
     def __init__(self,
                  name: str,
@@ -28,7 +40,7 @@ class PluginDefinition:
     def name(self):
         return self._name
 
-    def namespaces(self):
+    def namespaces(self) -> List[NamespaceOfCommands]:
         return list(self._namespaces)
 
     def get_priority_manager(self):
