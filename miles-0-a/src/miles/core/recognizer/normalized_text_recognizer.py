@@ -88,6 +88,10 @@ class _TRReader:
                     break
             if add:
                 new_items.append(p)
+
+        for item in new_items:
+            self._cache.add_to_cache(item)
+
         self._pointers[:0] = new_items
 
     def _advance_pointer(self, pointer: RecPointer) -> List[RecPointer]:
