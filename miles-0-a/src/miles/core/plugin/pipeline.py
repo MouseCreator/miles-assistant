@@ -6,7 +6,7 @@ from src.miles.core.matcher.matcher_factory import MatcherFactory
 from src.miles.core.normalized.matcher_normalizer import normalize
 from src.miles.core.plugin.plugin_definition import PluginDefinition
 from src.miles.core.plugin.plugin_structure import PluginStructure, NamespaceComponent
-from src.miles.core.recognizer.priority_assign import PriorityAssigner
+from src.miles.core.priority.priority_assign import PriorityAssigner
 
 
 def create_normalized_matcher_from_command_string(plugin_definition: PluginDefinition) -> PluginStructure:

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
-from src.miles.core.recognizer.priority_manager import PriorityManager, PriorityStrategy
+from src.miles.core.priority.priority_manager import PriorityManager, PriorityStrategy
 
 
 class _Path:
