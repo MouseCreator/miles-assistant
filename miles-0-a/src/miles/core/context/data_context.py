@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Any, TypeVar, Optional, Type
+
+from src.miles.core.context.flags import Flags
 
 
 class ConsumedRange:
@@ -9,6 +11,7 @@ class ConsumedRange:
 
     def as_range(self) -> range:
         return range(self.from_index, self.to_index)
+
 
 class RecognizeContext(ABC):
     @abstractmethod
@@ -46,6 +49,9 @@ class RecognizeContext(ABC):
         pass
     @abstractmethod
     def is_empty(self) -> bool:
+        pass
+    @abstractmethod
+    def flags(self) -> Flags:
         pass
 
 

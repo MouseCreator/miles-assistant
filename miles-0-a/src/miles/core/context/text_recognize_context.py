@@ -1,18 +1,25 @@
-from typing import List, Callable, Self
+from typing import List, Callable, Self, Any, Dict, Type, Optional, TypeVar
 
 from src.miles.core.context.data_context import RecognizeContext, ConsumedRange
-
+from src.miles.core.context.flags import Flags
 
 class TextRecognizeContext(RecognizeContext):
+    def flags(self) -> Flags:
+        return self._flags
 
+    _flags: Flags
     _consumed: List[ConsumedRange]
-    def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False):
+
+    def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False, flags=Flags|None):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
         self._fail_flag = failed
         self._on_interrupt = on_interrupt
         self._consumed = []
+        if flags is None:
+            flags = Flags()
+        self._flags = flags.copy()
 
     def current(self) -> str | None:
         if self.is_empty():
