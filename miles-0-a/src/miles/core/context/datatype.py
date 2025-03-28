@@ -5,9 +5,8 @@ from typing import TypeVar, Generic, List, Any
 
 from src.miles.core.context.data_holder import InputDataHolder, TextDataHolder
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer, AutomaticContextAnalyzer, \
-    WordContextAnalyzer
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
-from src.miles.core.recognizer.normalized_matcher import NodeType
+    WordContextAnalyzer, TextContextAnalyzer
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet, MatchingDefinition
 
 T = TypeVar('T')
 S = TypeVar('S')
@@ -22,8 +21,9 @@ class OriginType(Enum):
 
 class DataTypeManager(Generic[T]):
     definitions: MatchingDefinitionSet
-    def __init__(self, definitions: MatchingDefinitionSet):
-        self.definitions = definitions
+    def __init__(self):
+        self.definitions = MatchingDefinitionSet()
+        self.definitions.append_all_definitions(self.include_definitions())
     @abstractmethod
     def origin_type(self) -> OriginType:
         pass
@@ -33,10 +33,19 @@ class DataTypeManager(Generic[T]):
     @abstractmethod
     def dataholder(self, tokens: List[T]) -> InputDataHolder:
         pass
+
+    def include_definitions(self) -> List[MatchingDefinition]:
+        return []
+
     @abstractmethod
-    def provide_analyzer(self, node_type: NodeType, argument: str | None) -> GenericContextAnalyzer:
+    def on_word(self, argument) -> GenericContextAnalyzer:
         pass
 
+    def on_matching(self, argument) -> GenericContextAnalyzer:
+        return self.definitions.get_matching(argument).analyzer()
+
+    def on_automatic(self, argument) -> GenericContextAnalyzer:
+        return AutomaticContextAnalyzer()
 
 class TextTypeManager(DataTypeManager[str]):
 
@@ -49,13 +58,12 @@ class TextTypeManager(DataTypeManager[str]):
     def dataholder(self, tokens: List[str]) -> InputDataHolder:
         return TextDataHolder(tokens)
 
-    def provide_analyzer(self, node_type: NodeType, argument: str | None) -> GenericContextAnalyzer:
-        if node_type == NodeType.AUTOMATIC:
-            return AutomaticContextAnalyzer()
-        if node_type == NodeType.MATCHING:
-            return self.definitions.get_matching(argument).analyzer()
-        if node_type == NodeType.WORD:
-            return WordContextAnalyzer(argument)
+    def on_word(self, argument) -> GenericContextAnalyzer:
+        return WordContextAnalyzer(argument)
+
+    def include_definitions(self) -> List[MatchingDefinition]:
+        return [ MatchingDefinition("text", TextContextAnalyzer()) ] # move to plugin ?
+
 
 
 

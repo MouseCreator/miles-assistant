@@ -1,11 +1,10 @@
 from typing import Dict, List
 
-from src.miles.core.context.data_types import InputDataType
 from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
 
 class MatchingDefinition:
 
-    def __init__(self, analyzer: TypedContextAnalyzer, name: str):
+    def __init__(self, name: str, analyzer: TypedContextAnalyzer):
         self._name = name
         self._analyzer = analyzer
 
