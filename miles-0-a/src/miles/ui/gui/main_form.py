@@ -27,8 +27,8 @@ class AssistantApp():
         self.root = tk.Tk()
 
         self.root.title("Miles assistant")
-        self.root.geometry("500x500")
-        self.root.minsize(400, 400)
+        self.root.geometry("720x480")
+        self.root.minsize(720, 480)
 
         self.create_menu()
         self.create_widgets()
@@ -60,7 +60,7 @@ class AssistantApp():
         input_frame.pack(fill=tk.X, padx=10, pady=5)
 
         self.option_var = tk.StringVar(value="--")
-        self.dropdown = ttk.Combobox(input_frame, textvariable=self.option_var, values=["--", "1", "2"], width=5)
+        self.dropdown = ttk.Combobox(input_frame, textvariable=self.option_var, values=["--", "1", "2"], width=15)
         self.dropdown.grid(row=0, column=0, padx=(0, 5), sticky="w")
 
         self.text_field = tk.Text(input_frame, height=3, width=40)
