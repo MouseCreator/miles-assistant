@@ -13,10 +13,12 @@ class DynamicPriorityRuleInitializer:
     pass
 
 class NamespaceInitializer:
-    def __init__(self, name: str, identifier: str):
+    def __init__(self, name: str, prefix: str):
         self._name = name
-        self._identifier = identifier
+        self._prefix = prefix
         self._commands = []
+        self._static_priority_rules = []
+        self._dynamic_priority_rules = []
 
     def add_command(self, command: CommandInitializer):
         self._commands.append(command)
@@ -27,11 +29,20 @@ class NamespaceInitializer:
     def get_commands(self):
         return list(self._commands)
 
-    def add_static_priority_rule(self, command: StaticPriorityRuleInitializer):
-        pass
+    def add_static_priority_rule(self, rule: StaticPriorityRuleInitializer):
+        self._static_priority_rules.append(rule)
 
-    def add_dynamic_priority_rule(self, command: DynamicPriorityRuleInitializer):
-        pass
+    def add_dynamic_priority_rule(self, rule: DynamicPriorityRuleInitializer):
+        self._dynamic_priority_rules.append(rule)
+
+    def get_name(self):
+        return self._name
+
+    def get_prefix(self):
+        return self._prefix
+
+    def components(self):
+        return self._commands, self._static_priority_rules, self._dynamic_priority_rules
 
 class PluginRegister:
     _name: str
@@ -41,6 +52,7 @@ class PluginRegister:
         if display_name is None:
             display_name = name
         self._display_name = display_name
+        self._namespaces = []
 
     def get_name(self):
         return self._name
@@ -49,7 +61,9 @@ class PluginRegister:
         return self._display_name
 
     def add_namespace(self, namespace: NamespaceInitializer):
-        pass
+        self._namespaces.append(namespace)
+
+
 
 class MilesRegister(metaclass=Singleton):
     _plugins: List[PluginRegister]

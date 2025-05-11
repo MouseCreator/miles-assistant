@@ -10,7 +10,6 @@ from src.miles.core.priority.priority_assign import PriorityAssigner
 
 
 def create_normalized_matcher_from_command_string(plugin_definition: PluginDefinition) -> PluginStructure:
-
     plugin_name = plugin_definition.name()
     priority_manager = plugin_definition.get_priority_manager()
     priority_assigner = PriorityAssigner(priority_manager)
