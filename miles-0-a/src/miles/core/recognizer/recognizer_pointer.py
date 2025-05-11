@@ -1,7 +1,9 @@
+from sys import flags
 from typing import Self, List
 
 from src.miles.core.context.data_context import RecognizeContext
-from src.miles.core.context.data_holder import InputDataHolder
+from src.miles.core.context.data_holder import TextDataHolder
+from src.miles.core.context.flags import Flags
 from src.miles.core.normalized.history import NorHistory, HistoryItem
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode
@@ -10,20 +12,26 @@ from src.miles.core.recognizer.normalized_matcher import NormalizedState, Normal
 class RecPointer:
 
     _history: NorHistory
-    _of_data: InputDataHolder
+    _of_data: TextDataHolder
 
     def __init__(self,
                  at_state: NormalizedState,
-                 of_data: InputDataHolder,
+                 of_data: TextDataHolder,
                  current_position = 0,
-                 history: NorHistory | None = None):
+                 history: NorHistory | None = None,
+                 flags: Flags | None = None):
         self._at_state = at_state
 
         self._current_position = current_position
         self._of_data = of_data
+
         if history is None:
             history = NorHistory()
         self._history = history
+
+        if flags is None:
+            flags = Flags()
+        self._flags = flags
 
     def __eq__(self, other):
         if not isinstance(other, RecPointer):
@@ -41,7 +49,8 @@ class RecPointer:
             at_state=state,
             of_data=self._of_data,
             current_position=self._current_position,
-            history=self._history
+            history=self._history,
+            flags=self._flags.copy()
         )
     def get_position(self):
         return self._current_position
@@ -70,7 +79,7 @@ class RecPointer:
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
-        context: RecognizeContext = self._of_data.create_context(_on_interrupt, self._current_position)
+        context: RecognizeContext = self._of_data.create_context(_on_interrupt, self._current_position, flags=self._flags)
         analyzer.process(context)
         _on_interrupt(context)
         return result_pointers
@@ -80,3 +89,6 @@ class RecPointer:
 
     def get_history(self) -> NorHistory:
         return self._history
+
+    def flags(self):
+        return self._flags

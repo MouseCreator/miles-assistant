@@ -3,8 +3,9 @@ from random import shuffle
 from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.generic_recognizer import Recognizer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
@@ -44,12 +45,14 @@ class _TRReader:
     _reached_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
     _cache: _DynamicCache
+    _dynamic_priorities: List[DynamicPriorityRule]
 
     def __init__(self,
                  matcher: NormalizedMatcher,
                  input_data: TextDataHolder,
                  start_from: int,
-                 analyzer_provider: AnalyzerProvider):
+                 analyzer_provider: AnalyzerProvider,
+                 dynamic_priorities: List[DynamicPriorityRule] | None):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
@@ -60,6 +63,10 @@ class _TRReader:
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
         self._analyzers = analyzer_provider
+
+        if dynamic_priorities is None:
+            dynamic_priorities = []
+        self._dynamic_priorities = dynamic_priorities
 
     def recognize(self):
         self._pointers = []
@@ -98,9 +105,9 @@ class _TRReader:
             self._reached_pointer = pointer
             return []
 
-        state = pointer.get_state()
+
         next_gen_pointers: List[RecPointer] = []
-        ordered_connections = self._all_connections_ordered(state)
+        ordered_connections = self._all_connections_ordered(pointer)
         for connection in ordered_connections:
             new_pointers = self._go_through_connection(pointer, connection)
             next_gen_pointers.extend(new_pointers)
@@ -122,9 +129,28 @@ class _TRReader:
 
         return previous_generation
 
-    def _all_connections_ordered(self, state: NormalizedState) -> List[NormalizedConnection]:
-        lst = state.all_connections()
-        return sorted(lst, key=lambda c: state.get_priority(c), reverse=True)
+    def _all_connections_ordered(self, pointer: RecPointer) -> List[NormalizedConnection]:
+        state = pointer.get_state()
+        connections_from_state = state.all_connections()
+
+        priority_map = {}
+        for c in connections_from_state:
+            priority = state.get_priority(c)
+            connection_origin = c.get_nodes()[0]
+            for d in self._dynamic_priorities:
+                context = self._input_data.dynamic_priority_context(
+                    start_at=pointer.get_position(),
+                    flags=pointer.flags(),
+                    connection_type=connection_origin.node_type,
+                    connection_arg=connection_origin.argument,
+                    connection_name=connection_origin.name,
+                    priority=priority
+                )
+                if d.is_applicable(context):
+                    priority = d.priority(context)
+            priority_map[c.get_id()] = priority
+
+        return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
 
     def _optimized_route(self, next_gen_pointers: List[RecPointer], analyzer: GenericContextAnalyzer) -> List[RecPointer]:
         lst = list(next_gen_pointers)

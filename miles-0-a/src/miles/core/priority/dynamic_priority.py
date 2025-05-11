@@ -10,6 +10,7 @@ class DynamicPriorityContext:
                  tokens: List[str],
                  connection_type: ConnectionType,
                  connection_argument: str,
+                 connection_name: str,
                  static_priority: int,
                  start_at=0,
                  flags=Flags | None
@@ -20,6 +21,7 @@ class DynamicPriorityContext:
         self._connection_type = connection_type
         self._connection_argument = connection_argument
         self._connection_priority = static_priority
+        self._connection_name = connection_name
         if flags is None:
             flags = Flags()
         self.flags = flags.copy()
@@ -63,3 +65,6 @@ class DynamicPriorityRule(ABC):
     @abstractmethod
     def priority(self, context: DynamicPriorityContext) -> int:
         pass
+
+    def ordered(self):
+        return 0

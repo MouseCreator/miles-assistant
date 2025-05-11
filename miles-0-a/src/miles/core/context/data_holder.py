@@ -4,6 +4,8 @@ from typing import List
 
 from src.miles.core.context.flags import Flags
 from src.miles.core.context.text_recognize_context import TextRecognizeContext
+from src.miles.core.matcher.matcher import ConnectionType
+from src.miles.core.priority.dynamic_priority import DynamicPriorityContext
 
 
 class TextDataHolder:
@@ -20,4 +22,21 @@ class TextDataHolder:
                        failed: bool = False):
         return TextRecognizeContext(
             tokens=self._text, on_interrupt=on_interrupt, start_at=start_at, failed=failed, flags=flags
+        )
+
+    def dynamic_priority_context(self,
+                       start_at: int,
+                       flags: Flags,
+                       connection_type: ConnectionType,
+                       connection_arg: str,
+                       connection_name: str,
+                       priority: int):
+        return DynamicPriorityContext(
+            tokens=self._text,
+            connection_type=connection_type,
+            connection_argument=connection_arg,
+            connection_name=connection_name,
+            static_priority=priority,
+            start_at=start_at,
+            flags=flags
         )
