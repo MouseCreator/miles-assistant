@@ -2,7 +2,7 @@
 from random import shuffle
 from typing import List, Set, Tuple
 
-from src.miles.core.context.data_holder import InputDataHolder
+from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
@@ -47,7 +47,7 @@ class _TRReader:
 
     def __init__(self,
                  matcher: NormalizedMatcher,
-                 input_data: InputDataHolder,
+                 input_data: TextDataHolder,
                  start_from: int,
                  analyzer_provider: AnalyzerProvider):
         self._matcher = matcher
@@ -100,9 +100,10 @@ class _TRReader:
 
         state = pointer.get_state()
         next_gen_pointers: List[RecPointer] = []
-        ordered_connection = self._all_connections_ordered(state)
-        for connection in ordered_connection:
-            self._go_through_connection(pointer, connection)
+        ordered_connections = self._all_connections_ordered(state)
+        for connection in ordered_connections:
+            new_pointers = self._go_through_connection(pointer, connection)
+            next_gen_pointers.extend(new_pointers)
 
         return next_gen_pointers
 
@@ -113,9 +114,7 @@ class _TRReader:
         for node in nodes:
             this_generation = []
             for p in previous_generation:
-                analyzer = self._analyzers.provide_analyzer(self._input_data.type(),
-                                                            node.node_type,
-                                                            node.argument)
+                analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
                 advance = self._optimized_route(advance, analyzer)
                 this_generation.extend(advance)
@@ -147,7 +146,7 @@ class _TRReader:
 class TextRecognizer(Recognizer):
     _pointers: List[RecPointer]
     _reached_pointers: List[RecPointer]
-    def __init__(self, matcher: NormalizedMatcher, of_data: InputDataHolder, provider: AnalyzerProvider, start_from: int):
+    def __init__(self, matcher: NormalizedMatcher, of_data: TextDataHolder, provider: AnalyzerProvider, start_from: int):
         self._reader = _TRReader(matcher, of_data, start_from, provider)
 
     def recognize(self):

@@ -95,6 +95,7 @@ class MatchState:
         if index < 0:
             return None
         return self._priorities[index]
+
     def all_connections(self) -> List[MatchConnection]:
         return list(self._connections)
 

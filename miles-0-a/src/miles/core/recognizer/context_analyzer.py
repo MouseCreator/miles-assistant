@@ -63,13 +63,6 @@ class WordContextAnalyzer(TypedContextAnalyzer):
         else:
             context.fail()
 
-class SoundContextAnalyzer(GenericContextAnalyzer):
-    def __init__(self, word: str):
-        self.word = word.lower()
-
-    def invoke(self, context: TextRecognizeContext):
-        raise NotImplementedError('TODO: implement matching for sound')
-
 class TextContextAnalyzer(TypedContextAnalyzer):
     """
     Text Context Analyzer implements matching for unbounded text

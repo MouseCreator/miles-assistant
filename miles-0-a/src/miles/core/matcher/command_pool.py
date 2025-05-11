@@ -12,9 +12,8 @@ class CommandPool:
     def append(self, command: CommandDefinition):
         self.definitions.append(command)
 
-    def append_all(self, commands: List[CommandDefinition]):
-        for c in commands:
-            self.definitions.append(c)
+    def extend(self, commands: List[CommandDefinition]):
+        self.definitions.extend(commands)
             
     def __iter__(self):
         return self.definitions.__iter__()

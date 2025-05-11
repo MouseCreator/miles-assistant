@@ -41,8 +41,6 @@ class GeneralWordRule(PriorityRule, ABC):
         pass
 
 
-
-
 class ConstructedRule(PriorityRule, ABC):
     def __init__(self, argument: str, priority: int):
         super().__init__()
