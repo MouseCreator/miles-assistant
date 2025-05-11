@@ -24,12 +24,15 @@ class DataTypeManager(Generic[T]):
     def __init__(self):
         self.definitions = MatchingDefinitionSet()
         self.definitions.append_all_definitions(self.include_definitions())
+        
     @abstractmethod
     def origin_type(self) -> OriginType:
         pass
+
     @abstractmethod
     def prepare(self, raw_data: Any) -> List[T]:
         pass
+
     @abstractmethod
     def dataholder(self, tokens: List[T]) -> InputDataHolder:
         pass
