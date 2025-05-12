@@ -2,7 +2,7 @@ from typing import List
 
 from src.miles.core.matcher.matcher import ConnectionType
 from src.miles.core.normalized.history import NorHistory
-from src.miles.core.structure.command_structure import CommandStructure
+from src.miles.core.processor.command_structure import CommandStructure
 
 
 class _ProtoNode:
