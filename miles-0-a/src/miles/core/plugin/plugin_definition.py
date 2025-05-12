@@ -7,15 +7,23 @@ from src.miles.core.priority.priority_manager import PriorityManager
 
 
 class StoredCommand:
-    def __init__(self, name: str, syntax: str):
+    def __init__(self, name: str, syntax: str, command_processor):
         self.name = name
         self.syntax = syntax
+        self.command_processor = command_processor
 
 class NamespaceOfCommands:
-    def __init__(self, name: str, prefix: str, commands: List[StoredCommand]):
+    def __init__(self,
+                 name: str,
+                 prefix: str,
+                 commands: List[StoredCommand],
+                 priority_manager: PriorityManager,
+                 definition_set : MatchingDefinitionSet):
         self.name = name
         self.prefix = prefix
         self.commands = commands
+        self.priority_manager = priority_manager
+        self.definition_set = definition_set
 
     def as_command_namespace(self):
         words = self.prefix.split() if self.prefix.strip() else []
@@ -30,21 +38,14 @@ class NamespaceOfCommands:
 class PluginDefinition:
     def __init__(self,
                  name: str,
-                 namespaces: List[NamespaceOfCommands],
-                 priority_manager: PriorityManager,
-                 definition_set : MatchingDefinitionSet):
+                 display: str,
+                 namespaces: List[NamespaceOfCommands]):
         self._namespaces = namespaces
-        self._priority_manager = priority_manager
         self._name = name
-        self._definition_set = definition_set
+        self._display_name = display
+
     def name(self):
         return self._name
 
     def namespaces(self) -> List[NamespaceOfCommands]:
         return list(self._namespaces)
-
-    def get_priority_manager(self):
-        return self._priority_manager
-
-    def definition_set(self):
-        return self._definition_set

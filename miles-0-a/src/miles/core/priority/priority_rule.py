@@ -4,10 +4,12 @@ from enum import Enum
 
 class RuleType(Enum):
     GENERAL_WORD=0,
-    SPECIFIC_WORD=1,
-    SPECIFIC_MATCHING=2,
-    SPECIFIC_AUTOMATIC=3,
-    NAMED=4
+    GENERAL_MATCHING=1,
+    GENERAL_AUTOMATIC=2
+    SPECIFIC_WORD=3,
+    SPECIFIC_MATCHING=4,
+    SPECIFIC_AUTOMATIC=5,
+    NAMED=6
 
 class PriorityRule(ABC):
     def __init__(self):
@@ -34,12 +36,36 @@ class GeneralWordRule(PriorityRule, ABC):
         return RuleType.GENERAL_WORD
 
     def get_priority(self, argument: str) -> int:
-        return self.for_word(argument)
+        return self.for_word()
 
     @abstractmethod
-    def for_word(self, word: str) -> int:
+    def for_word(self) -> int:
         pass
 
+
+class GeneralMatchingRule(PriorityRule, ABC):
+
+    def rule_type(self) -> RuleType:
+        return RuleType.GENERAL_MATCHING
+
+    def get_priority(self, argument: str) -> int:
+        return self.for_matching()
+
+    @abstractmethod
+    def for_matching(self) -> int:
+        pass
+
+class GeneralAutomaticRule(PriorityRule, ABC):
+
+    def rule_type(self) -> RuleType:
+        return RuleType.GENERAL_MATCHING
+
+    def get_priority(self, argument: str) -> int:
+        return self.for_automatic()
+
+    @abstractmethod
+    def for_automatic(self) -> int:
+        pass
 
 class ConstructedRule(PriorityRule, ABC):
     def __init__(self, argument: str, priority: int):

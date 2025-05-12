@@ -1,6 +1,6 @@
 from src.miles.core.priority.priority_config import PriorityStrategy
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple
 
 from src.miles.core.priority.priority_rule import PriorityRule, RuleType
 from src.miles.core.recognizer.normalized_matcher import NodeType, NormalizedNode
@@ -12,13 +12,15 @@ class PriorityManager:
     _strategy: PriorityStrategy
     _named_priorities: Dict[Tuple[str, str], int]
     _node_priorities: Dict[Tuple[str, NodeType, str], int]
-    _generic_rules: List[PriorityRule]
 
     def __init__(self, strategy: PriorityStrategy = PriorityStrategy.FIND_MAX, default_priority = 0):
         self._node_priorities = {}
         self._named_priorities = {}
         self._strategy = strategy
         self._def_priority = default_priority
+        self._def_word = default_priority
+        self._def_matching = default_priority
+        self._def_automatic = default_priority
 
     def get_strategy(self):
         return self._strategy
@@ -28,10 +30,11 @@ class PriorityManager:
         default_priority =  self.default_priority()
 
         if node.node_type == NodeType.WORD:
-            for rule in self._generic_rules:
-                pr = rule.get_priority(node.argument)
-                if pr is not None:
-                    default_priority = pr
+            default_priority = self._def_word
+        elif node.node_type == NodeType.MATCHING:
+            default_priority = self._def_matching
+        elif node.node_type == NodeType.AUTOMATIC:
+            default_priority = self._def_automatic
 
         node_key = (plugin, node.node_type, node.argument)
         priority1 = self._node_priorities.get(node_key, None)
@@ -50,8 +53,12 @@ class PriorityManager:
         raise ValueError()
 
     def set_rule(self, rule: PriorityRule):
-        if rule.rule_type()==RuleType.SPECIFIC_WORD:
-            self._generic_rules.append(rule)
+        if rule.rule_type()==RuleType.GENERAL_WORD:
+            self._def_word = rule.get_priority('word')
+        elif rule.rule_type()==RuleType.GENERAL_AUTOMATIC:
+            self._def_automatic = rule.get_priority('automatic')
+        elif rule.rule_type()==RuleType.GENERAL_MATCHING:
+            self._def_matching = rule.get_priority('matching')
         elif rule.rule_type()==RuleType.SPECIFIC_WORD:
             self.set_word_priority(rule.plugin(), rule.arg(), rule.get_priority(''))
         elif rule.rule_type()==RuleType.SPECIFIC_AUTOMATIC:

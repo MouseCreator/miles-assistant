@@ -11,11 +11,14 @@ from src.miles.core.priority.priority_assign import PriorityAssigner
 
 def create_normalized_matcher_from_command_string(plugin_definition: PluginDefinition) -> PluginStructure:
     plugin_name = plugin_definition.name()
-    priority_manager = plugin_definition.get_priority_manager()
-    priority_assigner = PriorityAssigner(priority_manager)
+
     matcher_factory = MatcherFactory()
     namespace_components: List[NamespaceComponent] = []
     for namespace in plugin_definition.namespaces():
+
+        priority_manager = namespace.priority_manager
+        priority_assigner = PriorityAssigner(priority_manager)
+
         namespace_matcher = matcher_factory.create_namespace(namespace.as_command_namespace())
         matcher = matcher_factory.empty_matcher()
         for stored_command in namespace.commands:
@@ -26,10 +29,10 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
         normalized_namespace_matcher = normalize(namespace_matcher)
         priority_assigner.assign_all(plugin_name, normalized_matcher)
 
-        namespace_component = NamespaceComponent(namespace.name, normalized_namespace_matcher, normalized_matcher)
+        namespace_component = NamespaceComponent(namespace.name, normalized_namespace_matcher, normalized_matcher, namespace.definition_set)
         namespace_components.append(namespace_component)
 
-    return PluginStructure(plugin_name, namespace_components, definitions=plugin_definition.definition_set())
+    return PluginStructure(plugin_name, namespace_components)
 
 
 
