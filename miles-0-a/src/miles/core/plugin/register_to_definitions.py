@@ -12,7 +12,6 @@ def _build_priority_manager(namespace: NamespaceInitializer) -> PriorityManager:
         priority_manager.set_rule(rule)
     return priority_manager
 
-
 def _map_matchings(namespace: NamespaceInitializer) -> MatchingDefinitionSet:
     matchings = namespace.get_matchings()
     definition_set = MatchingDefinitionSet()
@@ -30,7 +29,6 @@ def _map_commands(namespace: NamespaceInitializer) -> List[StoredCommand]:
             )
         )
     return result
-
 
 def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
     name = namespace.get_name()
