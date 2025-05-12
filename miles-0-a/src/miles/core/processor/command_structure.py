@@ -82,27 +82,22 @@ class CommandNode:
 class CommandStructure:
     def __init__(self,
                  root_node: CommandNode,
-                 input_string: str,
+                 tokens: List[str],
                  command_name: str,
-                 has_namespace: bool,
-                 command_syntax: str):
+                 has_namespace: bool):
         self._root_node = root_node
-        self._input = input_string
+        self._input = tokens
         self._command_name = command_name
-        self._command_syntax = command_syntax
         self._has_namespace = has_namespace
 
     def get_root(self) -> CommandNode:
         return self._root_node
 
-    def get_input(self) -> str:
+    def get_input(self) -> List[str]:
         return self._input
 
     def get_command_name(self) -> str:
         return self._command_name
-
-    def get_command_syntax(self) -> str:
-        return self._command_syntax
 
     def has_namespace(self) -> bool:
         return self._has_namespace

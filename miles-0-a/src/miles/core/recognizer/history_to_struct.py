@@ -2,7 +2,7 @@ from typing import List
 import re
 
 from src.miles.core.normalized.history import NorHistory
-from src.miles.core.processor.command_structure import CommandNode, NodeType
+from src.miles.core.processor.command_structure import CommandNode, NodeType, CommandStructure
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.utils.id_generator import IdGenerator
 from src.miles.utils.list_utils import get_elements_by_indexes
@@ -155,8 +155,19 @@ class StructFactory:
             raise ValueError(f'Invalid stack state: {stack}')
         return stack[0]
 
-    def convert(self, has_namespace: bool, tokens: List[str], history: NorHistory):
+    def convert(self,
+                has_namespace: bool,
+                tokens: List[str],
+                history: NorHistory,
+                command_name: str,
+                ) -> CommandStructure:
         root_node = self._convert(tokens, history)
+        return CommandStructure(
+            root_node=root_node,
+            has_namespace=has_namespace,
+            tokens=tokens,
+            command_name=command_name
+        )
 
 
 
