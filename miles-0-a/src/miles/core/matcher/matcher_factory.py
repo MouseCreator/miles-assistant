@@ -157,18 +157,16 @@ class MatcherFactory:
         sig = SignatureVisitor(from_state, c_name, self)
         command.accept_visitor(sig)
 
-    def create_namespace(self, namespace : CommandNamespace) -> Matcher:
+    def create_namespace(self, matcher : Matcher, namespace : CommandNamespace):
         arguments = namespace.get_arguments()
-        initial = self._create_empty_state()
+        initial = matcher.get_initial_state()
 
         if not arguments:
-            final_state = self._create_empty_state(final=True)
-            self._move_automatically(initial, final_state, f'recognize {namespace.namespace_name}', None)
-        else:
-            state = initial
-            for arg in arguments:
-                state = self._move_and_add_word(state, arg, None)
-        return Matcher(initial)
+            raise ValueError(f'Namespace {namespace.namespace_name} has no arguments!')
+
+        state = initial
+        for arg in arguments:
+            state = self._move_and_add_word(state, arg, None)
 
     def create_command(self, command : Command, name: str) -> Matcher:
         initial = self._create_empty_state()
