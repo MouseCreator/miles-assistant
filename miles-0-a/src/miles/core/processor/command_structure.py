@@ -27,8 +27,10 @@ class CommandNode:
                  parent: None | Self = None,
                  name: None | str = None,
                  children: None | List[Self] = None,
-                 number: None | int = None
+                 number: None | int = None,
+                 argument: None | str = None
                  ):
+        self._argument = argument
         self._number = number
         self._id = identity
         self._node_type = node_type
@@ -70,6 +72,8 @@ class CommandNode:
         return not self._children
     def number(self) -> int | None:
         return self._number
+    def argument(self):
+        return self._argument
 
     def append(self, struct: Self):
         self._children.append(struct)

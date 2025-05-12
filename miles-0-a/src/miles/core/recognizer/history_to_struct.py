@@ -5,6 +5,7 @@ from src.miles.core.normalized.history import NorHistory
 from src.miles.core.processor.command_structure import CommandNode, NodeType
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.utils.id_generator import IdGenerator
+from src.miles.utils.list_utils import get_elements_by_indexes
 
 
 class _ProtoNode:
@@ -46,6 +47,9 @@ class StructFactory:
         while item_queue:
             item = item_queue.pop(0)
             node = item.node
+
+            included_tokens = get_elements_by_indexes(tokens, item.included)
+
             parent=stack[0]
             if node.node_type == HistoryNodeType.AUTOMATIC:
                 label: str = node.argument
@@ -80,7 +84,6 @@ class StructFactory:
                         node_type=NodeType.LIST,
                         value=None,
                         name=node.name,
-                        children=[],
                         parent=parent
                     )
                     parent.append(list_struct)
@@ -90,7 +93,6 @@ class StructFactory:
                         node_type=NodeType.ITEM,
                         value=None,
                         name=node.name,
-                        children=[],
                         parent=list_struct,
                         number=0
                     ))
@@ -101,8 +103,6 @@ class StructFactory:
                         identity=self._next_index(),
                         node_type=NodeType.ITEM,
                         value=None,
-                        name=node.name,
-                        children=[],
                         parent=list_struct,
                         number=len(list_struct)
                     ))
@@ -121,7 +121,6 @@ class StructFactory:
                         node_type=NodeType.CHOICE,
                         value=None,
                         name=node.name,
-                        children=[],
                         parent=parent,
                         number=number
                     )
@@ -129,10 +128,28 @@ class StructFactory:
                     stack.insert(0, struct)
                 elif label == 'end choice':
                     stack.pop(0)
-
-
+                else:
+                    raise ValueError(f'Invalid label: {label}')
+            elif node.node_type == HistoryNodeType.WORD:
+                struct = CommandNode(
+                    identity=self._next_index(),
+                    argument=node.argument,
+                    node_type=NodeType.WORD,
+                    value=included_tokens,
+                    name=node.name,
+                    parent=parent
+                )
+                parent.append(struct)
             elif node.node_type == HistoryNodeType.MATCHING:
-                word: str = node.argument
+                struct = CommandNode(
+                    identity=self._next_index(),
+                    argument=node.argument,
+                    node_type=NodeType.MATCHING,
+                    value=included_tokens,
+                    name=node.name,
+                    parent=parent
+                )
+                parent.append(struct)
 
         if len(stack) != 1:
             raise ValueError(f'Invalid stack state: {stack}')
