@@ -32,6 +32,7 @@ class HistoryItem:
     def step(self) -> int:
         return self.next_point - self.prev_point
 
+
 class NorHistory:
     _items: List[HistoryItem]
     def __init__(self, items: List[HistoryItem] | None=None):
@@ -43,7 +44,7 @@ class NorHistory:
     def extend(self, item: HistoryItem) -> Self:
         return NorHistory(self._items + [item])
 
-    def all_items(self):
+    def all_items(self) -> List[HistoryItem]:
         return list(self._items)
 
     def __eq__(self, other):

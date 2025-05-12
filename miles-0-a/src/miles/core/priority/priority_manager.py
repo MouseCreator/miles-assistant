@@ -3,7 +3,7 @@ from src.miles.core.priority.priority_config import PriorityStrategy
 from typing import Dict, Tuple
 
 from src.miles.core.priority.priority_rule import PriorityRule, RuleType
-from src.miles.core.recognizer.normalized_matcher import NodeType, NormalizedNode
+from src.miles.core.recognizer.normalized_matcher import HistoryNodeType, NormalizedNode
 
 
 class PriorityManager:
@@ -11,7 +11,7 @@ class PriorityManager:
     _def_priority: int
     _strategy: PriorityStrategy
     _named_priorities: Dict[Tuple[str, str], int]
-    _node_priorities: Dict[Tuple[str, NodeType, str], int]
+    _node_priorities: Dict[Tuple[str, HistoryNodeType, str], int]
 
     def __init__(self, strategy: PriorityStrategy = PriorityStrategy.FIND_MAX, default_priority = 0):
         self._node_priorities = {}
@@ -29,11 +29,11 @@ class PriorityManager:
 
         default_priority =  self.default_priority()
 
-        if node.node_type == NodeType.WORD:
+        if node.node_type == HistoryNodeType.WORD:
             default_priority = self._def_word
-        elif node.node_type == NodeType.MATCHING:
+        elif node.node_type == HistoryNodeType.MATCHING:
             default_priority = self._def_matching
-        elif node.node_type == NodeType.AUTOMATIC:
+        elif node.node_type == HistoryNodeType.AUTOMATIC:
             default_priority = self._def_automatic
 
         node_key = (plugin, node.node_type, node.argument)
@@ -71,15 +71,15 @@ class PriorityManager:
             raise ValueError(f'Unknown rule type found in rule {rule}')
 
     def set_word_priority(self, plugin: str, word: str, priority: int):
-        node_key = (plugin, NodeType.WORD, word)
+        node_key = (plugin, HistoryNodeType.WORD, word)
         self._node_priorities[node_key] = priority
 
     def set_matching_priority(self, plugin: str, matching: str, priority: int):
-        node_key = (plugin, NodeType.MATCHING, matching)
+        node_key = (plugin, HistoryNodeType.MATCHING, matching)
         self._node_priorities[node_key] = priority
 
     def set_automatic_priority(self, plugin: str, label: str, priority: int):
-        node_key = (plugin, NodeType.AUTOMATIC, label)
+        node_key = (plugin, HistoryNodeType.AUTOMATIC, label)
         self._node_priorities[node_key] = priority
 
     def set_named_priority(self, plugin: str, named: str, priority: int):

@@ -1,7 +1,7 @@
 from typing import Set, List, Self, Dict
 
 from src.miles.core.matcher.matcher import Matcher, MatchState, MatchConnection, ConnectionType
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedState, NormalizedNode, NodeType, \
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedState, NormalizedNode, HistoryNodeType, \
     NormalizedConnection
 from src.miles.utils.decorators import auto_str
 from src.miles.utils.pretty import PrintableStructure
@@ -150,13 +150,13 @@ class _ConnectionPrototype:
         self.path = path
 
 
-def _map_connection_type(connection_type: ConnectionType) -> NodeType:
+def _map_connection_type(connection_type: ConnectionType) -> HistoryNodeType:
     if connection_type == ConnectionType.AUTOMATIC:
-        return NodeType.AUTOMATIC
+        return HistoryNodeType.AUTOMATIC
     if connection_type == ConnectionType.MATCHING:
-        return NodeType.MATCHING
+        return HistoryNodeType.MATCHING
     if connection_type == ConnectionType.WORD:
-        return NodeType.WORD
+        return HistoryNodeType.WORD
 
 
 class _NormalizerMatcherBuilder:

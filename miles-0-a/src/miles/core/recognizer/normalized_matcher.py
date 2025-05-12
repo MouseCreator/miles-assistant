@@ -5,7 +5,7 @@ from src.miles.utils.decorators import auto_str
 from src.miles.utils.list_utils import index_of
 
 
-class NodeType(Enum):
+class HistoryNodeType(Enum):
     AUTOMATIC = 0
     MATCHING = 1
     WORD = 2
@@ -13,7 +13,7 @@ class NodeType(Enum):
 
 @auto_str
 class NormalizedNode:
-    def __init__(self, node_type : NodeType, argument: str, name: str | None):
+    def __init__(self, node_type : HistoryNodeType, argument: str, name: str | None):
         self.node_type = node_type
         self.argument = argument
         self.name = name

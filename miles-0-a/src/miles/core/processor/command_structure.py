@@ -8,6 +8,7 @@ class NodeType(Enum):
     OPTIONAL = 2
     LIST = 3
     CHOICE = 4
+    ITEM=5
 
 
 class CommandNode:
@@ -15,17 +16,20 @@ class CommandNode:
     _node_type: NodeType
     _name: str | None
     _children: List[Self]
-    _value: str
+    _value: List[str]
     _option_num: None | int
     _parent: Self | None
+    _number: int | None
     def __init__(self,
                  identity: int,
                  node_type: NodeType,
-                 value: str,
+                 value: List[str] | None,
                  parent: None | Self = None,
                  name: None | str = None,
-                 children: None | List[Self] = None
+                 children: None | List[Self] = None,
+                 number: None | int = None
                  ):
+        self._number = number
         self._id = identity
         self._node_type = node_type
         self._value = value
@@ -40,8 +44,15 @@ class CommandNode:
         if not isinstance(other, CommandNode):
             return False
         return self._id == other._id
+
     def __iter__(self):
         return self._children.__iter__()
+
+    def __bool__(self):
+        return len(self._children) > 0
+
+    def __len__(self):
+        return len(self._children)
 
     def has_parent(self) -> bool:
         return self._parent is not None
@@ -55,6 +66,13 @@ class CommandNode:
         return self._parent
     def node_type(self):
         return self._node_type
+    def is_empty(self):
+        return not self._children
+    def number(self) -> int | None:
+        return self._number
+
+    def append(self, struct: Self):
+        self._children.append(struct)
 
 
 class CommandStructure:
@@ -62,11 +80,13 @@ class CommandStructure:
                  root_node: CommandNode,
                  input_string: str,
                  command_name: str,
+                 has_namespace: bool,
                  command_syntax: str):
         self._root_node = root_node
         self._input = input_string
         self._command_name = command_name
         self._command_syntax = command_syntax
+        self._has_namespace = has_namespace
 
     def get_root(self) -> CommandNode:
         return self._root_node
@@ -79,3 +99,6 @@ class CommandStructure:
 
     def get_command_syntax(self) -> str:
         return self._command_syntax
+
+    def has_namespace(self) -> bool:
+        return self._has_namespace

@@ -3,7 +3,6 @@ from src.miles.core.command.command import WordComponent, ComponentVisitor, Name
 from src.miles.core.matcher.comand_defintion import CommandNamespace
 from src.miles.core.matcher.matcher import Matcher, MatchState, MatchConnection, ConnectionType
 
-
 class MatcherFactory:
 
     def __init__(self):
@@ -136,13 +135,19 @@ class MatcherFactory:
 
                 content = choice.get_content()
                 end_state = self._new_state()
+                option_count = 0
                 for component in content:
-                    self.previous_state_buffer = begins_at
+
+                    option_begin = self._new_state()
+                    self.previous_state_buffer = option_begin
+                    self.parent._move_automatically(begins_at, option_begin, f'option {option_count}', name)
+
                     component.accept_visitor(self)
                     component_ends = self.previous_state_buffer
 
                     # join all choices to the empty state at the end
                     self.parent._move_automatically(component_ends, end_state, 'end choice', name)
+                    option_count += 1
                 self.previous_state_buffer = end_state
 
             def visit_named(self, named: NamedComponent):
