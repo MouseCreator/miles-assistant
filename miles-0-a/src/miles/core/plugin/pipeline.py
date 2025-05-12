@@ -17,6 +17,7 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
     for namespace in plugin_definition.namespaces():
 
         priority_manager = namespace.priority_manager
+        dynamic_rule_set = namespace.dynamic_priorities
         priority_assigner = PriorityAssigner(priority_manager)
 
         namespace_matcher = matcher_factory.create_namespace(namespace.as_command_namespace())
@@ -29,7 +30,11 @@ def create_normalized_matcher_from_command_string(plugin_definition: PluginDefin
         normalized_namespace_matcher = normalize(namespace_matcher)
         priority_assigner.assign_all(plugin_name, normalized_matcher)
 
-        namespace_component = NamespaceComponent(namespace.name, normalized_namespace_matcher, normalized_matcher, namespace.definition_set)
+        namespace_component = NamespaceComponent(namespace.name,
+                                                 normalized_namespace_matcher,
+                                                 normalized_matcher,
+                                                 namespace.definition_set,
+                                                 dynamic_rule_set)
         namespace_components.append(namespace_component)
 
     return PluginStructure(plugin_name, namespace_components)

@@ -1,5 +1,6 @@
 from typing import List
 
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.core.priority.priority_rule import PriorityRule
 from src.miles.core.recognizer.matching_definition import MatchingDefinition
@@ -23,9 +24,6 @@ class CommandInitializer:
         self.name = name
         self.syntax = syntax
         self.processor = processor
-
-class DynamicPriorityRuleInitializer:
-    pass
 
 class NamespaceInitializer:
     _static_priority_rules: List[PriorityRule]
@@ -73,7 +71,7 @@ class NamespaceInitializer:
     def add_static_priority_rule(self, rule: PriorityRule):
         self._static_priority_rules.append(rule)
 
-    def add_dynamic_priority_rule(self, rule: DynamicPriorityRuleInitializer):
+    def add_dynamic_priority_rule(self, rule: DynamicPriorityRule):
         self._dynamic_priority_rules.append(rule)
 
     def get_name(self):
@@ -84,7 +82,8 @@ class NamespaceInitializer:
 
     def get_static_priorities(self):
         return self._static_priority_rules
-    def get_dynamic_priorities(self):
+
+    def get_dynamic_priorities(self) -> List[DynamicPriorityRule]:
         return self._dynamic_priority_rules
 
 class PluginRegister:

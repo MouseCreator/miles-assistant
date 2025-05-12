@@ -2,6 +2,7 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRule, DynamicPriorityRuleSet
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.priority.priority_manager import PriorityManager
 
@@ -18,10 +19,12 @@ class NamespaceOfCommands:
                  prefix: str,
                  commands: List[StoredCommand],
                  priority_manager: PriorityManager,
+                 dynamic_priorities: DynamicPriorityRuleSet,
                  definition_set : MatchingDefinitionSet):
         self.name = name
         self.prefix = prefix
         self.commands = commands
+        self.dynamic_priorities = dynamic_priorities
         self.priority_manager = priority_manager
         self.definition_set = definition_set
 

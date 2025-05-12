@@ -1,6 +1,7 @@
 from typing import List
 
 from src.miles.core.plugin.plugin_definition import PluginDefinition, NamespaceOfCommands, StoredCommand
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.priority.priority_manager import PriorityManager
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.register.register import MilesRegister, PluginRegister, NamespaceInitializer
@@ -30,6 +31,14 @@ def _map_commands(namespace: NamespaceInitializer) -> List[StoredCommand]:
         )
     return result
 
+
+def _map_dynamic_rules(namespace: NamespaceInitializer):
+    rules = namespace.get_dynamic_priorities()
+    dynamic_ruleset = DynamicPriorityRuleSet()
+    dynamic_ruleset.extend(rules)
+    return dynamic_ruleset
+
+
 def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
     name = namespace.get_name()
     prefix = namespace.get_prefix()
@@ -38,12 +47,15 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
 
     priority_manager = _build_priority_manager(namespace)
 
+    dynamic_ruleset = _map_dynamic_rules(namespace)
+
     return NamespaceOfCommands(
         name=name,
         prefix=prefix,
         priority_manager=priority_manager,
         commands=commands,
-        definition_set=definition_set
+        definition_set=definition_set,
+        dynamic_priorities=dynamic_ruleset
     )
 
 
