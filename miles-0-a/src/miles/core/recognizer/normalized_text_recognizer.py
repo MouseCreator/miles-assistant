@@ -129,7 +129,12 @@ class _CommandReader:
                 this_generation.extend(advance)
             previous_generation = this_generation
 
-        return previous_generation
+        destination = pointer.get_state().get_destination(connection)
+        result = []
+        for p in previous_generation:
+            r = p.move_to(destination)
+            result.append(r)
+        return result
 
     def _all_connections_ordered(self, pointer: RecPointer) -> List[NormalizedConnection]:
         state = pointer.get_state()
@@ -256,8 +261,13 @@ class _NamespaceReader:
                 advance = p.advance_with_analyzer(node, analyzer)
                 this_generation.extend(advance)
             previous_generation = this_generation
+        destination = pointer.get_state().get_destination(connection)
 
-        return previous_generation
+        result = []
+        for p in previous_generation:
+            r = p.move_to(destination)
+            result.append(r)
+        return result
 
 def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str]) -> NamespaceStructure:
     of_data = TextDataHolder(tokens)

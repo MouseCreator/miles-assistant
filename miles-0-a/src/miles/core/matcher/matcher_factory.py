@@ -167,8 +167,8 @@ class MatcherFactory:
         state = initial
         for arg in arguments:
             state = self._move_and_add_word(state, arg, None)
-
-        self._move_automatically(state, self._create_empty_state(True), f'recognize {namespace.namespace_name}', None)
+        final_state = self._create_empty_state(final=True)
+        self._move_automatically(state, final_state, f'recognize {namespace.namespace_name}', None)
 
     def create_command(self, command : Command, name: str) -> Matcher:
         initial = self._create_empty_state()

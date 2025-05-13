@@ -22,7 +22,7 @@ class Command2Executor(CommandExecutor):
 class Command3Executor(CommandExecutor):
 
     def on_recognize(self, command_structure: CommandStructure, core_context: CoreContext):
-        name = CommandStructureSearch(command_structure.get_root()).find_matching("name")[0]
+        name = CommandStructureSearch(command_structure.get_root()).find_matching("name")[0].any()
         print(f"Hello {name}")
 
 class SimplePluginCollector(PluginCollector):
@@ -53,7 +53,7 @@ def do_test():
     matching_core.recognize_and_execute("h hi Michael")
     print("-------")
 
-    matching_core.recognize_and_execute("hello Michael", namespace="h")
+    matching_core.recognize_and_execute("hello Michael", namespace="hello")
     print("-------")
 
 if __name__ == '__main__':

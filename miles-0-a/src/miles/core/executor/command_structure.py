@@ -83,6 +83,9 @@ class CommandNode:
     def set_argument(self, argument: str) -> None:
         self._argument = argument
 
+    def any(self):
+        return self.value()[0]
+
 
 class NamespaceStructure:
     def __init__(self, identifier: str, tokens: List[str]):

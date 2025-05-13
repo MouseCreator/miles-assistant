@@ -196,7 +196,7 @@ class StructFactory:
 
     def convert_namespace(self, tokens: List[str], pointer: RecPointer) -> NamespaceStructure:
         if pointer is None:
-            return NamespaceStructure('hello', ['h'])
+            raise ValueError(f'Namespace was not recognized! Tokens: {tokens}')
         history = pointer.get_history()
         return self._convert_namespace(tokens, history)
 
