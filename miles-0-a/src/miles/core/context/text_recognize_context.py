@@ -1,14 +1,29 @@
-from typing import List, Callable, Self, Any, Dict, Type, Optional, TypeVar
+from typing import List, Callable, Self, TypeVar
 
-from src.miles.core.context.data_context import RecognizeContext, ConsumedRange
 from src.miles.core.context.flags import Flags
 
-class TextRecognizeContext(RecognizeContext):
+T = TypeVar('T')
+
+class ConsumedRange:
+    def __init__(self, from_index: int, to_index: int):
+        self.from_index = from_index
+        self.to_index = to_index
+
+    def as_range(self) -> range:
+        return range(self.from_index, self.to_index)
+
+    def apply_to(self, lst: List[T]) -> List[T]:
+        return lst[self.from_index : self.to_index]
+
+
+
+class TextRecognizeContext:
     def flags(self) -> Flags:
         return self._flags
 
+    _tokens: List[str]
     _flags: Flags
-    _consumed: List[ConsumedRange]
+    _consumed: List[str]
 
     def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False, flags=Flags|None):
         self._tokens = list(tokens)
@@ -36,15 +51,18 @@ class TextRecognizeContext(RecognizeContext):
         self._on_interrupt(self)
 
     def consume(self, items:int = 1, interrupted: bool = False) -> None:
-        self._consumed.append(ConsumedRange(self._position, self._position + items))
+        c_range = ConsumedRange(self._position, self._position + items)
+        self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
         if interrupted:
             self.interrupt()
+
     def variant(self, items: int = 1) -> None:
         prev_position = self._position
         prev_consumed = list(self._consumed)
 
-        self._consumed.append(ConsumedRange(self._position, self._position + items))
+        c_range = ConsumedRange(self._position, self._position + items)
+        self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
         self.interrupt()
 
@@ -73,11 +91,8 @@ class TextRecognizeContext(RecognizeContext):
     def all_tokens(self) -> List[str]:
         return list(self._tokens)
 
-    def get_consumed(self) -> List[int]:
-        lst = []
-        for r in self.get_consumed_ranges():
-            lst.extend(r.as_range())
-        return lst
+    def write(self, items: List[str]) -> None:
+        self._consumed.extend(items)
 
-    def get_consumed_ranges(self) -> List[ConsumedRange]:
-        return list(self._consumed)
+    def get_consumed(self) -> List[str]:
+        return self._consumed

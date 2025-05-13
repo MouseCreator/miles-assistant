@@ -1,8 +1,8 @@
 from typing import Self, List
 
-from src.miles.core.context.data_context import RecognizeContext
 from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.context.flags import Flags
+from src.miles.core.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.normalized.history import NorHistory, HistoryItem
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode
@@ -53,7 +53,7 @@ class RecPointer:
         )
     def get_position(self):
         return self._current_position
-    def _create_next_pointer(self, context: RecognizeContext, node: NormalizedNode) -> Self:
+    def _create_next_pointer(self, context: TextRecognizeContext, node: NormalizedNode) -> Self:
         new_position = context.index()
 
         new_item = HistoryItem(
@@ -71,14 +71,14 @@ class RecPointer:
 
     def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
         result_pointers: List[RecPointer] = []
-        def _on_interrupt(ctx: RecognizeContext):
+        def _on_interrupt(ctx: TextRecognizeContext):
             if ctx.is_failed():
                 return
             next_pointer = self._create_next_pointer(ctx, node)
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
-        context: RecognizeContext = self._of_data.create_context(_on_interrupt, self._current_position, flags=self._flags)
+        context: TextRecognizeContext = self._of_data.create_context(_on_interrupt, self._current_position, flags=self._flags)
         analyzer.process(context)
         _on_interrupt(context)
         return result_pointers

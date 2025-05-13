@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 
-from src.miles.core.context.text_recognize_context import TextRecognizeContext, RecognizeContext
+from src.miles.core.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 
 
 class GenericContextAnalyzer(ABC):
 
     @abstractmethod
-    def invoke(self, context: RecognizeContext):
+    def invoke(self, context: TextRecognizeContext):
         pass
 
-    def process(self, context: RecognizeContext):
+    def process(self, context: TextRecognizeContext):
         if context.is_empty():
             context.fail()
         else:

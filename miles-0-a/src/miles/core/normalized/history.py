@@ -10,7 +10,7 @@ class HistoryItem:
     def __init__(self,
                  node: NormalizedNode,
                  prev_point: int,
-                 included: List[int],
+                 included: List[str],
                  next_point: int):
         self.node = node
         self.prev_point = prev_point

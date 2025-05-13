@@ -44,7 +44,7 @@ class _GenericCommandTransformer(Transformer):
         return ChoiceComponent(items)
 
     def list(self, items):
-        return ListComponent(items)
+        return ListComponent(items[0])
 
     def optional(self, items):
         return OptionalComponent(items)

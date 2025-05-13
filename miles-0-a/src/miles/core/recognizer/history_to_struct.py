@@ -6,7 +6,6 @@ from src.miles.core.executor.command_structure import CommandNode, NodeType, Com
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.id_generator import IdGenerator
-from src.miles.utils.list_utils import get_elements_by_indexes
 
 
 class StructFactory:
@@ -48,7 +47,7 @@ class StructFactory:
             item = item_queue.pop(0)
             node = item.node
 
-            included_tokens = get_elements_by_indexes(tokens, item.included)
+            included_tokens = item.included
 
             parent=stack[0]
             if node.node_type == HistoryNodeType.AUTOMATIC:
@@ -153,9 +152,7 @@ class StructFactory:
                 )
                 parent.append(struct)
 
-        if len(stack) != 1:
-            raise ValueError(f'Invalid stack state: {stack}')
-        return stack[0]
+        return root_node
 
     def convert_command(self,
                 namespace_structure: NamespaceStructure,

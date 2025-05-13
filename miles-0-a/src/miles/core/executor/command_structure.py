@@ -42,6 +42,7 @@ class CommandNode:
             self._children = []
         else:
             self._children = list(children)
+
     def __str__(self):
         return (
             f"CommandNode(id={self._id}, "
