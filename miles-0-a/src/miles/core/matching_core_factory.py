@@ -5,11 +5,7 @@ from src.miles.core.plugin.register_to_definitions import map_register_to_defini
 from src.miles.core.register.register import MilesRegister
 
 
-def collect_plugins():
-    pass
-
 def create_matching_core() -> MatchingCore:
-    collect_plugins()
     register = MilesRegister()
     definitions = map_register_to_definition(register)
     namespace_matcher = create_normalized_matcher_for_namespaces(definitions)
