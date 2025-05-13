@@ -5,7 +5,7 @@ from typing import List
 from src.miles.core.context.flags import Flags
 from src.miles.core.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.matcher.matcher import ConnectionType
-from src.miles.core.priority.dynamic_priority import DynamicPriorityContext
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityContext
 
 
 class TextDataHolder:

@@ -4,7 +4,7 @@ from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.context.flags import Flags
 from src.miles.core.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.normalized.history import NorHistory, HistoryItem
-from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
+from src.miles.shared.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode
 
 

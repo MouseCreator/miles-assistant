@@ -1,10 +1,10 @@
 from typing import List
 
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
-from src.miles.core.priority.priority_rule import PriorityRule
-from src.miles.core.executor.command_executor import CommandExecutor
-from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
+from src.miles.shared.priority.priority_rule import PriorityRule
+from src.miles.shared.executor.command_executor import CommandExecutor
+from src.miles.shared.context_analyzer import TypedContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinition
 from src.miles.utils.singleton import Singleton
 

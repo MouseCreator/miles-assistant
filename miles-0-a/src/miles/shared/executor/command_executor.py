@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import Dict
 
-from src.miles.core.core_context import CoreContext
-from src.miles.core.executor.command_structure import CommandStructure
+from src.miles.shared.executor.command_structure import CommandStructure
 
 
 class CommandExecutor(ABC):
     @abstractmethod
-    def on_recognize(self, command_structure: CommandStructure, core_context: CoreContext):
+    def on_recognize(self, command_structure: CommandStructure):
         pass
 
 class CommandExecutorsMap:

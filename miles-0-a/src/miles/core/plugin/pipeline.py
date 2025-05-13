@@ -1,7 +1,7 @@
 from typing import List
 
 from src.miles.core.command.generic_command_processor import GenericCommandProcessor
-from src.miles.core.executor.command_executor import CommandExecutorsMap
+from src.miles.shared.executor import CommandExecutorsMap
 
 from src.miles.core.matcher.matcher_factory import MatcherFactory
 from src.miles.core.normalized.matcher_normalizer import normalize

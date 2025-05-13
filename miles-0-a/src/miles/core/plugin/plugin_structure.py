@@ -1,7 +1,7 @@
-from typing import List, Dict
+from typing import List
 
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.core.executor.command_executor import CommandExecutorsMap
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
+from src.miles.shared.executor import CommandExecutorsMap
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 

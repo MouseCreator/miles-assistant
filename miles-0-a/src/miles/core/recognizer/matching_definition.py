@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
+from src.miles.shared.context_analyzer import TypedContextAnalyzer
 
 class MatchingDefinition:
 

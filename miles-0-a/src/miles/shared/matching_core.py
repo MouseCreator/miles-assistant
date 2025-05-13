@@ -2,11 +2,11 @@ from typing import List
 
 from src.miles.core.core_context import CoreContext
 from src.miles.core.plugin.plugin_structure import PluginStructure
-from src.miles.core.executor.command_structure import NamespaceStructure
+from src.miles.shared.executor.command_structure import NamespaceStructure
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.core.recognizer.normalized_text_recognizer import recognize_namespace, recognize_command
-from src.miles.core.tokenizer import Tokenizer
+from src.miles.shared.tokenizer import Tokenizer
 
 
 

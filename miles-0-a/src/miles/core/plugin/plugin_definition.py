@@ -2,8 +2,8 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.core.executor.command_executor import CommandExecutor
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
+from src.miles.shared.executor import CommandExecutor
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.priority.priority_manager import PriorityManager
 

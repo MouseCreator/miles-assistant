@@ -1,8 +1,8 @@
-from src.miles.core.matching_core import MatchingCore
+from src.miles.shared.matching_core import MatchingCore
 from src.miles.core.plugin.pipeline import create_normalized_matcher_from_definitions, \
     create_normalized_matcher_for_namespaces
 from src.miles.core.plugin.register_to_definitions import map_register_to_definition
-from src.miles.core.register.register import MilesRegister
+from src.miles.shared.register import MilesRegister
 
 
 def create_matching_core() -> MatchingCore:

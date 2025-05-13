@@ -1,10 +1,10 @@
 from typing import List
 
 from src.miles.core.plugin.plugin_definition import PluginDefinition, NamespaceOfCommands, StoredCommand
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.priority.priority_manager import PriorityManager
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
-from src.miles.core.register.register import MilesRegister, PluginRegister, NamespaceInitializer
+from src.miles.shared.register import MilesRegister, PluginRegister, NamespaceInitializer
 
 def _build_priority_manager(namespace: NamespaceInitializer) -> PriorityManager:
     priority_manager = PriorityManager(default_priority=namespace.get_default_priority(), strategy=namespace.get_priority_strategy())

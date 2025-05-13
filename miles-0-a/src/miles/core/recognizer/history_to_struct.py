@@ -2,7 +2,7 @@ from typing import List
 import re
 
 from src.miles.core.normalized.history import NorHistory
-from src.miles.core.executor.command_structure import CommandNode, NodeType, CommandStructure, NamespaceStructure
+from src.miles.shared.executor import CommandNode, NodeType, CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.id_generator import IdGenerator

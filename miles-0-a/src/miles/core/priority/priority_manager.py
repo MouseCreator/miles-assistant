@@ -2,7 +2,7 @@ from src.miles.core.priority.priority_config import PriorityStrategy
 
 from typing import Dict, Tuple
 
-from src.miles.core.priority.priority_rule import PriorityRule, RuleType
+from src.miles.shared.priority.priority_rule import PriorityRule, RuleType
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType, NormalizedNode
 
 
