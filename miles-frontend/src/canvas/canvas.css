@@ -1,0 +1,18 @@
+.canvas-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+
+}
+.main-canvas {
+    background-color: #f3f8f8;
+    aspect-ratio: 1;
+    max-width: 600px;
+    max-height: 600px;
+    border: black 2px;
+    width: auto;
+    height: auto;
+    display: block;
+}
