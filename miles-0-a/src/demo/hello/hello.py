@@ -23,7 +23,7 @@ class Command3Executor(CommandExecutor):
 
     def on_recognize(self, command_structure: CommandStructure, core_context: CoreContext):
         name = CommandStructureSearch(command_structure.get_root()).find_matching("name")[0].any()
-        print(f"Hello {name}")
+        print(f"Hey {name}")
 
 class SimplePluginCollector(PluginCollector):
 

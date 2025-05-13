@@ -14,6 +14,6 @@ def get_elements_by_indexes(elements: List[T], indexes: List[int]) -> List[T]:
     if not indexes:
         return []
     try:
-        return [elements[i - 1] for i in indexes]
+        return [elements[i] for i in indexes]
     except IndexError:
         raise IndexError("One or more indexes are out of range.")
