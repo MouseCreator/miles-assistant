@@ -7,7 +7,7 @@ from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.register.register import MilesRegister, PluginRegister, NamespaceInitializer
 
 def _build_priority_manager(namespace: NamespaceInitializer) -> PriorityManager:
-    priority_manager = PriorityManager(default_priority=namespace.get_priority_strategy(), strategy=namespace.get_priority_strategy())
+    priority_manager = PriorityManager(default_priority=namespace.get_default_priority(), strategy=namespace.get_priority_strategy())
     rules = namespace.get_static_priorities()
     for rule in rules:
         priority_manager.set_rule(rule)

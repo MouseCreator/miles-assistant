@@ -3,7 +3,8 @@ from random import shuffle
 from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
+from src.miles.core.plugin.plugin_structure import NamespaceComponent
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.executor.command_structure import CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
 from src.miles.core.recognizer.history_to_struct import StructFactory
@@ -41,39 +42,39 @@ class _DynamicCache:
 
 
 @auto_str
-class _TRReader:
+class _CommandReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
     _cache: _DynamicCache
-    _dynamic_priorities: List[DynamicPriorityRule]
+    _dynamic_priorities: DynamicPriorityRuleSet
 
     def __init__(self,
                  matcher: NormalizedMatcher,
                  input_data: TextDataHolder,
                  start_from: int,
                  analyzer_provider: AnalyzerProvider,
-                 dynamic_priorities: List[DynamicPriorityRule] | None):
+                 dynamic_priorities: DynamicPriorityRuleSet | None):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
-        self._dynamic_cache = _DynamicCache
         self._reached_pointer = None
         self._start_from = start_from
+        self._cache = _DynamicCache()
 
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
         self._analyzers = analyzer_provider
 
         if dynamic_priorities is None:
-            dynamic_priorities = []
+            dynamic_priorities = DynamicPriorityRuleSet()
         self._dynamic_priorities = dynamic_priorities
 
     def recognize(self):
         self._pointers = []
         self._reached_pointer = None
-        self._recognize_tokens()
         self._cache.clear()
+        self._recognize_tokens()
         return self._reached_pointer
 
     def _recognize_tokens(self):
@@ -138,7 +139,7 @@ class _TRReader:
         for c in connections_from_state:
             priority = state.get_priority(c)
             connection_origin = c.get_nodes()[0]
-            for d in self._dynamic_priorities:
+            for d in self._dynamic_priorities.get_rules():
                 context = self._input_data.dynamic_priority_context(
                     start_at=pointer.get_position(),
                     flags=pointer.flags(),
@@ -149,7 +150,7 @@ class _TRReader:
                 )
                 if d.is_applicable(context):
                     priority = d.priority(context)
-            priority_map[c.get_id()] = priority
+            priority_map[c] = priority
 
         return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
 
@@ -167,19 +168,97 @@ class _TRReader:
             return lst
         else:
             raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
+@auto_str
+class _NamespaceReader:
+    _pointers: List[RecPointer]
+    _reached_pointer: RecPointer | None
+    _cache: _DynamicCache
 
+    def __init__(self,
+                 matcher: NormalizedMatcher,
+                 input_data: TextDataHolder):
+        self._matcher = matcher
+        self._input_data = input_data
+        self._pointers = []
+        self._reached_pointer = None
+        self._previous_reached = None
+        self._cache = _DynamicCache()
+
+    def recognize(self):
+        self._pointers = []
+        self._reached_pointer = None
+        self._previous_reached = None
+        self._cache.clear()
+        self._recognize_tokens()
+
+        return self._reached_pointer
+
+    def _recognize_tokens(self):
+        initial = self._matcher.initial_state()
+        first_pointer = RecPointer(initial, self._input_data)
+        self._cache.add_to_cache(first_pointer)
+        self._pointers.append(first_pointer)
+
+        self._run_token_recognition_loop()
+
+    def _run_token_recognition_loop(self):
+        while self._reached_pointer is None:
+            first = self._pointers.pop(0)
+            advanced = self._advance_pointer(first)
+            self._add_to_pointers(advanced)
+
+    def _add_to_pointers(self, new_pointers: List[RecPointer]):
+        new_items: List[RecPointer] = []
+        for p in new_pointers:
+            if p not in self._cache:
+                new_items.append(p)
+
+        for item in new_items:
+            self._cache.add_to_cache(item)
+
+        self._pointers[:0] = new_items
+
+    def _advance_pointer(self, pointer: RecPointer) -> List[RecPointer]:
+        if pointer.is_final():
+            self._previous_reached = pointer
+
+        next_gen_pointers: List[RecPointer] = []
+        ordered_connections = self._all_connections_ordered(pointer)
+        for connection in ordered_connections:
+            new_pointers = self._go_through_connection(pointer, connection)
+            next_gen_pointers.extend(new_pointers)
+
+        return next_gen_pointers
+
+    def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
+        nodes = connection.get_nodes()
+        previous_generation = [pointer]
+
+        for node in nodes:
+            this_generation = []
+            for p in previous_generation:
+                analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
+                advance = p.advance_with_analyzer(node, analyzer)
+                advance = self._optimized_route(advance, analyzer)
+                this_generation.extend(advance)
+            previous_generation = this_generation
+
+        return previous_generation
 
 def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str]) -> NamespaceStructure:
     of_data = TextDataHolder(tokens)
-    recognizer = _TRReader(matcher, of_data, 0, AnalyzerProvider(MatchingDefinitionSet()))
+    recognizer = _CommandReader(matcher, of_data, 0, AnalyzerProvider(MatchingDefinitionSet()), None)
     pointer: RecPointer = recognizer.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_namespace(tokens, pointer)
 
-def recognize_command(matcher: NormalizedMatcher, tokens: List[str], ns: NamespaceStructure) -> CommandStructure:
+def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceStructure) -> CommandStructure:
     of_data = TextDataHolder(tokens)
     shift = ns.size()
-    recognizer = _TRReader(matcher, of_data, shift, AnalyzerProvider(MatchingDefinitionSet()))
+    matcher = nc.command_matcher
+    dynamic_priorities = nc.dynamic_priorities
+    analyzer_provider = AnalyzerProvider(nc.definitions)
+    recognizer = _CommandReader(matcher, of_data, shift, analyzer_provider, dynamic_priorities)
     pointer: RecPointer = recognizer.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)

@@ -4,6 +4,7 @@ from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.core.priority.priority_rule import PriorityRule
 from src.miles.core.executor.command_executor import CommandExecutor
+from src.miles.core.recognizer.context_analyzer import TypedContextAnalyzer
 from src.miles.core.recognizer.matching_definition import MatchingDefinition
 from src.miles.utils.singleton import Singleton
 
@@ -36,10 +37,11 @@ class NamespaceInitializer:
         self._static_priority_rules = []
         self._dynamic_priority_rules = []
         self._matchings = []
-        self._priority_strategy = PriorityStrategy.FIND_MAX
+        self._priority_strategy = PriorityStrategy.ALL_DEFAULT
         self._default_priority = 0
 
-    def add_command(self, command: CommandInitializer):
+    def add_command(self, name: str, syntax: str, executor: CommandExecutor):
+        command = CommandInitializer(name, syntax, executor)
         self._commands.append(command)
 
     def set_priority_strategy(self, ps: PriorityStrategy):
@@ -57,7 +59,8 @@ class NamespaceInitializer:
     def extend_commands(self, commands: List[CommandInitializer]):
         self._commands.extend(commands)
 
-    def add_matching(self, matching: MatchingDefinition):
+    def add_matching(self, name: str, analyzer: TypedContextAnalyzer):
+        matching = MatchingDefinition(name, analyzer)
         self._matchings.append(matching)
 
     def extend_matching(self, matchings: List[MatchingDefinition]):
@@ -104,9 +107,11 @@ class PluginRegister:
     def get_display_name(self):
         return self._display_name
 
-    def add_namespace(self, namespace: NamespaceInitializer):
+    def add_namespace(self, name: str, prefix: str) -> NamespaceInitializer:
+        namespace = NamespaceInitializer(name, prefix)
         self._prefixes.remember_and_validate(namespace.get_prefix())
         self._namespaces.append(namespace)
+        return namespace
 
     def get_namespaces(self):
         return list(self._namespaces)

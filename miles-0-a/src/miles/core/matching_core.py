@@ -26,8 +26,10 @@ class MatchingCore:
         self._tokenizer = Tokenizer()
 
 
-    def recognize_and_execute(self, command: str, core_callback: CoreContext, namespace: str | None):
+    def recognize_and_execute(self, command: str, core_context: CoreContext | None = None, namespace: str | None = None):
         tokens = self._tokenize(command)
+        if core_context is None:
+            core_context = CoreContext()
         if namespace is None:
             namespace_structure = recognize_namespace(self._namespace_matcher, tokens)
         else:
@@ -36,9 +38,11 @@ class MatchingCore:
         namespace_id = namespace_structure.identifier()
         p_namespace, plugin = self._namespace_name_map[namespace_id]
 
-        command_structure = recognize_command(p_namespace.command_matcher, tokens, namespace_structure)
+        command_structure = recognize_command(p_namespace,
+                                              tokens,
+                                              namespace_structure)
         executor = p_namespace.executors_map.get(command_structure.get_command_name())
-        executor.on_recognize(command_structure, core_callback)
+        executor.on_recognize(command_structure, core_context)
 
 
     def _tokenize(self, command: str) -> List[str]:

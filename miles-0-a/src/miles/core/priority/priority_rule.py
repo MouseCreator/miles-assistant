@@ -21,8 +21,6 @@ class PriorityRule(ABC):
         :return: priority if the rule can define priority for the given argument, otherwise None
         """
         pass
-    def plugin(self) -> str:
-        pass
     @abstractmethod
     def rule_type(self) -> RuleType:
         pass

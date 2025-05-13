@@ -4,6 +4,12 @@ T = TypeVar('T')
 
 class Flags:
     _flags: Dict[str, Any]
+
+    def __init__(self, _map: Dict[str, Any] | None = None):
+        if _map is None:
+            _map = {}
+        self._flags = _map
+
     def set_flag(self, name: str, value: Any):
         self._flags[name] = value
 
@@ -23,9 +29,7 @@ class Flags:
         return name in self._flags
 
     def copy(self) -> Self:
-        flags = Flags()
-        flags._flags = self._flags.copy()
-        return flags
+        return Flags(self._flags.copy())
 
 
 

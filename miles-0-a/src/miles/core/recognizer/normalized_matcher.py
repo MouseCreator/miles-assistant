@@ -36,6 +36,11 @@ class NormalizedConnection:
         if not isinstance(other, NormalizedConnection):
             return False
         return self._id == other._id
+    def __hash__(self):
+        return hash(self._id)
+    def __str__(self):
+        return f'Normalized Connection {self._id}'
+
     def get_id(self) -> int:
         return self._id
     def get_nodes(self):
@@ -56,6 +61,16 @@ class NormalizedState:
         self._connections = []
         self._final = final
         self._priorities = []
+        self._destinations = []
+
+    def __hash__(self):
+        return hash(self._id)
+    def __eq__(self, other):
+        if not isinstance(other, NormalizedState):
+            return False
+        return self._id == other._id
+    def __str__(self):
+        return f'State {self._id}'
 
     def add_connection(self, connection : NormalizedConnection, destination: Self, priority: int = 0):
         self._connections.append(connection)
@@ -85,11 +100,6 @@ class NormalizedState:
 
     def is_final(self) -> bool:
         return self._final
-
-    def __eq__(self, other):
-        if not isinstance(other, NormalizedState):
-            return False
-        return self._id == other._id
 
     def update_priority(self, connection: NormalizedConnection, priority: int):
         index = self._connection_index(connection)

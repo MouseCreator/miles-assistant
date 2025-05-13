@@ -9,28 +9,29 @@ class _Path:
     def __init__(self, state: NormalizedState, connection: NormalizedConnection):
         self.state = state
         self.connection = connection
-
+    def __str__(self):
+        return f'path {self.state} --> {self.connection}'
 class ConnectionPrioritizer(ABC):
     @abstractmethod
-    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+    def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         pass
 
 class FirstConnectionPrioritizer(ConnectionPrioritizer):
-    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+    def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         if connection.empty():
             return priority_manager.default_priority()
         first = connection.get_nodes()[0]
-        return priority_manager.get_priority(plugin, first)
+        return priority_manager.get_priority(first)
 
 class FindMaxConnectionPrioritizer(ConnectionPrioritizer):
-    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+    def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         if connection.empty():
             return priority_manager.default_priority()
-        priorities = map(lambda c: priority_manager.get_priority(plugin, c) ,connection.get_nodes())
+        priorities = map(lambda c: priority_manager.get_priority(c) ,connection.get_nodes())
         return max(priorities)
 
 class AllDefaultConnectionPrioritizer(ConnectionPrioritizer):
-    def get_priority(self, plugin: str, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
+    def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         return priority_manager.default_priority()
 
 
@@ -70,15 +71,15 @@ class PriorityAssigner:
                     queue.append(dest)
         return list(visited_states)
 
-    def _assign_priorities(self, plugin: str, matcher: NormalizedMatcher, strategy: PriorityStrategy):
+    def _assign_priorities(self, matcher: NormalizedMatcher, strategy: PriorityStrategy):
         paths = self._all_paths(matcher)
         for path in paths:
-            priority = self._get_priority_for(plugin, path.connection, strategy)
+            priority = self._get_priority_for(path.connection, strategy)
             path.state.update_priority(path.connection, priority)
 
-    def _get_priority_for(self, plugin: str, connection: NormalizedConnection, strategy: PriorityStrategy) -> int:
+    def _get_priority_for(self, connection: NormalizedConnection, strategy: PriorityStrategy) -> int:
         prioritizer = _prioritizer(strategy)
-        return prioritizer.get_priority(plugin, self._priority_manager, connection)
+        return prioritizer.get_priority(self._priority_manager, connection)
 
 
     def _refresh_priorities(self, matcher):
@@ -87,9 +88,10 @@ class PriorityAssigner:
             for conn in state.all_connections():
                 state.update_priority(conn, self._priority_manager.default_priority())
 
-    def assign_all(self, plugin: str, matcher: NormalizedMatcher):
+    def assign_all(self, matcher: NormalizedMatcher):
         self._refresh_priorities(matcher)
-        self._assign_priorities(plugin, matcher, self._priority_manager.get_strategy())
+        strategy = self._priority_manager.get_strategy()
+        self._assign_priorities(matcher, strategy)
 
 
 

@@ -63,6 +63,14 @@ class WordContextAnalyzer(TypedContextAnalyzer):
         else:
             context.fail()
 
+class AnyWordContextAnalyzer(TypedContextAnalyzer):
+    """
+    Matches one and only one word
+    """
+
+    def invoke(self, context: TextRecognizeContext):
+        context.consume()
+
 class TextContextAnalyzer(TypedContextAnalyzer):
     """
     Text Context Analyzer implements matching for unbounded text

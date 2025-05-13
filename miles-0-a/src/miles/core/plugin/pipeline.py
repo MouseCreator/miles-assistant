@@ -33,7 +33,7 @@ def create_normalized_matcher_from_definitions(plugin_definition: PluginDefiniti
         for stored_command in namespace.commands:
             executor_map.add(stored_command.name, stored_command.executor)
 
-        priority_assigner.assign_all(plugin_name, normalized_matcher)
+        priority_assigner.assign_all(normalized_matcher)
         namespace_component = NamespaceComponent(namespace.name,
                                                  normalized_matcher,
                                                  namespace.definition_set,

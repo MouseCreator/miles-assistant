@@ -13,6 +13,9 @@ class RecPointer:
     _history: NorHistory
     _of_data: TextDataHolder
 
+    def __str__(self):
+        return f'Pointer {{ {self._at_state}, {self._current_position} }}'
+
     def __init__(self,
                  at_state: NormalizedState,
                  of_data: TextDataHolder,
@@ -36,9 +39,6 @@ class RecPointer:
         if not isinstance(other, RecPointer):
             return False
         return self._at_state == other._at_state and self._history == other._history
-
-    def __str__(self):
-        return f"Pointer {self._at_state}"
 
     def get_state(self) -> NormalizedState:
         return self._at_state
@@ -85,6 +85,9 @@ class RecPointer:
 
     def is_finished(self):
         return self._at_state.is_final() and self._current_position >= self._of_data.size()
+
+    def is_final(self):
+        return self._at_state.is_final()
 
     def get_history(self) -> NorHistory:
         return self._history

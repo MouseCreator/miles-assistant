@@ -35,6 +35,10 @@ class CommandStructureSearch:
         keyword = keyword.upper()
         return self.find_all(lambda node: node.node_type() == NodeType.WORD and node.value().upper() == keyword)
 
+    def find_matching(self, matching: str) -> List[CommandNode]:
+        matching = matching.upper()
+        return self.find_all(lambda node: node.node_type() == NodeType.MATCHING and node.value().upper() == matching)
+
     def find_by_type(self, of_type: NodeType) -> List[CommandNode]:
         return self.find_all(lambda node: node.node_type() == of_type)
 
