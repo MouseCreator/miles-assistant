@@ -3,7 +3,7 @@ from typing import Generic, List, TypeVar
 
 
 
-from src.miles.core.processor.command_structure import CommandNode, NodeType
+from src.miles.core.executor.command_structure import CommandNode, NodeType
 
 T = TypeVar('T')
 class _ResultList(Generic[T]):

@@ -3,7 +3,7 @@ from src.miles.core.command.generic_command_processor import GenericCommandProce
 
 def test_process_single_word():
     """
-    Check if command processor is able to read a single reserved word
+    Check if command executor is able to read a single reserved word
     """
     g = GenericCommandProcessor()
     command = g.process('HELLO')
@@ -12,7 +12,7 @@ def test_process_single_word():
 
 def test_process_multiple_words():
     """
-    Check if command processor is able to read a sequence of reserved words
+    Check if command executor is able to read a sequence of reserved words
     """
     g = GenericCommandProcessor()
     command = g.process('WELCOME TO THE WORLD')
@@ -20,7 +20,7 @@ def test_process_multiple_words():
 
 def test_process_matching():
     """
-    Check if command processor is able to read a matching placeholder
+    Check if command executor is able to read a matching placeholder
     """
     g = GenericCommandProcessor()
     command = g.process('placeholder')
@@ -28,7 +28,7 @@ def test_process_matching():
 
 def test_process_matching_special_names():
     """
-    Check if command processor is able to read a matching placeholder
+    Check if command executor is able to read a matching placeholder
     """
     g = GenericCommandProcessor()
     command = g.process('a_b _1 cd2')
@@ -36,7 +36,7 @@ def test_process_matching_special_names():
 
 def test_process_multiple_matching():
     """
-    Check if command processor is able to read a series of placeholders
+    Check if command executor is able to read a series of placeholders
     """
     g = GenericCommandProcessor()
     command = g.process('a b c')
@@ -44,7 +44,7 @@ def test_process_multiple_matching():
 
 def test_process_multiple_words_and_matching():
     """
-    Check if command processor is able to read text with placeholders
+    Check if command executor is able to read text with placeholders
     """
     g = GenericCommandProcessor()
     command = g.process('DISPLAY text WITH FONT font')
@@ -52,7 +52,7 @@ def test_process_multiple_words_and_matching():
 
 def test_process_optional():
     """
-    Check if command processor is able to read optional parameters
+    Check if command executor is able to read optional parameters
     """
     g = GenericCommandProcessor()
     command = g.process('{THIS IS OPTIONAL}')
@@ -60,7 +60,7 @@ def test_process_optional():
 
 def test_process_optional_in_context():
     """
-    Check if command processor is able to recognize optional among other tokens
+    Check if command executor is able to recognize optional among other tokens
     """
     g = GenericCommandProcessor()
     command = g.process('A { B } C')
@@ -69,7 +69,7 @@ def test_process_optional_in_context():
 
 def test_process_list():
     """
-    Check if command processor is able to read list parameters
+    Check if command executor is able to read list parameters
     """
     g = GenericCommandProcessor()
     command = g.process('[DO action]')
@@ -77,7 +77,7 @@ def test_process_list():
 
 def test_process_list_in_context():
     """
-    Check if command processor is able to recognize list among other tokens
+    Check if command executor is able to recognize list among other tokens
     """
     g = GenericCommandProcessor()
     command = g.process('action [AND action]')
@@ -86,7 +86,7 @@ def test_process_list_in_context():
 
 def test_process_choice():
     """
-    Check if command processor is able to read choice parameters
+    Check if command executor is able to read choice parameters
     """
     g = GenericCommandProcessor()
     command = g.process('(A, B, C)')
@@ -94,7 +94,7 @@ def test_process_choice():
 
 def test_process_choice_in_context():
     """
-    Check if command processor is able to recognize choice among other tokens
+    Check if command executor is able to recognize choice among other tokens
     """
     g = GenericCommandProcessor()
     command = g.process('SELECT (one two, three)')
@@ -102,7 +102,7 @@ def test_process_choice_in_context():
 
 def test_combination():
     """
-    Check if command processor can handle nesting of different parameters
+    Check if command executor can handle nesting of different parameters
     """
     g = GenericCommandProcessor()
     command = g.process("DO c {[AND (a, b)]}")
@@ -111,7 +111,7 @@ def test_combination():
 
 def test_named_arg():
     """
-    Check if command processor can handle nesting of different parameters
+    Check if command executor can handle nesting of different parameters
     """
     g = GenericCommandProcessor()
     command = g.process("a=[NAMED LIST]")

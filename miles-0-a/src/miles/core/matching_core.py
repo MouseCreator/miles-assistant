@@ -1,11 +1,11 @@
-from typing import List, Tuple
+from typing import List
 
-from src.miles.core.context.data_holder import TextDataHolder
+from src.miles.core.core_context import CoreContext
 from src.miles.core.plugin.plugin_structure import PluginStructure
-from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
+from src.miles.core.executor.command_structure import NamespaceStructure
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
-from src.miles.core.recognizer.normalized_text_recognizer import TextRecognizer
+from src.miles.core.recognizer.normalized_text_recognizer import recognize_namespace, recognize_command
 from src.miles.core.tokenizer import Tokenizer
 
 
@@ -23,24 +23,25 @@ class MatchingCore:
                 self._namespace_name_map[name] = (namespace, plugin)
         self._plugin_structures = list(plugin_structures)
         self._struct_factory = StructFactory()
-        self._analyzer_provider = AnalyzerProvider(self._plugin_structures[0].)
         self._tokenizer = Tokenizer()
 
 
-    def recognize_and_process(self, command: str, namespace: str | None):
+    def recognize_and_execute(self, command: str, core_callback: CoreContext, namespace: str | None):
         tokens = self._tokenize(command)
-        shift = 0
         if namespace is None:
-            namespace, shift = self._match_namespace(tokens)
+            namespace_structure = recognize_namespace(self._namespace_matcher, tokens)
+        else:
+            namespace_structure = NamespaceStructure(identifier=namespace, tokens=[])
+
+        namespace_id = namespace_structure.identifier()
+        p_namespace, plugin = self._namespace_name_map[namespace_id]
+
+        command_structure = recognize_command(p_namespace.command_matcher, tokens, namespace_structure)
+        executor = p_namespace.executors_map.get(command_structure.get_command_name())
+        executor.on_recognize(command_structure, core_callback)
+
 
     def _tokenize(self, command: str) -> List[str]:
         return self._tokenizer.tokenize(command)
 
-    def _match_namespace(self, tokens: List[str]) -> Tuple[str, int]:
-        data_holder = TextDataHolder(tokens)
-        recognizer = TextRecognizer(
-            self._namespace_matcher, data_holder
-        )
-
-        recognizer.recognize()
 

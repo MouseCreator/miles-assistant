@@ -1,6 +1,7 @@
 from typing import List
 
 from src.miles.core.command.generic_command_processor import GenericCommandProcessor
+from src.miles.core.executor.command_executor import CommandExecutorsMap
 
 from src.miles.core.matcher.matcher_factory import MatcherFactory
 from src.miles.core.normalized.matcher_normalizer import normalize
@@ -27,11 +28,17 @@ def create_normalized_matcher_from_definitions(plugin_definition: PluginDefiniti
             matcher_factory.add_command(matcher, command, stored_command.name)
 
         normalized_matcher = normalize(matcher)
+
+        executor_map = CommandExecutorsMap()
+        for stored_command in namespace.commands:
+            executor_map.add(stored_command.name, stored_command.executor)
+
         priority_assigner.assign_all(plugin_name, normalized_matcher)
         namespace_component = NamespaceComponent(namespace.name,
                                                  normalized_matcher,
                                                  namespace.definition_set,
-                                                 dynamic_rule_set)
+                                                 dynamic_rule_set,
+                                                 executor_map)
         namespace_components.append(namespace_component)
 
     return PluginStructure(plugin_name, namespace_components)

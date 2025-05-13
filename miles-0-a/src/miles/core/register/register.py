@@ -3,6 +3,7 @@ from typing import List
 from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.core.priority.priority_rule import PriorityRule
+from src.miles.core.executor.command_executor import CommandExecutor
 from src.miles.core.recognizer.matching_definition import MatchingDefinition
 from src.miles.utils.singleton import Singleton
 
@@ -20,10 +21,10 @@ class _PrefixSet:
         self._prefixes.append(new_prefix)
 
 class CommandInitializer:
-    def __init__(self, name: str, syntax: str, processor):
+    def __init__(self, name: str, syntax: str, executor: CommandExecutor):
         self.name = name
         self.syntax = syntax
-        self.processor = processor
+        self.executor = executor
 
 class NamespaceInitializer:
     _static_priority_rules: List[PriorityRule]

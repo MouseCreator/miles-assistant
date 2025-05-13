@@ -26,7 +26,7 @@ def _map_commands(namespace: NamespaceInitializer) -> List[StoredCommand]:
             StoredCommand(
                 command.name,
                 command.syntax,
-                command.processor
+                command.executor
             )
         )
     return result

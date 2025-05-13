@@ -2,16 +2,17 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
-from src.miles.core.priority.dynamic_priority import DynamicPriorityRule, DynamicPriorityRuleSet
+from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
+from src.miles.core.executor.command_executor import CommandExecutor
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.priority.priority_manager import PriorityManager
 
 
 class StoredCommand:
-    def __init__(self, name: str, syntax: str, command_processor):
+    def __init__(self, name: str, syntax: str, executor: CommandExecutor):
         self.name = name
         self.syntax = syntax
-        self.command_processor = command_processor
+        self.executor = executor
 
 class NamespaceOfCommands:
     def __init__(self,

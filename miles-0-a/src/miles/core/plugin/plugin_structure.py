@@ -1,8 +1,10 @@
-from typing import List
+from typing import List, Dict
 
 from src.miles.core.priority.dynamic_priority import DynamicPriorityRuleSet
+from src.miles.core.executor.command_executor import CommandExecutorsMap
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
+
 
 
 class NamespaceComponent:
@@ -10,8 +12,10 @@ class NamespaceComponent:
                  name: str,
                  command_mather: NormalizedMatcher,
                  definitions: MatchingDefinitionSet,
-                 dynamic_ruleset: DynamicPriorityRuleSet):
+                 dynamic_ruleset: DynamicPriorityRuleSet,
+                 executors_map: CommandExecutorsMap):
         self.name = name
+        self.executors_map = executors_map
         self.command_matcher = command_mather
         self.definitions = definitions
         self.dynamic_priorities = dynamic_ruleset

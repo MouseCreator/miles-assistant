@@ -4,7 +4,7 @@ from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
-from src.miles.core.processor.command_structure import CommandStructure, NamespaceStructure
+from src.miles.core.executor.command_structure import CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection

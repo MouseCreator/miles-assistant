@@ -5,7 +5,6 @@ from src.miles.core.command.command_processor_error import CommandProcessorError
 from src.miles.core.command.command import Command, RootComponent, \
     WordComponent, MatchingComponent, ChoiceComponent, ListComponent, OptionalComponent, SequenceComponent, \
     NamedComponent
-from src.miles.core.command.command_processor import CommandProcessor
 
 from lark import Lark, Transformer
 
@@ -80,7 +79,7 @@ class _GenericCommandParser(metaclass=Singleton):
         self.content = Lark(grammar, start="start", parser="lalr")
 
 
-class GenericCommandProcessor(CommandProcessor):
+class GenericCommandProcessor:
     def __init__(self, parser: Lark | None = None, transformer: Transformer | None = None):
         if parser is None:
             parser = _GenericCommandParser().content
