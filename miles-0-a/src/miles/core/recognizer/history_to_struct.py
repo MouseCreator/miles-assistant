@@ -2,19 +2,12 @@ from typing import List
 import re
 
 from src.miles.core.normalized.history import NorHistory
-from src.miles.core.processor.command_structure import CommandNode, NodeType, CommandStructure
+from src.miles.core.processor.command_structure import CommandNode, NodeType, CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
+from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.id_generator import IdGenerator
 from src.miles.utils.list_utils import get_elements_by_indexes
 
-
-class _ProtoNode:
-    def __init__(self, name, p_type, children):
-        pass
-
-class _ProtoNodeStack:
-    def __init__(self):
-        pass
 
 class StructFactory:
 
@@ -35,13 +28,20 @@ class StructFactory:
         else:
             raise ValueError(f"Incorrect format of choice option: {input_string}")
 
+    def _extract_identifier(self, label: str):
+        match = re.fullmatch(r"recognize\s+(\w+)", label.strip())
+        if match:
+            return match.group(1)
+        raise ValueError(f'Cannot get command name from recognition label {label}')
+
     def _convert(self, tokens: List[str], history: NorHistory) -> CommandNode:
         items = history.all_items()
-        stack = [ CommandNode(
+        root_node = CommandNode(
             identity=self._next_index(),
             node_type=NodeType.ITEM,
             value=None,
-        ) ]
+        )
+        stack = [ root_node ]
         item_queue = list(items)
 
         while item_queue:
@@ -78,6 +78,8 @@ class StructFactory:
                     stack.insert(0, struct)
                 elif label == 'end optional':
                     stack.pop(0)
+                elif self._is_recognition_label(label):
+                    root_node.set_argument(self._extract_identifier(label))
                 elif label == 'begin list':
                     list_struct = CommandNode(
                         identity=self._next_index(),
@@ -155,19 +157,55 @@ class StructFactory:
             raise ValueError(f'Invalid stack state: {stack}')
         return stack[0]
 
-    def convert(self,
-                has_namespace: bool,
+    def convert_command(self,
+                namespace_structure: NamespaceStructure,
                 tokens: List[str],
-                history: NorHistory,
-                command_name: str,
+                pointer: RecPointer,
                 ) -> CommandStructure:
+        history = pointer.get_history()
+        pointer_flags = pointer.flags()
         root_node = self._convert(tokens, history)
         return CommandStructure(
             root_node=root_node,
-            has_namespace=has_namespace,
+            namespace_structure=namespace_structure,
             tokens=tokens,
-            command_name=command_name
+            command_name=root_node.argument(),
+            flags=pointer_flags
         )
+
+    def _convert_namespace(self, tokens: List[str], history: NorHistory):
+        items = history.all_items()
+        item_queue = list(items)
+        namespace_tokens = []
+        namespace_id = None
+        for item in item_queue:
+            if item.node.node_type == HistoryNodeType.WORD:
+                namespace_tokens.extend([tokens[i] for i in range(item.prev_point, item.next_point)])
+            elif item.node.node_type == HistoryNodeType.AUTOMATIC:
+                label = item.node.argument
+                if self._is_recognition_label(label):
+                    namespace_id = self._extract_identifier(label)
+                else:
+                    raise ValueError(f'Unexpected automatic item in the namespace: {item}')
+            else:
+                raise ValueError(f"Unexpected item in the namespace: {item}")
+        return NamespaceStructure(
+            tokens=namespace_tokens,
+            identifier=namespace_id
+        )
+
+    def convert_namespace(self, tokens: List[str], pointer: RecPointer) -> NamespaceStructure:
+        history = pointer.get_history()
+        return self._convert_namespace(tokens, history)
+
+    def _is_recognition_label(self, label) -> bool:
+        if label is None:
+            return False
+        return label.startswith('recognize ')
+
+
+
+
 
 
 

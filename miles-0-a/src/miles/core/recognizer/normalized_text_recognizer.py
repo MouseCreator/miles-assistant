@@ -4,10 +4,11 @@ from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.priority.dynamic_priority import DynamicPriorityRule
+from src.miles.core.processor.command_structure import CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
+from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
 from src.miles.core.recognizer.context_analyzer import GenericContextAnalyzer
-from src.miles.core.recognizer.generic_recognizer import Recognizer
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 from src.miles.core.recognizer.recognizer_pointer import RecPointer
@@ -168,12 +169,17 @@ class _TRReader:
             raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
 
 
+def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str]) -> NamespaceStructure:
+    of_data = TextDataHolder(tokens)
+    recognizer = _TRReader(matcher, of_data, 0, AnalyzerProvider(MatchingDefinitionSet()))
+    pointer: RecPointer = recognizer.recognize()
+    struct_factory = StructFactory()
+    return struct_factory.convert_namespace(tokens, pointer)
 
-class TextRecognizer(Recognizer):
-    _pointers: List[RecPointer]
-    _reached_pointers: List[RecPointer]
-    def __init__(self, matcher: NormalizedMatcher, of_data: TextDataHolder, provider: AnalyzerProvider, start_from: int):
-        self._reader = _TRReader(matcher, of_data, start_from, provider)
-
-    def recognize(self):
-        reached_pointers = self._reader.recognize()
+def recognize_command(matcher: NormalizedMatcher, tokens: List[str], ns: NamespaceStructure) -> CommandStructure:
+    of_data = TextDataHolder(tokens)
+    shift = ns.size()
+    recognizer = _TRReader(matcher, of_data, shift, AnalyzerProvider(MatchingDefinitionSet()))
+    pointer: RecPointer = recognizer.recognize()
+    struct_factory = StructFactory()
+    return struct_factory.convert_command(ns, tokens, pointer)

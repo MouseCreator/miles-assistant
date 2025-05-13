@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import List, Self
 
+from src.miles.core.context.flags import Flags
+
 
 class NodeType(Enum):
     WORD = 0
@@ -78,17 +80,43 @@ class CommandNode:
     def append(self, struct: Self):
         self._children.append(struct)
 
+    def set_argument(self, argument: str) -> None:
+        self._argument = argument
+
+
+class NamespaceStructure:
+    def __init__(self, identifier: str, tokens: List[str]):
+        self._tokens = tokens
+        self._identifier = identifier
+
+    def identifier(self) -> str:
+        return self._identifier
+
+    def empty(self):
+        return self.size() == 0
+
+    def __len__(self):
+        return self.size()
+
+    def size(self):
+        return len(self._tokens)
+
+    def tokens(self):
+        return list(self._tokens)
+
 
 class CommandStructure:
     def __init__(self,
                  root_node: CommandNode,
                  tokens: List[str],
                  command_name: str,
-                 has_namespace: bool):
+                 namespace_structure: NamespaceStructure,
+                 flags: Flags):
         self._root_node = root_node
         self._input = tokens
         self._command_name = command_name
-        self._has_namespace = has_namespace
+        self._namespace_structure=namespace_structure
+        self._flags = flags
 
     def get_root(self) -> CommandNode:
         return self._root_node
@@ -100,4 +128,11 @@ class CommandStructure:
         return self._command_name
 
     def has_namespace(self) -> bool:
-        return self._has_namespace
+        return not self._namespace_structure.empty()
+
+    def namespace(self) -> NamespaceStructure:
+        return self._namespace_structure
+
+    def flags(self) -> Flags:
+        return self._flags
+
