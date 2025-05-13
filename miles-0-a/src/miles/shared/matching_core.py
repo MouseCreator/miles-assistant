@@ -1,6 +1,5 @@
 from typing import List
 
-from src.miles.core.core_context import CoreContext
 from src.miles.core.plugin.plugin_structure import PluginStructure
 from src.miles.shared.executor.command_structure import NamespaceStructure
 from src.miles.core.recognizer.history_to_struct import StructFactory
@@ -26,10 +25,8 @@ class MatchingCore:
         self._tokenizer = Tokenizer()
 
 
-    def recognize_and_execute(self, command: str, core_context: CoreContext | None = None, namespace: str | None = None):
+    def recognize_and_execute(self, command: str, namespace: str | None = None):
         tokens = self._tokenize(command)
-        if core_context is None:
-            core_context = CoreContext()
         if namespace is None:
             namespace_structure = recognize_namespace(self._namespace_matcher, tokens)
         else:
@@ -42,7 +39,7 @@ class MatchingCore:
                                               tokens,
                                               namespace_structure)
         executor = p_namespace.executors_map.get(command_structure.get_command_name())
-        executor.on_recognize(command_structure, core_context)
+        executor.on_recognize(command_structure)
 
 
     def _tokenize(self, command: str) -> List[str]:

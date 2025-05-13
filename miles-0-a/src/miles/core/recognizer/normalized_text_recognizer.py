@@ -9,7 +9,7 @@ from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
-from src.miles.shared.context_analyzer import GenericContextAnalyzer
+from src.miles.shared.context_analyzer import GenericContextAnalyzer, DefaultWordContextAnalyzerFactory
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 from src.miles.core.recognizer.recognizer_pointer import RecPointer
