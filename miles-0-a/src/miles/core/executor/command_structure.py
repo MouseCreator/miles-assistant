@@ -19,7 +19,6 @@ class CommandNode:
     _name: str | None
     _children: List[Self]
     _value: List[str]
-    _option_num: None | int
     _parent: Self | None
     _number: int | None
     def __init__(self,
@@ -43,7 +42,15 @@ class CommandNode:
             self._children = []
         else:
             self._children = list(children)
-
+    def __str__(self):
+        return (
+            f"CommandNode(id={self._id}, "
+            f"type={self._node_type}, "
+            f"name={self._name}, "
+            f"value={self._value}, "
+            f"number={self._number}, "
+            f"children_count={len(self._children)})"
+        )
     def __eq__(self, other):
         if not isinstance(other, CommandNode):
             return False
