@@ -12,6 +12,9 @@ class TextDataHolder:
     def __init__(self, text: List[str]):
         self._text = text
 
+    def __str__(self):
+        return f"{str(self._text)}"
+
     def size(self) -> int:
         return len(self._text)
 

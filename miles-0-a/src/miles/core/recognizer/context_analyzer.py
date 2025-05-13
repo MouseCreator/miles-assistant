@@ -58,7 +58,7 @@ class WordContextAnalyzer(TypedContextAnalyzer):
 
     def invoke(self, context: TextRecognizeContext):
         current_token = context.current()
-        if current_token == self.word:
+        if current_token.lower() == self.word:
             context.consume()
         else:
             context.fail()

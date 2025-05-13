@@ -183,6 +183,7 @@ class _NamespaceReader:
         self._reached_pointer = None
         self._previous_reached = None
         self._cache = _DynamicCache()
+        self._analyzers = AnalyzerProvider(MatchingDefinitionSet())
 
     def recognize(self):
         self._pointers = []
@@ -203,6 +204,8 @@ class _NamespaceReader:
 
     def _run_token_recognition_loop(self):
         while self._reached_pointer is None:
+            if not self._pointers:
+                raise ValueError(f'Cannot match any namespace!')
             first = self._pointers.pop(0)
             advanced = self._advance_pointer(first)
             self._add_to_pointers(advanced)
@@ -228,7 +231,19 @@ class _NamespaceReader:
             new_pointers = self._go_through_connection(pointer, connection)
             next_gen_pointers.extend(new_pointers)
 
+        if not next_gen_pointers:
+            self._reached_pointer = self._previous_reached
+
         return next_gen_pointers
+
+    def _all_connections_ordered(self, pointer: RecPointer) -> List[NormalizedConnection]:
+        state = pointer.get_state()
+        connections_from_state = state.all_connections()
+        priority_map = {}
+        for c in connections_from_state:
+            priority = state.get_priority(c)
+            priority_map[c] = priority
+        return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
         nodes = connection.get_nodes()
@@ -239,7 +254,6 @@ class _NamespaceReader:
             for p in previous_generation:
                 analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
-                advance = self._optimized_route(advance, analyzer)
                 this_generation.extend(advance)
             previous_generation = this_generation
 
@@ -247,8 +261,8 @@ class _NamespaceReader:
 
 def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str]) -> NamespaceStructure:
     of_data = TextDataHolder(tokens)
-    recognizer = _CommandReader(matcher, of_data, 0, AnalyzerProvider(MatchingDefinitionSet()), None)
-    pointer: RecPointer = recognizer.recognize()
+    reader = _NamespaceReader(matcher, of_data)
+    pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_namespace(tokens, pointer)
 
@@ -258,7 +272,7 @@ def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceSt
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     analyzer_provider = AnalyzerProvider(nc.definitions)
-    recognizer = _CommandReader(matcher, of_data, shift, analyzer_provider, dynamic_priorities)
-    pointer: RecPointer = recognizer.recognize()
+    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, dynamic_priorities)
+    pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)

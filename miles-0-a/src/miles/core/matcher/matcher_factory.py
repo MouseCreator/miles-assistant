@@ -168,6 +168,8 @@ class MatcherFactory:
         for arg in arguments:
             state = self._move_and_add_word(state, arg, None)
 
+        self._move_automatically(state, self._create_empty_state(True), f'recognize {namespace.namespace_name}', None)
+
     def create_command(self, command : Command, name: str) -> Matcher:
         initial = self._create_empty_state()
         self._append_command_signature(command, name, initial)
