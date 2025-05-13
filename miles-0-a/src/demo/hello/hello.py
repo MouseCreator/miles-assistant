@@ -1,11 +1,10 @@
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure
 from src.miles.shared.executor.executor_utils import CommandStructureSearch
-
 from src.miles.shared.matching_core import MatchingCore
 from src.miles.shared.matching_core_factory import create_matching_core
 from src.miles.shared.collector import PluginCollector
-from src.miles.shared.context_analyzer import AnyWordContextAnalyzer
+from src.miles.shared.context_analyzer import AnyWordContextAnalyzer, WordContextAnalyzer
 from src.miles.shared.register import MilesRegister
 
 
@@ -37,7 +36,7 @@ class SimplePluginCollector(PluginCollector):
         namespace_init.add_command("command3", "(HI, HELLO) name", Command3Executor())
 
         namespace_init.add_matching("name", AnyWordContextAnalyzer())
-
+        namespace_init.word_analyzer(WordContextAnalyzer())
 
 
 def do_test():

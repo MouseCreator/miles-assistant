@@ -4,8 +4,8 @@ from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.plugin.plugin_structure import NamespaceComponent
+from src.miles.shared.executor.command_structure import NamespaceStructure, CommandStructure
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.shared.executor import CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
@@ -188,7 +188,7 @@ class _NamespaceReader:
         self._reached_pointer = None
         self._previous_reached = None
         self._cache = _DynamicCache()
-        self._analyzers = AnalyzerProvider(MatchingDefinitionSet())
+        self._analyzers = AnalyzerProvider(MatchingDefinitionSet(), DefaultWordContextAnalyzerFactory())
 
     def recognize(self):
         self._pointers = []
@@ -281,7 +281,7 @@ def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceSt
     shift = ns.size()
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
-    analyzer_provider = AnalyzerProvider(nc.definitions)
+    analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
     reader = _CommandReader(matcher, of_data, shift, analyzer_provider, dynamic_priorities)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()

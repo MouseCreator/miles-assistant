@@ -4,7 +4,8 @@ from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.shared.priority.priority_rule import PriorityRule
 from src.miles.shared.executor.command_executor import CommandExecutor
-from src.miles.shared.context_analyzer import TypedContextAnalyzer
+from src.miles.shared.context_analyzer import TypedContextAnalyzer, DefaultWordContextAnalyzerFactory, \
+    WordContextAnalyzerFactory
 from src.miles.core.recognizer.matching_definition import MatchingDefinition
 from src.miles.utils.singleton import Singleton
 
@@ -39,6 +40,7 @@ class NamespaceInitializer:
         self._matchings = []
         self._priority_strategy = PriorityStrategy.ALL_DEFAULT
         self._default_priority = 0
+        self._word_analyzer_factory = DefaultWordContextAnalyzerFactory()
 
     def add_command(self, name: str, syntax: str, executor: CommandExecutor):
         command = CommandInitializer(name, syntax, executor)
@@ -89,6 +91,12 @@ class NamespaceInitializer:
 
     def get_dynamic_priorities(self) -> List[DynamicPriorityRule]:
         return self._dynamic_priority_rules
+
+    def get_word_analyzer_factory(self) -> WordContextAnalyzerFactory:
+        return self._word_analyzer_factory
+    def set_word_analyzer_factory(self, factory : WordContextAnalyzerFactory):
+        self._word_analyzer_factory = factory
+
 
 class PluginRegister:
     _name: str

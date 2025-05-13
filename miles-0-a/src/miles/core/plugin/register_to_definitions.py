@@ -48,6 +48,7 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
     priority_manager = _build_priority_manager(namespace)
 
     dynamic_ruleset = _map_dynamic_rules(namespace)
+    word_analyzer_factory = namespace.get_word_analyzer_factory()
 
     return NamespaceOfCommands(
         name=name,
@@ -55,7 +56,8 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
         priority_manager=priority_manager,
         commands=commands,
         definition_set=definition_set,
-        dynamic_priorities=dynamic_ruleset
+        dynamic_priorities=dynamic_ruleset,
+        word_analyzer_factory=word_analyzer_factory
     )
 
 

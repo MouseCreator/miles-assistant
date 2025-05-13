@@ -34,11 +34,13 @@ def create_normalized_matcher_from_definitions(plugin_definition: PluginDefiniti
             executor_map.add(stored_command.name, stored_command.executor)
 
         priority_assigner.assign_all(normalized_matcher)
+        word_analyzer_factory = namespace.word_analyzer_factory
         namespace_component = NamespaceComponent(namespace.name,
                                                  normalized_matcher,
                                                  namespace.definition_set,
                                                  dynamic_rule_set,
-                                                 executor_map)
+                                                 executor_map,
+                                                 word_analyzer_factory)
         namespace_components.append(namespace_component)
 
     return PluginStructure(plugin_name, namespace_components)

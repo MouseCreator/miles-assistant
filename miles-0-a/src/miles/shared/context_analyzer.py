@@ -47,7 +47,6 @@ class TypedContextAnalyzer(GenericContextAnalyzer):
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.NONE
 
-
 class WordContextAnalyzer(TypedContextAnalyzer):
     """
     Word Context Analyzer implements matching for a single word
@@ -62,6 +61,16 @@ class WordContextAnalyzer(TypedContextAnalyzer):
             context.consume()
         else:
             context.fail()
+
+class WordContextAnalyzerFactory(ABC):
+    @abstractmethod
+    def build(self, word: str) -> TypedContextAnalyzer:
+        pass
+
+class DefaultWordContextAnalyzerFactory(WordContextAnalyzerFactory):
+
+    def build(self, word: str) -> TypedContextAnalyzer:
+        return WordContextAnalyzer(word)
 
 class AnyWordContextAnalyzer(TypedContextAnalyzer):
     """

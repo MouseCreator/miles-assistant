@@ -2,8 +2,9 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
+from src.miles.shared.context_analyzer import WordContextAnalyzerFactory
+from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.shared.executor import CommandExecutor
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.priority.priority_manager import PriorityManager
 
@@ -21,13 +22,15 @@ class NamespaceOfCommands:
                  commands: List[StoredCommand],
                  priority_manager: PriorityManager,
                  dynamic_priorities: DynamicPriorityRuleSet,
-                 definition_set : MatchingDefinitionSet):
+                 definition_set : MatchingDefinitionSet,
+                 word_analyzer_factory: WordContextAnalyzerFactory):
         self.name = name
         self.prefix = prefix
         self.commands = commands
         self.dynamic_priorities = dynamic_priorities
         self.priority_manager = priority_manager
         self.definition_set = definition_set
+        self.word_analyzer_factory = word_analyzer_factory
 
     def as_command_namespace(self):
         words = self.prefix.split() if self.prefix.strip() else []
