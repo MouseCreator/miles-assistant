@@ -91,6 +91,9 @@ class _CommandReader:
             advanced = self._advance_pointer(first)
             self._add_to_pointers(advanced)
 
+        if self._reached_pointer is None:
+            raise ValueError(f'Unable to recognize command from tokens: {self._input_data.full()}')
+
     def _add_to_pointers(self, new_pointers: List[RecPointer]):
         new_items: List[RecPointer] = []
         for p in new_pointers:

@@ -1,10 +1,7 @@
 .canvas-wrapper {
-    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-
-
 }
 .main-canvas {
     background-color: #f3f8f8;

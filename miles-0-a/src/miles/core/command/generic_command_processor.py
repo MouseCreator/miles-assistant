@@ -47,7 +47,7 @@ class _GenericCommandTransformer(Transformer):
         return ListComponent(items[0])
 
     def optional(self, items):
-        return OptionalComponent(items)
+        return OptionalComponent(items[0])
 
     def named(self, items):
         return NamedComponent(items[0].value, items[1])

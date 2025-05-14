@@ -43,3 +43,6 @@ class TextDataHolder:
             start_at=start_at,
             flags=flags
         )
+
+    def full(self):
+        return ' '.join(self._text)
