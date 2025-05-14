@@ -1,10 +1,10 @@
 from typing import List
 
 from src.miles.core.matcher.matcher import ConnectionType
-from src.miles.core.recognizer.text_recognizer import _Pointer
+from src.miles.core.recognizer.recognizer_pointer import RecPointer
 
 
-def scan_history(text: str, reached_pointer: _Pointer) -> List[str]:
+def scan_history(text: str, reached_pointer: RecPointer) -> List[str]:
     tokens = text.split(' ')
     history = reached_pointer.get_history()
     items = history.all_items()

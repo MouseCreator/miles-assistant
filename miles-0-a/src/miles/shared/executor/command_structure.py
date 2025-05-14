@@ -94,6 +94,9 @@ class CommandNode:
     def any(self):
         return self.value()[0]
 
+    def size(self):
+        return len(self._children)
+
 
 class NamespaceStructure:
     def __init__(self, identifier: str, tokens: List[str]):

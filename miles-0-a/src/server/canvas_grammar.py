@@ -142,8 +142,7 @@ def canvas_grammar(plugin_register: PluginRegister):
     namespace_init.add_command("move", "MOVE number TO coordinates", MoveCommandExecutor())
 
     #TODO: merge two delete commands in one
-    namespace_init.add_command("delete1", "DELETE number", DeleteCommandExecutor())
-    namespace_init.add_command("delete2", "REMOVE number", DeleteCommandExecutor())
+    namespace_init.add_command("delete1", "(DELETE, REMOVE) number", DeleteCommandExecutor())
     namespace_init.add_command("clear", "CLEAR { ALL }", ClearCommandExecutor())
 
     namespace_init.add_matching("color", ColorContextAnalyzer())
