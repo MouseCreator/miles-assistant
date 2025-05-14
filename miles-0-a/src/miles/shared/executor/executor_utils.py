@@ -42,6 +42,9 @@ class CommandStructureSearch:
     def find_by_type(self, of_type: NodeType) -> List[CommandNode]:
         return self.find_all(lambda node: node.node_type() == of_type)
 
+    def find_ith(self, i: int):
+        return self._node.children()[i]
+
     def find_all(self, predicate: Callable[[CommandNode], bool]):
         result_list = _ResultList()
         self._find(self._node, predicate, result_list)

@@ -25,7 +25,7 @@ class MatchingCore:
         self._tokenizer = Tokenizer()
 
 
-    def recognize_and_execute(self, command: str, namespace: str | None = None):
+    def recognize_and_execute(self, command: str, namespace: str | None = None, context: str | None = None):
         tokens = self._tokenize(command)
         if namespace is None:
             namespace_structure = recognize_namespace(self._namespace_matcher, tokens)
@@ -39,7 +39,7 @@ class MatchingCore:
                                               tokens,
                                               namespace_structure)
         executor = p_namespace.executors_map.get(command_structure.get_command_name())
-        executor.on_recognize(command_structure)
+        executor.on_recognize(command_structure, context)
 
 
     def _tokenize(self, command: str) -> List[str]:

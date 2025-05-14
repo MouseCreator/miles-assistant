@@ -4,15 +4,17 @@ import './canvas.css'
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 1000;
 
-const colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink', 'black', 'brown'];
+const colors = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink', 'brown'];
 const canvas = ['arrow', 'circle', 'square', 'triangle', 'hexagon', 'oval', 'line'];
 
 class Shape {
-    constructor(type, x, y, color) {
-        this.type = type;
+    constructor(identity, type, x, y, color, angle) {
+        this.identity = identity
+        this.category = type;
         this.x = x;
         this.y = y;
         this.color = color;
+        this.angle = angle
     }
 
     draw(ctx) {
@@ -20,24 +22,24 @@ class Shape {
         ctx.fillStyle = this.color;
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 3;
+        ctx.rotate((this.angle * Math.PI) / 180);
+        const drawX = 0;
+        const drawY = 0;
 
-        const x = this.x;
-        const y = this.y;
-
-        switch (this.type) {
+        switch (this.category) {
             case 'circle':
                 ctx.beginPath();
-                ctx.arc(x, y, 30, 0, Math.PI * 2);
+                ctx.arc(drawX, drawY, 30, 0, Math.PI * 2);
                 ctx.fill();
                 break;
             case 'square':
-                ctx.fillRect(x - 30, y - 30, 60, 60);
+                ctx.fillRect(drawX - 30, drawY - 30, 60, 60);
                 break;
             case 'triangle':
                 ctx.beginPath();
-                ctx.moveTo(x, y - 35);
-                ctx.lineTo(x - 30, y + 25);
-                ctx.lineTo(x + 30, y + 25);
+                ctx.moveTo(drawX, drawY - 35);
+                ctx.lineTo(drawX - 30, drawY + 25);
+                ctx.lineTo(drawX + 30, drawY + 25);
                 ctx.closePath();
                 ctx.fill();
                 break;
@@ -46,8 +48,8 @@ class Shape {
                 ctx.beginPath();
                 for (let i = 0; i < 6; i++) {
                     const angle = Math.PI / 3 * i;
-                    const px = x + r * Math.cos(angle);
-                    const py = y + r * Math.sin(angle);
+                    const px = drawX + r * Math.cos(angle);
+                    const py = drawY + r * Math.sin(angle);
                     if (i === 0) ctx.moveTo(px, py);
                     else ctx.lineTo(px, py);
                 }
@@ -56,24 +58,24 @@ class Shape {
                 break;
             case 'oval':
                 ctx.beginPath();
-                ctx.ellipse(x, y, 40, 25, 0, 0, 2 * Math.PI);
+                ctx.ellipse(drawX, drawY, 40, 25, 0, 0, 2 * Math.PI);
                 ctx.fill();
                 break;
             case 'line':
                 ctx.beginPath();
-                ctx.moveTo(x - 30, y - 30);
-                ctx.lineTo(x + 30, y + 30);
+                ctx.moveTo(drawX - 30, drawY - 30);
+                ctx.lineTo(drawX + 30, drawY + 30);
                 ctx.stroke();
                 break;
             case 'arrow':
                 ctx.beginPath();
-                ctx.moveTo(x - 30, y);
-                ctx.lineTo(x + 10, y);
-                ctx.lineTo(x + 10, y - 10);
-                ctx.lineTo(x + 30, y + 10);
-                ctx.lineTo(x + 10, y + 30);
-                ctx.lineTo(x + 10, y + 20);
-                ctx.lineTo(x - 30, y + 20);
+                ctx.moveTo(drawX - 30, drawY);
+                ctx.lineTo(drawX + 10, drawY);
+                ctx.lineTo(drawX + 10, drawY - 10);
+                ctx.lineTo(drawX + 30, drawY + 10);
+                ctx.lineTo(drawX + 10, drawY + 30);
+                ctx.lineTo(drawX + 10, drawY + 20);
+                ctx.lineTo(drawX - 30, drawY + 20);
                 ctx.closePath();
                 ctx.fill();
                 break;
@@ -109,7 +111,8 @@ const CanvasShapes = forwardRef((props, ref) => {
             const color = colors[getRandomInt(0, colors.length - 1)];
             const x = getRandomInt(0, CANVAS_WIDTH);
             const y = getRandomInt(0, CANVAS_HEIGHT);
-            shapesRef.current.push(new Shape(type, x, y, color));
+            const angle =  getRandomInt(0, 360)
+            shapesRef.current.push(new Shape(i+1, type, x, y, color, angle));
         }
         drawAll();
     }, []);

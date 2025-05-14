@@ -10,17 +10,17 @@ from src.miles.shared.register import MilesRegister
 
 class Command1Executor(CommandExecutor):
 
-    def on_recognize(self, command_structure: CommandStructure):
+    def on_recognize(self, command_structure: CommandStructure, context):
         print("Hi world!")
 
 class Command2Executor(CommandExecutor):
 
-    def on_recognize(self, command_structure: CommandStructure):
+    def on_recognize(self, command_structure: CommandStructure, context):
         print("Hello world!")
 
 class Command3Executor(CommandExecutor):
 
-    def on_recognize(self, command_structure: CommandStructure):
+    def on_recognize(self, command_structure: CommandStructure, context):
         name = CommandStructureSearch(command_structure.get_root()).find_matching("name")[0].any()
         print(f"Hey {name}")
 

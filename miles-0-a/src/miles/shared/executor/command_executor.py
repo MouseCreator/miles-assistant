@@ -6,7 +6,7 @@ from src.miles.shared.executor.command_structure import CommandStructure
 
 class CommandExecutor(ABC):
     @abstractmethod
-    def on_recognize(self, command_structure: CommandStructure):
+    def on_recognize(self, command_structure: CommandStructure, context):
         pass
 
 class CommandExecutorsMap:
