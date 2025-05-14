@@ -46,3 +46,6 @@ class TextDataHolder:
 
     def full(self):
         return ' '.join(self._text)
+
+    def __getitem__(self, item):
+        return self._text[item]

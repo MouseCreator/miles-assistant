@@ -1,9 +1,9 @@
-
 from random import shuffle
 from typing import List, Set, Tuple
 
 from src.miles.core.context.data_holder import TextDataHolder
 from src.miles.core.plugin.plugin_structure import NamespaceComponent
+from src.miles.core.recognizer.recognizer_error import RecognizerError
 from src.miles.shared.executor.command_structure import NamespaceStructure, CommandStructure
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
@@ -45,6 +45,7 @@ class _DynamicCache:
 class _CommandReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
+    _failed_max_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
     _cache: _DynamicCache
     _dynamic_priorities: DynamicPriorityRuleSet
@@ -59,6 +60,7 @@ class _CommandReader:
         self._input_data = input_data
         self._pointers = []
         self._reached_pointer = None
+        self._failed_max_pointer = None
         self._start_from = start_from
         self._cache = _DynamicCache()
 
@@ -74,12 +76,14 @@ class _CommandReader:
         self._pointers = []
         self._reached_pointer = None
         self._cache.clear()
+        self._failed_max_pointer = None
         self._recognize_tokens()
         return self._reached_pointer
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
         first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
+        self._failed_max_pointer = first_pointer
         self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
 
@@ -92,7 +96,13 @@ class _CommandReader:
             self._add_to_pointers(advanced)
 
         if self._reached_pointer is None:
-            raise ValueError(f'Unable to recognize command from tokens: {self._input_data.full()}')
+            position = self._failed_max_pointer.get_position()
+            if position < self._input_data.size():
+                error_token = self._input_data[position]
+                message = f'Unable to recognize command! Error at position {position+1}: {error_token}'
+                raise RecognizerError(message)
+            else:
+                raise RecognizerError(f'Unable to recognize command! Unexpected end of input.')
 
     def _add_to_pointers(self, new_pointers: List[RecPointer]):
         new_items: List[RecPointer] = []
@@ -129,6 +139,13 @@ class _CommandReader:
                 analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
                 advance = self._optimized_route(advance, analyzer)
+
+                if len(advance) == 0: # failed pointer
+                    position = p.get_position()
+                    prev_max = self._failed_max_pointer.get_position()
+                    if position > prev_max:
+                        self._failed_max_pointer = p
+
                 this_generation.extend(advance)
             previous_generation = this_generation
 
@@ -181,6 +198,7 @@ class _NamespaceReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
     _cache: _DynamicCache
+    _failed_max_pointer: RecPointer | None
 
     def __init__(self,
                  matcher: NormalizedMatcher,
@@ -191,12 +209,14 @@ class _NamespaceReader:
         self._reached_pointer = None
         self._previous_reached = None
         self._cache = _DynamicCache()
+        self._failed_max_pointer = None
         self._analyzers = AnalyzerProvider(MatchingDefinitionSet(), DefaultWordContextAnalyzerFactory())
 
     def recognize(self):
         self._pointers = []
         self._reached_pointer = None
         self._previous_reached = None
+        self._failed_max_pointer = None
         self._cache.clear()
         self._recognize_tokens()
 
@@ -205,6 +225,7 @@ class _NamespaceReader:
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
         first_pointer = RecPointer(initial, self._input_data)
+        self._failed_max_pointer = first_pointer
         self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
 
@@ -213,7 +234,14 @@ class _NamespaceReader:
     def _run_token_recognition_loop(self):
         while self._reached_pointer is None:
             if not self._pointers:
-                raise ValueError(f'Cannot match any namespace!')
+                if self._reached_pointer is None:
+                    position = self._failed_max_pointer.get_position()
+                    if position < self._input_data.size():
+                        error_token = self._input_data[position]
+                        message = f'Unable to recognize namespace! Error at position {position+1}: {error_token}'
+                    else:
+                        message = f'Unable to recognize namespace! Unexpected end of input.'
+                    raise RecognizerError(message)
             first = self._pointers.pop(0)
             advanced = self._advance_pointer(first)
             self._add_to_pointers(advanced)
@@ -240,6 +268,12 @@ class _NamespaceReader:
             next_gen_pointers.extend(new_pointers)
 
         if not next_gen_pointers:
+            if self._previous_reached is None:
+                position = pointer.get_position()
+                prev_max = self._failed_max_pointer.get_position()
+                if position > prev_max:
+                    self._failed_max_pointer = pointer
+
             self._reached_pointer = self._previous_reached
 
         return next_gen_pointers
