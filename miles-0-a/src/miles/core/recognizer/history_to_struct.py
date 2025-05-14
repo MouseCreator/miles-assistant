@@ -33,7 +33,7 @@ class StructFactory:
             return match.group(1)
         raise ValueError(f'Cannot get command name from recognition label {label}')
 
-    def _convert(self, tokens: List[str], history: NorHistory) -> CommandNode:
+    def _convert(self, history: NorHistory) -> CommandNode:
         items = history.all_items()
         root_node = CommandNode(
             identity=self._next_index(),
@@ -89,24 +89,28 @@ class StructFactory:
                     )
                     parent.append(list_struct)
                     stack.insert(0, list_struct)
-                    stack.insert(0, CommandNode(
+                    first_item = CommandNode(
                         identity=self._next_index(),
                         node_type=NodeType.ITEM,
                         value=None,
                         name=node.name,
                         parent=list_struct,
                         number=0
-                    ))
+                    )
+                    stack.insert(0, first_item)
+                    list_struct.append(first_item)
                 elif label == 'repeat list':
                     stack.pop(0) # pop previous item
                     list_struct = stack[0]
-                    stack.insert(0, CommandNode( # begin new item
+                    new_item = CommandNode( # begin new item
                         identity=self._next_index(),
                         node_type=NodeType.ITEM,
                         value=None,
                         parent=list_struct,
                         number=len(list_struct)
-                    ))
+                    )
+                    stack.insert(0, new_item)
+                    parent.append(new_item)
                 elif label == 'end list':
                     stack.pop(0) # pops item node
                     stack.pop(0) # pops list node
@@ -161,7 +165,7 @@ class StructFactory:
                 ) -> CommandStructure:
         history = pointer.get_history()
         pointer_flags = pointer.flags()
-        root_node = self._convert(tokens, history)
+        root_node = self._convert(history)
         return CommandStructure(
             root_node=root_node,
             namespace_structure=namespace_structure,
