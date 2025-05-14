@@ -14,12 +14,15 @@ class Command1Executor(CommandExecutor):
         search = CommandStructureSearch(command_structure.get_root())
         choice_item = search.find_by_type(NodeType.CHOICE)[0]
         text = choice_item.children()[0].any()
-        context.set(f"{text} e")
+        context.set(f"1 {text} e")
 
 class Command2Executor(CommandExecutor):
 
     def on_recognize(self, command_structure: CommandStructure, context: OutputContext):
-        context.set("C D E")
+        search = CommandStructureSearch(command_structure.get_root())
+        choice_item = search.find_by_type(NodeType.CHOICE)[0]
+        text = choice_item.children()[0].any()
+        context.set(f"2 {text} e")
 
 class SimplePluginCollector(PluginCollector):
 
@@ -39,13 +42,13 @@ def test_choice():
     output_context = OutputContext()
 
     matching_core.recognize_and_execute("a e", namespace="letters", context=output_context)
-    assert output_context.get() == "a e"
+    assert output_context.get() == "1 a e"
 
     matching_core.recognize_and_execute("b e", namespace="letters", context=output_context)
-    assert output_context.get() == "b e"
+    assert output_context.get() == "1 b e"
 
     matching_core.recognize_and_execute("c e", namespace="letters", context=output_context)
-    assert output_context.get() == "c e"
+    assert output_context.get() == "2 c e"
 
     matching_core.recognize_and_execute("d e", namespace="letters", context=output_context)
-    assert output_context.get() == "d e"
+    assert output_context.get() == "2 d e"

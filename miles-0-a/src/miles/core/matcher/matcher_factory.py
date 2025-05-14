@@ -19,26 +19,38 @@ class MatcherFactory:
         return new_state
 
 
-    def _move_and_add_word(self, state: MatchState, word_component: WordComponent, name: str | None) -> MatchState:
+    def _move_and_add_word(self,
+                           state: MatchState,
+                           word_component: WordComponent,
+                           name: str | None) -> MatchState:
         connection = MatchConnection(ConnectionType.WORD, word_component.get_content(), name)
         if state.has_connection(connection, word_component.get_priority()):
             return state.update_priority(connection, word_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, word_component.get_priority(), new_state)
 
-    def _move_and_add_matching(self, state: MatchState, matching_component: MatchingComponent, name: str | None) -> MatchState:
+    def _move_and_add_matching(self,
+                               state: MatchState,
+                               matching_component: MatchingComponent,
+                               name: str | None) -> MatchState:
         connection = MatchConnection(ConnectionType.MATCHING, matching_component.get_content(), name)
         if state.has_connection(connection, matching_component.get_priority()):
             return state.update_priority(connection, matching_component.get_priority())
         new_state = self._create_empty_state()
         return state.add_connection(connection, matching_component.get_priority(), new_state)
-    def _move_automatically(self, move_from: MatchState, move_to: MatchState, label: str, name: str | None):
-        if move_from is None or move_to is None:
-            return
+
+    def _move_automatically(self,
+                            move_from: MatchState,
+                            move_to: MatchState | None,
+                            label: str, name: str | None) -> MatchState:
         connection = MatchConnection(ConnectionType.AUTOMATIC, label, name)
         if move_from.has_connection(connection):
-            return move_to
-        move_from.add_connection(connection, self._automatic_priority, move_to)
+            return move_from.get_destination(connection)
+
+        if move_to is None:
+            move_to = self._create_empty_state()
+
+        return move_from.add_connection(connection, self._automatic_priority, move_to)
 
     def _append_command_signature(self, command: Command, c_name: str, from_state: MatchState):
         class SignatureVisitor(ComponentVisitor):
@@ -95,11 +107,9 @@ class MatcherFactory:
             def visit_optional(self, optional: OptionalComponent):
                 name = self._use_buffered_name()
                 prev = self.previous_state_buffer
-                begins_at = self._new_state()
-                ends_at = self._new_state()
 
-                self.parent._move_automatically(prev, ends_at, 'skip optional', name)
-                self.parent._move_automatically(prev, begins_at, 'begin optional', name)
+                ends_at = self.parent._move_automatically(prev, None, 'skip optional', name)
+                begins_at = self.parent._move_automatically(prev, None, 'begin optional', name)
 
                 self.previous_state_buffer = begins_at
 
@@ -114,8 +124,7 @@ class MatcherFactory:
             def visit_list(self, lst: ListComponent):
                 name = self._use_buffered_name()
                 prev = self.previous_state_buffer
-                begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, 'begin list', name)
+                begins_at = self.parent._move_automatically(prev, None, 'begin list', name)
                 self.previous_state_buffer = begins_at
 
                 content = lst.get_content()
@@ -129,18 +138,15 @@ class MatcherFactory:
             def visit_choice(self, choice: ChoiceComponent):
                 name = self._use_buffered_name()
                 prev = self.previous_state_buffer
-                begins_at = self._new_state()
-                self.parent._move_automatically(prev, begins_at, 'begin choice', name)
+                begins_at = self.parent._move_automatically(prev, None, 'begin choice', name)
                 self.previous_state_buffer = begins_at
 
                 content = choice.get_content()
                 end_state = self._new_state()
                 option_count = 0
                 for component in content:
-
-                    option_begin = self._new_state()
+                    option_begin = self.parent._move_automatically(begins_at, None, f'option {option_count}', name)
                     self.previous_state_buffer = option_begin
-                    self.parent._move_automatically(begins_at, option_begin, f'option {option_count}', name)
 
                     component.accept_visitor(self)
                     component_ends = self.previous_state_buffer
