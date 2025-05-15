@@ -153,7 +153,6 @@ def canvas_grammar(plugin_register: PluginRegister):
     namespace_init.add_command("set_angle", "SET number ANGLE number", SetterCommandExecutor('angle'))
     namespace_init.add_command("move", "MOVE number TO coordinates", MoveCommandExecutor())
 
-    #TODO: merge two delete commands in one
     namespace_init.add_command("delete1", "(DELETE, REMOVE) number", DeleteCommandExecutor())
     namespace_init.add_command("clear", "CLEAR { ALL }", ClearCommandExecutor())
 
