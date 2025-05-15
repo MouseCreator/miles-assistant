@@ -14,7 +14,7 @@ export default function Canvas() {
     function onSubmit(text) {
         setError('');
         setLastInput(text);
-        fetch('http://localhost:5000/canvas', {
+        fetch('http://localhost:5000/canvas/text', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -51,7 +51,21 @@ export default function Canvas() {
         });
     }
     function onRecorded(audio) {
-
+        const formData = new FormData();
+        formData.append('audio', audio, 'recording.webm');
+        formData.append('id_count', idCount);
+        formData.append('shapes', JSON.stringify(shapes))
+        fetch('http://localhost:5000/canvas/audio', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+            })
+            .catch(error => {
+                console.error('Upload failed:', error);
+            });
     }
 
     return (
