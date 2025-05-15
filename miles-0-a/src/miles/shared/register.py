@@ -121,7 +121,7 @@ class PluginRegister:
         self._namespaces.append(namespace)
         return namespace
 
-    def get_namespaces(self):
+    def get_namespaces(self) -> List[NamespaceInitializer]:
         return list(self._namespaces)
 
 

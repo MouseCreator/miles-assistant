@@ -18,13 +18,15 @@ class StoredCommand:
 class NamespaceOfCommands:
     def __init__(self,
                  name: str,
-                 prefix: str,
+                 prefix: str | None,
                  commands: List[StoredCommand],
                  priority_manager: PriorityManager,
                  dynamic_priorities: DynamicPriorityRuleSet,
                  definition_set : MatchingDefinitionSet,
                  word_analyzer_factory: WordContextAnalyzerFactory):
         self.name = name
+        if prefix is None:
+            prefix=''
         self.prefix = prefix
         self.commands = commands
         self.dynamic_priorities = dynamic_priorities
@@ -45,10 +47,12 @@ class NamespaceOfCommands:
 class PluginDefinition:
     def __init__(self,
                  name: str,
-                 display: str,
-                 namespaces: List[NamespaceOfCommands]):
+                 namespaces: List[NamespaceOfCommands],
+                 display: str|None = None):
         self._namespaces = namespaces
         self._name = name
+        if display is None:
+            display = self._name
         self._display_name = display
 
     def name(self):

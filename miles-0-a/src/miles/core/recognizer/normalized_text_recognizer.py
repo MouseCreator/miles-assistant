@@ -42,6 +42,159 @@ class _DynamicCache:
 
 
 @auto_str
+class _ExtendedCommandReader:
+    _pointers: List[RecPointer]
+    _reached_pointers: List[RecPointer]
+    _failed_max_pointer: RecPointer | None
+    _analyzers: AnalyzerProvider
+    _cache: _DynamicCache
+    _dynamic_priorities: DynamicPriorityRuleSet
+
+    def __init__(self,
+                 matcher: NormalizedMatcher,
+                 input_data: TextDataHolder,
+                 start_from: int,
+                 analyzer_provider: AnalyzerProvider,
+                 dynamic_priorities: DynamicPriorityRuleSet | None):
+        self._matcher = matcher
+        self._input_data = input_data
+        self._pointers = []
+        self._reached_pointers = []
+        self._failed_max_pointer = None
+        self._start_from = start_from
+        self._cache = _DynamicCache()
+
+        if analyzer_provider is None:
+            analyzer_provider = MatchingDefinitionSet()
+        self._analyzers = analyzer_provider
+
+        if dynamic_priorities is None:
+            dynamic_priorities = DynamicPriorityRuleSet()
+        self._dynamic_priorities = dynamic_priorities
+
+    def recognize(self):
+        self._pointers = []
+        self._reached_pointers = []
+        self._cache.clear()
+        self._failed_max_pointer = None
+        self._recognize_tokens()
+        return self._select_max_pointer()
+
+    def _select_max_pointer(self):
+        max_pointer = None
+        for pointer in self._reached_pointers:
+            if max_pointer is None:
+                max_pointer = pointer
+            elif pointer.get_position() > max_pointer.get_position():
+                max_pointer = pointer
+        return max_pointer
+
+
+    def _recognize_tokens(self):
+        initial = self._matcher.initial_state()
+        first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
+        self._failed_max_pointer = first_pointer
+        self._cache.add_to_cache(first_pointer)
+        self._pointers.append(first_pointer)
+
+        self._run_token_recognition_loop()
+
+    def _run_token_recognition_loop(self):
+        while len(self._pointers) > 0:
+            first = self._pointers.pop(0)
+            advanced = self._advance_pointer(first)
+            self._add_to_pointers(advanced)
+
+    def _add_to_pointers(self, new_pointers: List[RecPointer]):
+        new_items: List[RecPointer] = []
+        for p in new_pointers:
+            if p not in self._cache:
+                new_items.append(p)
+
+        for item in new_items:
+            self._cache.add_to_cache(item)
+
+        self._pointers[:0] = new_items
+
+    def _advance_pointer(self, pointer: RecPointer) -> List[RecPointer]:
+        if pointer.is_final():
+            self._reached_pointers.append(pointer)
+
+        next_gen_pointers: List[RecPointer] = []
+        ordered_connections = self._all_connections_ordered(pointer)
+        for connection in ordered_connections:
+            new_pointers = self._go_through_connection(pointer, connection)
+            next_gen_pointers.extend(new_pointers)
+
+        return next_gen_pointers
+
+    def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
+        nodes = connection.get_nodes()
+        previous_generation = [ pointer ]
+
+        for node in nodes:
+            this_generation = []
+            for p in previous_generation:
+                analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
+                advance = p.advance_with_analyzer(node, analyzer)
+                advance = self._optimized_route(advance, analyzer)
+
+                if len(advance) == 0: # failed pointer
+                    position = p.get_position()
+                    prev_max = self._failed_max_pointer.get_position()
+                    if position > prev_max:
+                        self._failed_max_pointer = p
+
+                this_generation.extend(advance)
+            previous_generation = this_generation
+
+        destination = pointer.get_state().get_destination(connection)
+        result = []
+        for p in previous_generation:
+            r = p.move_to(destination)
+            result.append(r)
+        return result
+
+    def _all_connections_ordered(self, pointer: RecPointer) -> List[NormalizedConnection]:
+        state = pointer.get_state()
+        connections_from_state = state.all_connections()
+
+        priority_map = {}
+        for c in connections_from_state:
+            priority = state.get_priority(c)
+            connection_origin = c.get_nodes()[0]
+            for d in self._dynamic_priorities.get_rules():
+                context = self._input_data.dynamic_priority_context(
+                    start_at=pointer.get_position(),
+                    flags=pointer.flags(),
+                    connection_type=connection_origin.node_type,
+                    connection_arg=connection_origin.argument,
+                    connection_name=connection_origin.name,
+                    priority=priority
+                )
+                if d.is_applicable(context):
+                    priority = d.priority(context)
+            priority_map[c] = priority
+
+        return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
+
+    def _optimized_route(self, next_gen_pointers: List[RecPointer], analyzer: GenericContextAnalyzer) -> List[RecPointer]:
+        lst = list(next_gen_pointers)
+        optimization_strategy = analyzer.optimization_strategy()
+        if optimization_strategy == RecOptimizationStrategy.NONE or optimization_strategy is None:
+            return lst
+        elif optimization_strategy == RecOptimizationStrategy.SHORTEST_FIRST:
+            return sorted(lst, key=lambda p: p.get_history().last().step())
+        elif optimization_strategy == RecOptimizationStrategy.LONGEST_FIRST:
+            return sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
+        elif optimization_strategy == RecOptimizationStrategy.RANDOMIZE:
+            shuffle(lst)
+            return lst
+        else:
+            raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
+
+
+@auto_str
 class _CommandReader:
     _pointers: List[RecPointer]
     _reached_pointer: RecPointer | None
@@ -323,3 +476,15 @@ def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceSt
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)
+
+def recognize_extended(tokens: List[str], nc: NamespaceComponent, start_from: int) -> CommandStructure | None:
+    of_data = TextDataHolder(tokens)
+    matcher = nc.command_matcher
+    dynamic_priorities = nc.dynamic_priorities
+    analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
+    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities)
+    pointer: RecPointer = reader.recognize()
+    if pointer is None:
+        return None
+    struct_factory = StructFactory()
+    return struct_factory.convert_command(None, tokens, pointer)

@@ -96,3 +96,6 @@ class TextRecognizeContext:
 
     def get_consumed(self) -> List[str]:
         return self._consumed
+
+    def position(self) -> int:
+        return self._position
