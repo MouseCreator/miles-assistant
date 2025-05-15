@@ -35,12 +35,18 @@ export function CanvasShapes({shapes}) {
     }, []);
 
     return (
-        <div className={'canvas-wrapper '}>
+        <div className={'canvas-wrapper'}>
+            <div className={"canvas-min"}>
+                <div>0</div>
+            </div>
             <canvas className='main-canvas'
                     ref={canvasRef}
                     width={CANVAS_WIDTH}
                     height={CANVAS_HEIGHT}
             />
+            <div className={"canvas-max"}>
+                <div>1000</div>
+            </div>
         </div>
     );
 }

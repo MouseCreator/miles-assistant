@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+from src.miles.core.recognizer.recognizer_error import RecognizerError
 from src.miles.shared.matching_core_factory import create_matching_core
 from src.miles.shared.register import MilesRegister
 from src.server.canvas_context import Shape, RequestContext
 from src.server.canvas_grammar import canvas_grammar
+from src.server.shape_error import ShapeError
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
@@ -47,9 +49,15 @@ def process_shapes():
 
         return jsonify(response_data), 200
 
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    except RecognizerError as e:
+        message = str(e)
+        return jsonify({"error": message}), 400
+    except ShapeError as e:
+        message = str(e)
+        return jsonify({"error": message}), 400
+    except Exception:
+        message = 'Server Error!'
+        return jsonify({"error": message}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

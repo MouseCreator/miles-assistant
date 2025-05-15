@@ -78,6 +78,12 @@ const InputRow = ({ onSubmit, onRecorded }) => {
                 className="text-input"
                 value={text}
                 onChange={handleTextChange}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+
+                        handleSubmit()
+                    }
+                }}
             />
             <button className="submit-button" onClick={handleSubmit}>
                 Submit

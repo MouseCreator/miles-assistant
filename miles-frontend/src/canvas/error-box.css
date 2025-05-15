@@ -1,0 +1,7 @@
+.error-box {
+    color: red;
+    text-align: center;
+    padding: 2px;
+    min-height: 44px;
+    max-width: 600px;
+}

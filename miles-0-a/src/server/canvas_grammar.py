@@ -7,6 +7,7 @@ from src.miles.shared.executor.command_structure import CommandStructure, NodeTy
 from src.miles.shared.executor.executor_utils import CommandStructureSearch
 from src.miles.shared.register import PluginRegister
 from src.server.canvas_context import RequestContext, Shape
+from src.server.shape_error import ShapeError
 
 SHAPES = ['arrow', 'circle', 'square', 'triangle', 'hexagon', 'oval', 'line']
 COLORS = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink', 'brown']
@@ -82,21 +83,23 @@ class SetterCommandExecutor(CommandExecutor):
 
         if target is None:
             raise ValueError(f'No shape with id {identifier} found!')
-
-        if self.setter_for == 'color':
+        setter = self.setter_for
+        if setter == 'color':
             target.color = search.find_ith(3).any()
-        elif self.setter_for == 'coord':
+        elif setter == 'coord':
             val = search.find_ith(4).value()
             target.x = int(val[0])
             target.y = int(val[1])
-        elif self.setter_for == 'x':
+        elif setter == 'x':
             target.x = int(search.find_ith(3).any())
-        elif self.setter_for == 'y':
+        elif setter == 'y':
             target.y = int(search.find_ith(3).any())
-        elif self.setter_for == 'shape':
+        elif setter == 'shape':
             target.category = search.find_ith(3).any()
-        elif self.setter_for == 'angle':
-            target.category = int(search.find_ith(3).any())
+        elif setter == 'angle':
+            target.angle = int(search.find_ith(3).any())
+        else:
+            raise ShapeError(f'Unknown setter method: {setter}')
 
 class MoveCommandExecutor(CommandExecutor):
     def __init__(self):
@@ -108,7 +111,7 @@ class MoveCommandExecutor(CommandExecutor):
         shapes = context.shapes()
         target = shapes.get_by_id(identifier)
         if target is None:
-            raise ValueError(f'No shape with identifier {target}')
+            raise ShapeError(f'No shape with identifier {target}')
         val = search.find_ith(3).value()
         target.x = int(val[0])
         target.y = int(val[1])
@@ -119,6 +122,15 @@ class DeleteCommandExecutor(CommandExecutor):
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         target = int(search.find_matching('number')[0].any())
+
+        has_target = False
+        for shape in context.shapes():
+            if shape.identity == target:
+                has_target = True
+
+        if not has_target:
+            raise ShapeError(f'No shape with identifier {target}')
+
         context.shapes().remove_by_id(target)
 
 class ClearCommandExecutor(CommandExecutor):

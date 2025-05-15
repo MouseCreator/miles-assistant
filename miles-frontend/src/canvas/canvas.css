@@ -1,7 +1,7 @@
 .canvas-wrapper {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: stretch
 }
 .main-canvas {
     background-color: #f3f8f8;
@@ -12,4 +12,15 @@
     width: auto;
     height: auto;
     display: block;
+}
+
+.canvas-min {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.canvas-max {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
 }
