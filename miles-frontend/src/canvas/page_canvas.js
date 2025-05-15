@@ -59,13 +59,29 @@ export default function Canvas() {
             method: 'POST',
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Server response:', data);
-            })
-            .catch(error => {
-                console.error('Upload failed:', error);
-            });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    console.error('Server Error:', err.error);
+                    setError(err.error)
+                    return null;
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data == null) {
+                return;
+            }
+            setIdCount(data.id_count);
+            const mappedShapes = data.shapes.map(item =>
+                new Shape(item.identity, item.category, item.x, item.y, item.color, item.angle)
+            );
+            setShapes(mappedShapes);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
     }
 
     return (
