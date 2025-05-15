@@ -11,10 +11,38 @@ export default function Canvas() {
     const [idCount, setIdCount] = useState(0);
     const [error, setError] = useState('')
     const [lastInput, setLastInput] = useState('')
+
+    function requestServerCommandProcessor(address, init_params) {
+        fetch(address, init_params)
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        console.error('Server Error:', err.error);
+                        setError(err.error)
+                        return null;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data == null) {
+                    return;
+                }
+                setIdCount(data.id_count);
+                const mappedShapes = data.shapes.map(item =>
+                    new Shape(item.identity, item.category, item.x, item.y, item.color, item.angle)
+                );
+                setShapes(mappedShapes);
+            })
+            .catch(error => {
+                console.error('Error:', error.message);
+                setError('Error!')
+            });
+    }
     function onSubmit(text) {
         setError('');
         setLastInput(text);
-        fetch('http://localhost:5000/canvas/text', {
+        requestServerCommandProcessor('http://localhost:5000/canvas/text', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -25,62 +53,15 @@ export default function Canvas() {
                 shapes: shapes
             })
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    console.error('Server Error:', err.error);
-                    setError(err.error)
-                    return null;
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data == null) {
-                return;
-            }
-            setIdCount(data.id_count);
-            const mappedShapes = data.shapes.map(item =>
-                new Shape(item.identity, item.category, item.x, item.y, item.color, item.angle)
-            );
-            setShapes(mappedShapes);
-        })
-        .catch(error => {
-            console.error('Error:', error.message);
-            setError('Error!')
-        });
     }
     function onRecorded(audio) {
         const formData = new FormData();
         formData.append('audio', audio, 'recording.webm');
         formData.append('id_count', idCount);
         formData.append('shapes', JSON.stringify(shapes))
-        fetch('http://localhost:5000/canvas/audio', {
+        requestServerCommandProcessor('http://localhost:5000/canvas/audio', {
             method: 'POST',
             body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    console.error('Server Error:', err.error);
-                    setError(err.error)
-                    return null;
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data == null) {
-                return;
-            }
-            setIdCount(data.id_count);
-            const mappedShapes = data.shapes.map(item =>
-                new Shape(item.identity, item.category, item.x, item.y, item.color, item.angle)
-            );
-            setShapes(mappedShapes);
-        })
-        .catch(error => {
-            console.error('Error:', error);
         });
     }
 
