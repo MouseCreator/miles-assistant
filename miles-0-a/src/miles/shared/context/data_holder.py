@@ -2,8 +2,9 @@
 from collections.abc import Callable
 from typing import List
 
-from src.miles.core.context.flags import Flags
-from src.miles.core.context.text_recognize_context import TextRecognizeContext
+from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.context.flags import Flags
+from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.matcher.matcher import ConnectionType
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityContext
 
@@ -22,9 +23,10 @@ class TextDataHolder:
                        on_interrupt: Callable[[TextRecognizeContext], None],
                        start_at: int,
                        flags: Flags,
+                       stack: RecognizerStack,
                        failed: bool = False):
         return TextRecognizeContext(
-            tokens=self._text, on_interrupt=on_interrupt, start_at=start_at, failed=failed, flags=flags
+            tokens=self._text, on_interrupt=on_interrupt, start_at=start_at, failed=failed, flags=flags, stack=stack
         )
 
     def dynamic_priority_context(self,

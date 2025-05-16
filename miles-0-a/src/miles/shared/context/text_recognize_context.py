@@ -1,6 +1,7 @@
 from typing import List, Callable, Self, TypeVar
 
-from src.miles.core.context.flags import Flags
+from src.miles.shared.context.flags import Flags
+from src.miles.core.recognizer.recognizer_stack import RecognizerStack
 
 T = TypeVar('T')
 
@@ -24,14 +25,24 @@ class TextRecognizeContext:
     _tokens: List[str]
     _flags: Flags
     _consumed: List[str]
+    _stack: RecognizerStack
 
-    def __init__(self, tokens: List[str], on_interrupt: Callable[[Self], None], start_at=0, failed=False, flags=Flags|None):
+    def __init__(self,
+                 tokens: List[str],
+                 on_interrupt: Callable[[Self], None],
+                 start_at=0,
+                 failed=False,
+                 flags: Flags|None = None,
+                 stack: RecognizerStack|None = None):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
         self._fail_flag = failed
         self._on_interrupt = on_interrupt
         self._consumed = []
+        if stack is None:
+            stack = RecognizerStack()
+        self._stack = stack
         if flags is None:
             flags = Flags()
         self._flags = flags.copy()
@@ -51,6 +62,8 @@ class TextRecognizeContext:
         self._on_interrupt(self)
 
     def consume(self, items:int = 1, interrupted: bool = False) -> None:
+        if self._fail_flag:
+            return
         c_range = ConsumedRange(self._position, self._position + items)
         self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
@@ -99,3 +112,9 @@ class TextRecognizeContext:
 
     def position(self) -> int:
         return self._position
+
+    def stack(self):
+        return self._stack
+
+    def set_flags(self, flags: Flags):
+        self._flags = flags

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from src.miles.core.context.text_recognize_context import TextRecognizeContext
+from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 
 

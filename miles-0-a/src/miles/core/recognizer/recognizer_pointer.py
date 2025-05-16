@@ -1,8 +1,9 @@
 from typing import Self, List
 
-from src.miles.core.context.data_holder import TextDataHolder
-from src.miles.core.context.flags import Flags
-from src.miles.core.context.text_recognize_context import TextRecognizeContext
+from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.context.data_holder import TextDataHolder
+from src.miles.shared.context.flags import Flags
+from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.normalized.history import NorHistory, HistoryItem
 from src.miles.shared.context_analyzer import GenericContextAnalyzer
 from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode
@@ -21,7 +22,8 @@ class RecPointer:
                  of_data: TextDataHolder,
                  current_position = 0,
                  history: NorHistory | None = None,
-                 flags: Flags | None = None):
+                 flags: Flags | None = None,
+                 stack: RecognizerStack | None = None):
         self._at_state = at_state
 
         self._current_position = current_position
@@ -34,6 +36,10 @@ class RecPointer:
         if flags is None:
             flags = Flags()
         self._flags = flags
+
+        if stack is None:
+            stack = RecognizerStack()
+        self._stack = stack
 
     def __eq__(self, other):
         if not isinstance(other, RecPointer):
@@ -78,7 +84,10 @@ class RecPointer:
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
-        context: TextRecognizeContext = self._of_data.create_context(_on_interrupt, self._current_position, flags=self._flags)
+        context: TextRecognizeContext = self._of_data.create_context(_on_interrupt,
+                                                                     self._current_position,
+                                                                     stack=self._stack,
+                                                                     flags=self._flags)
         analyzer.process(context)
         _on_interrupt(context)
         return result_pointers

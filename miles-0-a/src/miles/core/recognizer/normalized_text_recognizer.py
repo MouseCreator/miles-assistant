@@ -1,9 +1,11 @@
 from random import shuffle
 from typing import List, Set, Tuple
 
-from src.miles.core.context.data_holder import TextDataHolder
+from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.context.data_holder import TextDataHolder
 from src.miles.core.plugin.plugin_structure import NamespaceComponent
 from src.miles.core.recognizer.recognizer_error import RecognizerError
+from src.miles.shared.context.flags import Flags
 from src.miles.shared.executor.command_structure import NamespaceStructure, CommandStructure
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
@@ -55,7 +57,9 @@ class _ExtendedCommandReader:
                  input_data: TextDataHolder,
                  start_from: int,
                  analyzer_provider: AnalyzerProvider,
-                 dynamic_priorities: DynamicPriorityRuleSet | None):
+                 dynamic_priorities: DynamicPriorityRuleSet | None,
+                 stack: RecognizerStack,
+                 flags: Flags):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
@@ -63,6 +67,8 @@ class _ExtendedCommandReader:
         self._failed_max_pointer = None
         self._start_from = start_from
         self._cache = _DynamicCache()
+        self._initial_stack = stack
+        self._initial_flags = flags
 
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
@@ -92,7 +98,11 @@ class _ExtendedCommandReader:
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
-        first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
+        first_pointer = RecPointer(initial,
+                                   self._input_data,
+                                   current_position=self._start_from,
+                                   flags=self._initial_flags,
+                                   stack=self._initial_stack)
         self._failed_max_pointer = first_pointer
         self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
@@ -477,14 +487,20 @@ def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceSt
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)
 
-def recognize_extended(tokens: List[str], nc: NamespaceComponent, start_from: int) -> CommandStructure | None:
+def recognize_extended(title: str,
+                       tokens: List[str],
+                       nc: NamespaceComponent,
+                       start_from: int,
+                       stack: RecognizerStack,
+                       flags: Flags) -> CommandStructure | None:
     of_data = TextDataHolder(tokens)
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities)
+    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities, stack, flags)
     pointer: RecPointer = reader.recognize()
+    ns = NamespaceStructure(identifier=title, tokens=[])
     if pointer is None:
         return None
     struct_factory = StructFactory()
-    return struct_factory.convert_command(None, tokens, pointer)
+    return struct_factory.convert_command(ns, tokens, pointer)

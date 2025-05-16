@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Self
 
-from src.miles.core.context.flags import Flags
+from src.miles.shared.context.flags import Flags
 
 
 class NodeType(Enum):
@@ -137,6 +137,9 @@ class CommandStructure:
 
     def get_input(self) -> List[str]:
         return self._input
+
+    def size(self):
+        return len(self._input)
 
     def get_command_name(self) -> str:
         return self._command_name

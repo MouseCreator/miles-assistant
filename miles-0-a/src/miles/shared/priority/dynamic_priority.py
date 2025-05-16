@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.miles.core.context.flags import Flags
+from src.miles.shared.context.flags import Flags
 from src.miles.core.matcher.matcher import ConnectionType
 
 

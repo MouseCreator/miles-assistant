@@ -5,6 +5,8 @@ from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.priority.priority_manager import PriorityManager
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.shared.register import MilesRegister, PluginRegister, NamespaceInitializer
+from src.miles.utils.singleton import Singleton
+
 
 def _build_priority_manager(namespace: NamespaceInitializer) -> PriorityManager:
     priority_manager = PriorityManager(default_priority=namespace.get_default_priority(), strategy=namespace.get_priority_strategy())
@@ -60,14 +62,13 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
         word_analyzer_factory=word_analyzer_factory
     )
 
-
 def _map_plugin(plugin: PluginRegister) -> PluginDefinition:
     name = plugin.get_name()
     display_name = plugin.get_display_name()
 
     namespaces = list(map(_map_namespace, plugin.get_namespaces()))
 
-    return PluginDefinition(name, display_name, namespaces)
+    return PluginDefinition(name, namespaces, display_name)
 
 def map_register_to_definition(register: MilesRegister) -> List[PluginDefinition]:
     plugins = register.all_plugins()
