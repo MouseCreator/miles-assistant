@@ -1,4 +1,3 @@
-from src.miles.shared.connection_type import ConnectionType
 from src.miles.shared.collector import PluginCollector
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.shared.context_analyzer import WordContextAnalyzerFactory, TypedContextAnalyzer

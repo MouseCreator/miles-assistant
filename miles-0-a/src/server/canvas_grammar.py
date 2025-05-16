@@ -5,6 +5,7 @@ from src.miles.shared.context_analyzer import DefaultWordContextAnalyzerFactory,
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure, NodeType
 from src.miles.shared.executor.executor_utils import CommandStructureSearch
+from src.miles.shared.extended import ExtendedCore
 from src.miles.shared.register import PluginRegister
 from src.server.canvas_context import RequestContext, Shape
 from src.server.shape_error import ShapeError
@@ -62,6 +63,9 @@ class NumberContextAnalyzer(TypedContextAnalyzer):
             context.fail()
 
 class CoordinatesContextAnalyzer(TypedContextAnalyzer):
+
+    def __init__(self):
+        self._core = ExtendedCore('canvas', 'canvas', 'coordinates')
     def invoke(self, context: TextRecognizeContext):
         for i in range(2):
             current_word = context.current()
