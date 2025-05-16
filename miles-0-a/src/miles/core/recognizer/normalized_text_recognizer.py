@@ -18,6 +18,26 @@ from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.decorators import auto_str
 
 
+def _optimized_route(next_gen_pointers: List[RecPointer], analyzer: GenericContextAnalyzer) -> List[RecPointer]:
+    lst = list(next_gen_pointers)
+    optimization_strategy = analyzer.optimization_strategy()
+
+    if optimization_strategy == RecOptimizationStrategy.NONE or optimization_strategy is None:
+        return lst
+
+    elif optimization_strategy == RecOptimizationStrategy.SHORTEST_FIRST:
+        return sorted(lst, key=lambda p: p.get_history().last().step())
+
+    elif optimization_strategy == RecOptimizationStrategy.LONGEST_FIRST:
+        return sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
+
+    elif optimization_strategy == RecOptimizationStrategy.RANDOMIZE:
+        shuffle(lst)
+        return lst
+    else:
+        raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
+
+
 class _DynamicCache:
     _cache: Set[Tuple[int, int]]
     def __init__(self):
@@ -26,7 +46,7 @@ class _DynamicCache:
     def _pair(self, pointer: RecPointer):
         state_id = pointer.get_state().get_id()
         position = pointer.get_position()
-        return (state_id, position)
+        return state_id, position
 
     def add_to_cache(self, pointer: RecPointer):
 
@@ -135,7 +155,7 @@ class _ExtendedCommandReader:
         for connection in ordered_connections:
             new_pointers = self._go_through_connection(pointer, connection)
             next_gen_pointers.extend(new_pointers)
-
+        next_gen_pointers = sorted(next_gen_pointers, key=lambda p : p.certainty(), reverse=True)
         return next_gen_pointers
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
@@ -147,7 +167,7 @@ class _ExtendedCommandReader:
             for p in previous_generation:
                 analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
-                advance = self._optimized_route(advance, analyzer)
+                advance = _optimized_route(advance, analyzer)
 
                 if len(advance) == 0: # failed pointer
                     position = p.get_position()
@@ -187,21 +207,6 @@ class _ExtendedCommandReader:
             priority_map[c] = priority
 
         return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
-
-    def _optimized_route(self, next_gen_pointers: List[RecPointer], analyzer: GenericContextAnalyzer) -> List[RecPointer]:
-        lst = list(next_gen_pointers)
-        optimization_strategy = analyzer.optimization_strategy()
-        if optimization_strategy == RecOptimizationStrategy.NONE or optimization_strategy is None:
-            return lst
-        elif optimization_strategy == RecOptimizationStrategy.SHORTEST_FIRST:
-            return sorted(lst, key=lambda p: p.get_history().last().step())
-        elif optimization_strategy == RecOptimizationStrategy.LONGEST_FIRST:
-            return sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
-        elif optimization_strategy == RecOptimizationStrategy.RANDOMIZE:
-            shuffle(lst)
-            return lst
-        else:
-            raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
 
 
 @auto_str
@@ -283,13 +288,12 @@ class _CommandReader:
             self._reached_pointer = pointer
             return []
 
-
         next_gen_pointers: List[RecPointer] = []
         ordered_connections = self._all_connections_ordered(pointer)
         for connection in ordered_connections:
             new_pointers = self._go_through_connection(pointer, connection)
             next_gen_pointers.extend(new_pointers)
-
+        next_gen_pointers = sorted(next_gen_pointers, key=lambda p: p.certainty(), reverse=True)
         return next_gen_pointers
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
@@ -301,7 +305,7 @@ class _CommandReader:
             for p in previous_generation:
                 analyzer = self._analyzers.provide_analyzer(node.node_type, node.argument)
                 advance = p.advance_with_analyzer(node, analyzer)
-                advance = self._optimized_route(advance, analyzer)
+                advance = _optimized_route(advance, analyzer)
 
                 if len(advance) == 0: # failed pointer
                     position = p.get_position()
@@ -342,20 +346,6 @@ class _CommandReader:
 
         return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
 
-    def _optimized_route(self, next_gen_pointers: List[RecPointer], analyzer: GenericContextAnalyzer) -> List[RecPointer]:
-        lst = list(next_gen_pointers)
-        optimization_strategy = analyzer.optimization_strategy()
-        if optimization_strategy == RecOptimizationStrategy.NONE or optimization_strategy is None:
-            return lst
-        elif optimization_strategy == RecOptimizationStrategy.SHORTEST_FIRST:
-            return sorted(lst, key=lambda p: p.get_history().last().step())
-        elif optimization_strategy == RecOptimizationStrategy.LONGEST_FIRST:
-            return sorted(lst, key=lambda p: p.get_history().last().step(), reverse=True)
-        elif optimization_strategy == RecOptimizationStrategy.RANDOMIZE:
-            shuffle(lst)
-            return lst
-        else:
-            raise ValueError(f'Unexpected optimization strategy: {optimization_strategy.name}')
 @auto_str
 class _NamespaceReader:
     _pointers: List[RecPointer]

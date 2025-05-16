@@ -26,6 +26,7 @@ class TextRecognizeContext:
     _flags: Flags
     _consumed: List[str]
     _stack: RecognizerStack
+    _last_certainty: float
 
     def __init__(self,
                  tokens: List[str],
@@ -40,6 +41,7 @@ class TextRecognizeContext:
         self._fail_flag = failed
         self._on_interrupt = on_interrupt
         self._consumed = []
+        self._last_certainty = 0.0
         if stack is None:
             stack = RecognizerStack()
         self._stack = stack
@@ -61,31 +63,40 @@ class TextRecognizeContext:
     def interrupt(self):
         self._on_interrupt(self)
 
-    def consume(self, items:int = 1, interrupted: bool = False) -> None:
+    def consume(self, items:int = 1, interrupted: bool = False, certainty: float=100) -> None:
         if self._fail_flag:
             return
         c_range = ConsumedRange(self._position, self._position + items)
         self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
+        self._last_certainty = certainty
         if interrupted:
             self.interrupt()
 
-    def variant(self, items: int = 1) -> None:
+    def variant(self, items: int = 1, certainty: float=100) -> None:
         prev_position = self._position
         prev_consumed = list(self._consumed)
+        prev_certainty = self._last_certainty
 
         c_range = ConsumedRange(self._position, self._position + items)
         self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
+        self._last_certainty = certainty
+
         self.interrupt()
 
+        self._last_certainty = prev_certainty
         self._position = prev_position
         self._consumed = prev_consumed
-    def ignore(self, items: int = 1, interrupted: bool = False) -> None:
+
+    def ignore(self, items: int = 1, interrupted: bool = False, certainty: float=100) -> None:
         self._position = min(self._total, self._position + items)
+        self._last_certainty = certainty
         if interrupted:
             self.interrupt()
 
+    def last_certainty(self):
+        return self._last_certainty
     def remaining_count(self) -> int:
         return self._total - self._position
 

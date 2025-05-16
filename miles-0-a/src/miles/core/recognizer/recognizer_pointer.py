@@ -23,10 +23,11 @@ class RecPointer:
                  current_position = 0,
                  history: NorHistory | None = None,
                  flags: Flags | None = None,
-                 stack: RecognizerStack | None = None):
+                 stack: RecognizerStack | None = None,
+                 certainty: float=100):
         self._at_state = at_state
-
         self._current_position = current_position
+        self._certainty = certainty
         self._of_data = of_data
 
         if history is None:
@@ -49,18 +50,28 @@ class RecPointer:
     def get_state(self) -> NormalizedState:
         return self._at_state
 
+    def certainty(self):
+        return self._certainty
+
     def move_to(self, state: NormalizedState) -> Self:
         return RecPointer(
             at_state=state,
             of_data=self._of_data,
             current_position=self._current_position,
             history=self._history,
-            flags=self._flags.copy()
+            flags=self._flags.copy(),
+            certainty=self._certainty
         )
     def get_position(self):
         return self._current_position
     def _create_next_pointer(self, context: TextRecognizeContext, node: NormalizedNode) -> Self:
         new_position = context.index()
+
+        certainty = context.last_certainty()
+        if certainty < 0:
+            certainty = 0
+        if certainty > 100:
+            certainty = 100
 
         new_item = HistoryItem(
             node=node,
@@ -72,7 +83,8 @@ class RecPointer:
             at_state=self._at_state,
             of_data=self._of_data,
             current_position=new_position,
-            history=self._history.extend(new_item)
+            history=self._history.extend(new_item),
+            certainty=certainty
         )
 
     def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:

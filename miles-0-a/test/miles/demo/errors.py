@@ -24,7 +24,7 @@ class SimplePluginCollector(PluginCollector):
         namespace_init.add_command("c1", "A B C D E", MockCommandExecutor())
 
 
-def test_choice():
+def test_errors():
     SimplePluginCollector().collect_plugins()
     matching_core: MatchingCore = create_matching_core()
 
