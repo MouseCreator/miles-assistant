@@ -1,4 +1,4 @@
-from enum import Enum
+
 from typing import Self, List
 
 
@@ -6,12 +6,7 @@ from src.miles.core.matcher.matcher_error import MatcherError
 from src.miles.utils.list_utils import index_of
 from src.miles.utils.pretty import PrintableStructure
 from src.miles.utils.strings import print_list
-
-
-class ConnectionType(Enum):
-    AUTOMATIC = 0
-    WORD = 1
-    MATCHING = 2
+from src.miles.shared.connection_type import ConnectionType
 
 
 class MatchConnection(PrintableStructure):

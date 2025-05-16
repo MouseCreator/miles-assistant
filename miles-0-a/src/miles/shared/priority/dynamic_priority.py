@@ -32,7 +32,7 @@ class DynamicPriorityContext:
     def connection_type(self):
         return self._connection_type
 
-    def connection_argument(self):
+    def argument(self):
         return self._connection_argument
 
     def static_priority(self):
@@ -54,9 +54,6 @@ class DynamicPriorityContext:
 
 
 class DynamicPriorityRule(ABC):
-    @abstractmethod
-    def plugin(self) -> str:
-        pass
 
     @abstractmethod
     def is_applicable(self, context: DynamicPriorityContext) -> bool:

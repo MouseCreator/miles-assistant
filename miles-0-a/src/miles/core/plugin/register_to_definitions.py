@@ -5,7 +5,6 @@ from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
 from src.miles.core.priority.priority_manager import PriorityManager
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.shared.register import MilesRegister, PluginRegister, NamespaceInitializer
-from src.miles.utils.singleton import Singleton
 
 
 def _build_priority_manager(namespace: NamespaceInitializer) -> PriorityManager:

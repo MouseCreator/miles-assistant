@@ -28,42 +28,42 @@ class PriorityRule(ABC):
         return None
 
 
-class GeneralWordRule(PriorityRule, ABC):
+class GeneralWordRule(PriorityRule):
+
+    def __init__(self, priority: int):
+        super().__init__()
+        self.priority = priority
 
     def rule_type(self) -> RuleType:
         return RuleType.GENERAL_WORD
 
     def get_priority(self, argument: str) -> int:
-        return self.for_word()
-
-    @abstractmethod
-    def for_word(self) -> int:
-        pass
+        return self.priority
 
 
 class GeneralMatchingRule(PriorityRule, ABC):
 
+    def __init__(self, priority: int):
+        super().__init__()
+        self.priority = priority
+
     def rule_type(self) -> RuleType:
         return RuleType.GENERAL_MATCHING
 
     def get_priority(self, argument: str) -> int:
-        return self.for_matching()
-
-    @abstractmethod
-    def for_matching(self) -> int:
-        pass
+        return self.priority
 
 class GeneralAutomaticRule(PriorityRule, ABC):
 
+    def __init__(self, priority: int):
+        super().__init__()
+        self.priority = priority
+
     def rule_type(self) -> RuleType:
         return RuleType.GENERAL_MATCHING
 
     def get_priority(self, argument: str) -> int:
-        return self.for_automatic()
-
-    @abstractmethod
-    def for_automatic(self) -> int:
-        pass
+        return self.priority
 
 class ConstructedRule(PriorityRule, ABC):
     def __init__(self, argument: str, priority: int):

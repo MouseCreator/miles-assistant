@@ -1,6 +1,5 @@
 from typing import List
 
-from src.miles.core.plugin.plugin_definition import PluginDefinition
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.shared.priority.priority_rule import PriorityRule
