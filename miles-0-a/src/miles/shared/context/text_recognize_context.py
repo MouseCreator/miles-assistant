@@ -2,6 +2,7 @@ from typing import List, Callable, Self, TypeVar
 
 from src.miles.shared.context.flags import Flags
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.context.shared_node import SharedNode
 
 T = TypeVar('T')
 
@@ -31,6 +32,7 @@ class TextRecognizeContext:
     def __init__(self,
                  tokens: List[str],
                  on_interrupt: Callable[[Self], None],
+                 node: SharedNode,
                  start_at=0,
                  failed=False,
                  flags: Flags|None = None,
@@ -41,6 +43,7 @@ class TextRecognizeContext:
         self._fail_flag = failed
         self._on_interrupt = on_interrupt
         self._consumed = []
+        self._node = node
         self._last_certainty = 0.0
         if stack is None:
             stack = RecognizerStack()
@@ -129,3 +132,6 @@ class TextRecognizeContext:
 
     def set_flags(self, flags: Flags):
         self._flags = flags
+
+    def node(self) -> SharedNode:
+        return self._node

@@ -1,12 +1,15 @@
 from typing import Self, List
 
+from click import argument
+
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
 from src.miles.shared.context.data_holder import TextDataHolder
 from src.miles.shared.context.flags import Flags
+from src.miles.shared.context.shared_node import SharedNode
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.normalized.history import NorHistory, HistoryItem
 from src.miles.shared.context_analyzer import GenericContextAnalyzer
-from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode
+from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode, HistoryNodeType
 
 
 class RecPointer:
@@ -65,11 +68,12 @@ class RecPointer:
     def get_position(self):
         return self._current_position
     def _create_next_pointer(self, context: TextRecognizeContext, node: NormalizedNode) -> Self:
+        if context.is_failed():
+            return None
         new_position = context.index()
-
         certainty = context.last_certainty()
         if certainty < 0:
-            certainty = 0
+            return None
         if certainty > 100:
             certainty = 100
 
@@ -90,16 +94,27 @@ class RecPointer:
     def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
         result_pointers: List[RecPointer] = []
         def _on_interrupt(ctx: TextRecognizeContext):
-            if ctx.is_failed():
-                return
             next_pointer = self._create_next_pointer(ctx, node)
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
 
+        node_type = 'automatic'
+        if node.node_type == HistoryNodeType.WORD:
+            node_type = 'word'
+        elif node.node_type == HistoryNodeType.MATCHING:
+            node_type = 'matching'
+
+        shared_node = SharedNode(
+            connection_type=node_type,
+            argument=node.argument,
+            name=node.name
+        )
+
         context: TextRecognizeContext = self._of_data.create_context(_on_interrupt,
                                                                      self._current_position,
                                                                      stack=self._stack,
-                                                                     flags=self._flags)
+                                                                     flags=self._flags,
+                                                                     node=shared_node)
         analyzer.process(context)
         _on_interrupt(context)
         return result_pointers
