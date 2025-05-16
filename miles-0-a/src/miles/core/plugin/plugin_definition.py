@@ -2,6 +2,7 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
+from src.miles.shared.certainty import CertaintyEffect
 from src.miles.shared.context_analyzer import WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
@@ -23,7 +24,8 @@ class NamespaceOfCommands:
                  priority_manager: PriorityManager,
                  dynamic_priorities: DynamicPriorityRuleSet,
                  definition_set : MatchingDefinitionSet,
-                 word_analyzer_factory: WordContextAnalyzerFactory):
+                 word_analyzer_factory: WordContextAnalyzerFactory,
+                 certainty_effect: CertaintyEffect):
         self.name = name
         if prefix is None:
             prefix=''
@@ -33,6 +35,7 @@ class NamespaceOfCommands:
         self.priority_manager = priority_manager
         self.definition_set = definition_set
         self.word_analyzer_factory = word_analyzer_factory
+        self.certainty_effect: CertaintyEffect = certainty_effect
 
     def as_command_namespace(self):
         words = self.prefix.split() if self.prefix.strip() else []

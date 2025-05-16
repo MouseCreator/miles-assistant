@@ -50,7 +50,7 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
 
     dynamic_ruleset = _map_dynamic_rules(namespace)
     word_analyzer_factory = namespace.get_word_analyzer_factory()
-
+    certainty = namespace.get_certainty_effect()
     return NamespaceOfCommands(
         name=name,
         prefix=prefix,
@@ -58,7 +58,8 @@ def _map_namespace(namespace: NamespaceInitializer) -> NamespaceOfCommands:
         commands=commands,
         definition_set=definition_set,
         dynamic_priorities=dynamic_ruleset,
-        word_analyzer_factory=word_analyzer_factory
+        word_analyzer_factory=word_analyzer_factory,
+        certainty_effect=certainty
     )
 
 def _map_plugin(plugin: PluginRegister) -> PluginDefinition:

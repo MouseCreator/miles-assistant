@@ -40,7 +40,7 @@ def create_normalized_matcher_from_definitions(plugin_definition: PluginDefiniti
                                                  namespace.definition_set,
                                                  dynamic_rule_set,
                                                  executor_map,
-                                                 word_analyzer_factory)
+                                                 word_analyzer_factory, namespace.certainty_effect)
         namespace_components.append(namespace_component)
 
     return PluginStructure(plugin_name, namespace_components)

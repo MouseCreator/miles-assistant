@@ -1,5 +1,6 @@
 from typing import List
 
+from src.miles.shared.certainty import SortCertaintyEffect, CertaintyEffect
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
 from src.miles.shared.priority.priority_rule import PriorityRule
@@ -41,6 +42,7 @@ class NamespaceInitializer:
         self._priority_strategy = PriorityStrategy.ALL_DEFAULT
         self._default_priority = 0
         self._word_analyzer_factory = DefaultWordContextAnalyzerFactory()
+        self._certainty_effect = SortCertaintyEffect()
 
     def add_command(self, name: str, syntax: str, executor: CommandExecutor):
         command = CommandInitializer(name, syntax, executor)
@@ -96,6 +98,11 @@ class NamespaceInitializer:
         return self._word_analyzer_factory
     def set_word_analyzer_factory(self, factory : WordContextAnalyzerFactory):
         self._word_analyzer_factory = factory
+
+    def get_certainty_effect(self):
+        return self._certainty_effect
+    def set_certainty_effect(self, ce: CertaintyEffect):
+        self._certainty_effect = ce
 
 
 class PluginRegister:

@@ -1,5 +1,6 @@
 from typing import List
 
+from src.miles.shared.certainty import CertaintyEffect
 from src.miles.shared.context_analyzer import WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutorsMap
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
@@ -15,13 +16,15 @@ class NamespaceComponent:
                  definitions: MatchingDefinitionSet,
                  dynamic_ruleset: DynamicPriorityRuleSet,
                  executors_map: CommandExecutorsMap,
-                 word_analyzer_factory: WordContextAnalyzerFactory):
+                 word_analyzer_factory: WordContextAnalyzerFactory,
+                 certainty_effect: CertaintyEffect):
         self.name = name
         self.executors_map = executors_map
         self.command_matcher = command_mather
         self.definitions = definitions
         self.dynamic_priorities = dynamic_ruleset
         self.word_analyzer_factory = word_analyzer_factory
+        self.certainty_effect = certainty_effect
 
 
 class PluginStructure:

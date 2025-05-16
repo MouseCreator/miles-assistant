@@ -1,7 +1,8 @@
 import random
 
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
-from src.miles.shared.context_analyzer import DefaultWordContextAnalyzerFactory, TypedContextAnalyzer
+from src.miles.shared.context_analyzer import DefaultWordContextAnalyzerFactory, TypedContextAnalyzer, \
+    WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure, NodeType
 from src.miles.shared.executor.executor_utils import CommandStructureSearch
@@ -19,6 +20,49 @@ def is_number(text: str):
         if char < '0' or char > '9':
             return False
     return len(text) > 0
+
+
+class TypoWordAnalyzer(TypedContextAnalyzer):
+
+    def __init__(self, word: str):
+        super().__init__()
+        self.word = word.lower()
+
+    def _count_typos(self, word1: str, word2: str) -> int:
+        typos = 0
+        for a, b in zip(word1, word2):
+            if a != b:
+                typos+=1
+        return typos
+
+    def invoke(self, context: TextRecognizeContext):
+        current = context.current().lower()
+
+        if self.word == current:
+            context.consume(certainty=100)
+            return
+
+        if len(self.word) <= 3:
+            context.fail()
+            return
+
+        if len(self.word) == len(current):
+            typos = self._count_typos(self.word, current)
+            threshold = 0.3
+            correct_ratio = typos / len(self.word)
+            if correct_ratio < threshold:
+                certainty=0
+                context.consume(certainty=certainty)
+            else:
+                context.fail()
+            return
+
+
+class TypoWordAnalyzerFactory(WordContextAnalyzerFactory):
+
+    def build(self, word: str) -> TypedContextAnalyzer:
+        return TypoWordAnalyzer(word)
+
 
 class AddCommandExecutor(CommandExecutor):
     def on_recognize(self, command_structure: CommandStructure, request_context: RequestContext):
@@ -66,13 +110,21 @@ class CoordinatesContextAnalyzer(TypedContextAnalyzer):
 
     def __init__(self):
         self._core = ExtendedCore('canvas', 'canvas', 'coordinates')
+        self._core.init_commands([
+            ('simple', 'x=number {AND} y=number'),
+            ('complex', 'X x=number {AND} Y y=number')
+        ])
+
     def invoke(self, context: TextRecognizeContext):
-        for i in range(2):
-            current_word = context.current()
-            if is_number(current_word):
-                context.consume()
-            else:
-                context.fail()
+        command_structure = self._core.recognize_extended(context=context)
+        if command_structure is None:
+            context.fail()
+        search = CommandStructureSearch(command_structure.get_root())
+        x = search.find_all_named('x')[0].any()
+        y = search.find_all_named('y')[0].any()
+        context.ignore(command_structure.get_root().size())
+        context.write([x, y])
+
 
 class SetterCommandExecutor(CommandExecutor):
     def __init__(self, setter_for: str):

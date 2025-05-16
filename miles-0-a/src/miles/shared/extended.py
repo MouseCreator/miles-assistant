@@ -52,7 +52,8 @@ class ExtendedCore:
                                                      priority_manager=self._namespace.priority_manager,
                                                      dynamic_priorities=self._namespace.dynamic_priorities,
                                                      definition_set=self._namespace.definition_set,
-                                                     word_analyzer_factory=self._namespace.word_analyzer_factory)
+                                                     word_analyzer_factory=self._namespace.word_analyzer_factory,
+                                                     certainty_effect=self._namespace.certainty_effect)
         position = context.position()
         if context.stack().contains(self._title, position):
             return None # fails to avoid infinite loop

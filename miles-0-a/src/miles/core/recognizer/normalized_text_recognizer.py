@@ -2,6 +2,7 @@ from random import shuffle
 from typing import List, Set, Tuple
 
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.certainty import CertaintyDecision, CertaintyItem, CertaintyEffect
 from src.miles.shared.context.data_holder import TextDataHolder
 from src.miles.core.plugin.plugin_structure import NamespaceComponent
 from src.miles.core.recognizer.recognizer_error import RecognizerError
@@ -71,6 +72,7 @@ class _ExtendedCommandReader:
     _analyzers: AnalyzerProvider
     _cache: _DynamicCache
     _dynamic_priorities: DynamicPriorityRuleSet
+    _certainty_effect: CertaintyEffect
 
     def __init__(self,
                  matcher: NormalizedMatcher,
@@ -78,10 +80,12 @@ class _ExtendedCommandReader:
                  start_from: int,
                  analyzer_provider: AnalyzerProvider,
                  dynamic_priorities: DynamicPriorityRuleSet | None,
+                 certainty_effect: CertaintyEffect,
                  stack: RecognizerStack,
                  flags: Flags):
         self._matcher = matcher
         self._input_data = input_data
+        self._certainty_effect = certainty_effect
         self._pointers = []
         self._reached_pointers = []
         self._failed_max_pointer = None
@@ -152,11 +156,31 @@ class _ExtendedCommandReader:
 
         next_gen_pointers: List[RecPointer] = []
         ordered_connections = self._all_connections_ordered(pointer)
+        pointers_count = 0
+        pointers_dict = {}
+        decision = CertaintyDecision()
+        category_count = 0
         for connection in ordered_connections:
             new_pointers = self._go_through_connection(pointer, connection)
-            next_gen_pointers.extend(new_pointers)
-        next_gen_pointers = sorted(next_gen_pointers, key=lambda p : p.certainty(), reverse=True)
-        return next_gen_pointers
+
+            if len(new_pointers) > 0:
+                category_count += 1
+                items = []
+                for np in new_pointers:
+                    pointers_count += 1
+                    pointers_dict[pointers_count] = np
+                    item = CertaintyItem(pointers_count, category_count, np.certainty())
+                    items.append(item)
+                decision.add(items)
+                next_gen_pointers.extend(new_pointers)
+
+        target_order = self._certainty_effect.apply(decision)
+        result = []
+        for item in target_order:
+            pointer = pointers_dict[item.identity]
+            result.append(pointer)
+
+        return result
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
         nodes = connection.get_nodes()
@@ -216,6 +240,7 @@ class _CommandReader:
     _failed_max_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
     _cache: _DynamicCache
+    _certainty_effect: CertaintyEffect
     _dynamic_priorities: DynamicPriorityRuleSet
 
     def __init__(self,
@@ -223,10 +248,12 @@ class _CommandReader:
                  input_data: TextDataHolder,
                  start_from: int,
                  analyzer_provider: AnalyzerProvider,
+                 certainty_effect: CertaintyEffect,
                  dynamic_priorities: DynamicPriorityRuleSet | None):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
+        self._certainty_effect = certainty_effect
         self._reached_pointer = None
         self._failed_max_pointer = None
         self._start_from = start_from
@@ -290,11 +317,31 @@ class _CommandReader:
 
         next_gen_pointers: List[RecPointer] = []
         ordered_connections = self._all_connections_ordered(pointer)
+        pointers_count = 0
+        pointers_dict = {}
+        decision = CertaintyDecision()
+        category_count = 0
         for connection in ordered_connections:
             new_pointers = self._go_through_connection(pointer, connection)
-            next_gen_pointers.extend(new_pointers)
-        next_gen_pointers = sorted(next_gen_pointers, key=lambda p: p.certainty(), reverse=True)
-        return next_gen_pointers
+
+            if len(new_pointers) > 0:
+                category_count += 1
+                items = []
+                for np in new_pointers:
+                    pointers_count += 1
+                    pointers_dict[pointers_count] = np
+                    item = CertaintyItem(pointers_count, category_count, np.certainty())
+                    items.append(item)
+                decision.add(items)
+                next_gen_pointers.extend(new_pointers)
+
+        target_order = self._certainty_effect.apply(decision)
+        result = []
+        for item in target_order:
+            pointer = pointers_dict[item.identity]
+            result.append(pointer)
+
+        return result
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
         nodes = connection.get_nodes()
@@ -472,7 +519,7 @@ def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceSt
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, dynamic_priorities)
+    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, nc.certainty_effect, dynamic_priorities)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)
@@ -486,8 +533,9 @@ def recognize_extended(title: str,
     of_data = TextDataHolder(tokens)
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
+    certainty_effect = nc.certainty_effect
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities, stack, flags)
+    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities, certainty_effect, stack, flags)
     pointer: RecPointer = reader.recognize()
     ns = NamespaceStructure(identifier=title, tokens=[])
     if pointer is None:
