@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from src.miles.shared.context.flags import Flags
 from src.miles.utils.decorators import auto_str
 
 
 @auto_str
 class CertaintyItem:
-    def __init__(self, identity: int, origin: int, certainty: float):
+    def __init__(self, identity: int, origin: int, certainty: float, flags: Flags):
         self.identity = identity
         self.origin = origin
         self.certainty = certainty
+        self.flags = flags
 @auto_str
 class CertaintyDecision:
     _all: List[List[CertaintyItem]]

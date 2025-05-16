@@ -169,7 +169,7 @@ class _ExtendedCommandReader:
                 for np in new_pointers:
                     pointers_count += 1
                     pointers_dict[pointers_count] = np
-                    item = CertaintyItem(pointers_count, category_count, np.certainty())
+                    item = CertaintyItem(pointers_count, category_count, np.certainty(), np.flags().copy())
                     items.append(item)
                 decision.add(items)
                 next_gen_pointers.extend(new_pointers)
