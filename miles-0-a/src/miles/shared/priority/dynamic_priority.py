@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.shared.context.flags import Flags
-from src.miles.core.matcher.matcher import ConnectionType
 
 
 class DynamicPriorityContext:
     def __init__(self,
                  tokens: List[str],
-                 connection_type: ConnectionType,
+                 connection_type: HistoryNodeType,
                  connection_argument: str,
                  connection_name: str,
                  static_priority: int,
@@ -29,8 +29,8 @@ class DynamicPriorityContext:
     def __len__(self):
         return self._total
 
-    def connection_type(self):
-        return self._connection_type
+    def is_word(self):
+        return self._connection_type == HistoryNodeType.WORD
 
     def argument(self):
         return self._connection_argument
@@ -51,6 +51,12 @@ class DynamicPriorityContext:
 
     def lookahead(self, items: int) -> List[str]:
         return self._tokens[self._position: self._position + items]
+
+    def is_matching(self):
+        return self._connection_type == HistoryNodeType.MATCHING
+
+    def is_automatic(self):
+        return self._connection_type == HistoryNodeType.AUTOMATIC
 
 
 class DynamicPriorityRule(ABC):

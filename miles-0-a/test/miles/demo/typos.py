@@ -25,7 +25,7 @@ class Command2Executor(CommandExecutor):
 class WordPriorityRule(DynamicPriorityRule):
 
     def is_applicable(self, context: DynamicPriorityContext) -> bool:
-        return context.connection_type() == ConnectionType.WORD
+        return context.is_word()
 
     def priority(self, context: DynamicPriorityContext) -> int:
         next_word = context.current()
@@ -35,7 +35,7 @@ class WordPriorityRule(DynamicPriorityRule):
 class MonthPriorityRule(DynamicPriorityRule):
 
     def is_applicable(self, context: DynamicPriorityContext) -> bool:
-        return context.connection_type() == ConnectionType.MATCHING and context.argument().lower() == 'month'
+        return context.is_matching() and context.argument().lower() == 'month'
 
     def priority(self, context: DynamicPriorityContext) -> int:
 
@@ -91,6 +91,7 @@ class SimplePluginCollector(PluginCollector):
         namespace_init.add_command("c2", "I LOVE month", Command2Executor())
         namespace_init.add_static_priority_rule(GeneralMatchingRule(20))
         namespace_init.add_dynamic_priority_rule(MonthPriorityRule())
+        namespace_init.add_dynamic_priority_rule(WordPriorityRule())
         namespace_init.add_matching('month', MonthAnalyzer())
         namespace_init.set_word_analyzer_factory(TypoWordContextAnalyzerFactory())
 
