@@ -4,9 +4,9 @@ from src.server.canvas_context import RequestContext
 from src.server.canvas_grammar import canvas_grammar
 
 
-if __name__ == '__main__':
+def test_typos_in_command():
     plugin = MilesRegister().create_plugin_register('app')
     canvas_grammar(plugin)
     matching_core = create_matching_core()
     context = RequestContext([], 0)
-    matching_core.recognize_and_execute('remove 1', 'canvas', context)
+    matching_core.recognize_and_execute('insetr sqaure at 100 100', 'canvas', context)

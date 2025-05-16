@@ -38,11 +38,13 @@ class ExtendedCore:
     def recognize_extended(self, context: TextRecognizeContext) -> CommandStructure | None:
         reg = MilesRegister()
         plugins = map_register_to_definition(reg)
+        plugin = None
         for p in plugins:
             if p.name() == self._plugin:
-                self._plugin = p
-
-        for n in self._plugin.namespaces():
+                plugin = p
+        if plugin is None:
+            raise ValueError(f'Unknown plugin: {self._plugin}')
+        for n in plugin.namespaces():
             if n.name == self._namespace:
                 self._namespace = n
 

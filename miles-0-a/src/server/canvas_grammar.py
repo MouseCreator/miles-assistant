@@ -1,7 +1,7 @@
 import random
 
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
-from src.miles.shared.context_analyzer import DefaultWordContextAnalyzerFactory, TypedContextAnalyzer, \
+from src.miles.shared.context_analyzer import TypedContextAnalyzer, \
     WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure, NodeType
@@ -10,6 +10,7 @@ from src.miles.shared.extended import ExtendedCore
 from src.miles.shared.register import PluginRegister
 from src.server.canvas_context import RequestContext, Shape
 from src.server.shape_error import ShapeError
+from src.server.typos import TypoManager
 
 SHAPES = ['arrow', 'circle', 'square', 'triangle', 'hexagon', 'oval', 'line']
 COLORS = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink', 'brown']
@@ -27,36 +28,12 @@ class TypoWordAnalyzer(TypedContextAnalyzer):
     def __init__(self, word: str):
         super().__init__()
         self.word = word.lower()
-
-    def _count_typos(self, word1: str, word2: str) -> int:
-        typos = 0
-        for a, b in zip(word1, word2):
-            if a != b:
-                typos+=1
-        return typos
+        self.typo_manager = TypoManager()
 
     def invoke(self, context: TextRecognizeContext):
         current = context.current().lower()
-
-        if self.word == current:
-            context.consume(certainty=100)
-            return
-
-        if len(self.word) <= 3:
-            context.fail()
-            return
-
-        if len(self.word) == len(current):
-            typos = self._count_typos(self.word, current)
-            threshold = 0.3
-            correct_ratio = typos / len(self.word)
-            if correct_ratio < threshold:
-                certainty=0
-                context.consume(certainty=certainty)
-            else:
-                context.fail()
-            return
-
+        word_comparison = self.typo_manager.compare_words(current, self.word)
+        context.consume(certainty=word_comparison)
 
 class TypoWordAnalyzerFactory(WordContextAnalyzerFactory):
 
@@ -83,20 +60,20 @@ class AddCommandExecutor(CommandExecutor):
         request_context.shapes().add(shape)
 
 class ColorContextAnalyzer(TypedContextAnalyzer):
+    def __init__(self):
+        self._typos = TypoManager()
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current().lower()
-        if current_word in COLORS:
-            context.consume()
-        else:
-            context.fail()
+        certainty = self._typos.is_one_of(current_word, COLORS)
+        context.consume(certainty=certainty)
 
 class ShapeContextAnalyzer(TypedContextAnalyzer):
+    def __init__(self):
+        self._typos = TypoManager()
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current().lower()
-        if current_word in SHAPES:
-            context.consume()
-        else:
-            context.fail()
+        certainty = self._typos.is_one_of(current_word, SHAPES)
+        context.consume(certainty=certainty)
 
 class NumberContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
@@ -109,7 +86,7 @@ class NumberContextAnalyzer(TypedContextAnalyzer):
 class CoordinatesContextAnalyzer(TypedContextAnalyzer):
 
     def __init__(self):
-        self._core = ExtendedCore('canvas', 'canvas', 'coordinates')
+        self._core = ExtendedCore('app', 'canvas', 'coordinates')
         self._core.init_commands([
             ('simple', 'x=number {AND} y=number'),
             ('complex', 'X x=number {AND} Y y=number')
@@ -216,4 +193,4 @@ def canvas_grammar(plugin_register: PluginRegister):
     namespace_init.add_matching("shape", ShapeContextAnalyzer())
     namespace_init.add_matching("coordinates", CoordinatesContextAnalyzer())
     namespace_init.add_matching("number", NumberContextAnalyzer())
-    namespace_init.set_word_analyzer_factory(DefaultWordContextAnalyzerFactory())
+    namespace_init.set_word_analyzer_factory(TypoWordAnalyzerFactory())

@@ -1,13 +1,11 @@
 import './shared.css'
 
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import './workspace.css';
 
 const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Canvas', path: '/canvas' },
-    { name: 'Calendar', path: '/calendar' },
-    { name: 'Assistant', path: '/assistant' },
     { name: 'Help', path: '/help' },
 ];
 
