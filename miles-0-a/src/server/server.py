@@ -23,6 +23,7 @@ canvas_grammar(plugin)
 matching_core = create_matching_core()
 
 
+
 def _process_shapes(id_count: int, shape_objects: List[Shape], command: str):
     try:
         context = RequestContext(shape_objects, id_count)

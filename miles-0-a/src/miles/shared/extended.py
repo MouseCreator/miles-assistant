@@ -23,7 +23,7 @@ class ExtendedCore:
         self._plugin = plugin
         self._namespace = namespace
         self._matching = matching
-        self._title = f'${self._matching}'
+        self._title = self._matching
         self._stored = []
 
     def init_commands(self, commands: List[Tuple[str, str]]):

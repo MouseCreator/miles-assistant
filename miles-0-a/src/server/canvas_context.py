@@ -2,7 +2,7 @@ from typing import List
 
 
 class Shape:
-    def __init__(self, identity: int, category: str, x: int, y: int, color: str, angle: int):
+    def __init__(self, identity: str, category: str, x: int, y: int, color: str, angle: int):
         self.identity = identity
         self.category = category
         self.x = x
@@ -42,6 +42,15 @@ class ShapeList:
     def add(self, shape: Shape) -> None:
         self._list.append(shape)
 
+def _next_shape_id(number: int) -> str:
+    if number < 1:
+        raise ValueError("Number of a shape must be greater than or equal to 1")
+    number -= 1
+    base = 26
+    letter = chr(ord('A') + (number % base))
+    suffix = number // base
+
+    return letter if suffix == 0 else f"{letter}{suffix - 1}"
 
 class RequestContext:
     def __init__(self, shapes: List[Shape], identity_count: int):
@@ -50,9 +59,9 @@ class RequestContext:
     def shapes(self) -> ShapeList:
         return self._shapes
 
-    def new_identity(self) -> int:
+    def new_identity(self) -> str:
         self._id_count += 1
-        return self._id_count
+        return _next_shape_id(self._id_count)
 
     def clear_identity(self):
         self._id_count = 0

@@ -64,6 +64,8 @@ class TextRecognizeContext:
 
     def lookahead(self, items: int) -> List[str]:
         return self._tokens[self._position:self._position + items]
+    def look(self, at_item: int) -> str:
+        return self._tokens[self._position+at_item]
 
     def interrupt(self):
         self._on_interrupt(self)

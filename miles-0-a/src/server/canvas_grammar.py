@@ -1,4 +1,5 @@
 import random
+import re
 
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.shared.context_analyzer import TypedContextAnalyzer, \
@@ -78,12 +79,54 @@ class ShapeContextAnalyzer(TypedContextAnalyzer):
         context.ignore(certainty=certainty)
         context.write(word)
 
+
+def is_audio_recognition_error(context: TextRecognizeContext):
+    current = context.current().lower()
+    word, certainty = rule_is_one_of(current, ['one', 'two', 'ten'], 'audio')
+    if certainty == 0:
+        context.fail()
+        return
+    num_dict = {
+        'one': 1,
+        'two': 2,
+        'ten': 10
+    }
+    after = context.look(1)
+    n = num_dict[word]
+    if after == '100':
+        context.consume(2)
+        context.set_result(n*100)
+    elif after == '1000':
+        context.consume(2)
+        context.set_result(n * 1000)
+    else:
+        context.consume()
+        context.set_result(n)
+
+
 class NumberContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current()
         if is_number(current_word):
             context.consume()
             context.set_result(int(current_word))
+        elif context.flags().get_flag('source') == 'audio':
+            is_audio_recognition_error(context)
+        else:
+            context.fail()
+
+
+
+
+class ShapeIdContextAnalyzer(TypedContextAnalyzer):
+
+    def __init__(self):
+        self.pattern = re.compile(r'^[A-Z][0-9]*$')
+
+    def invoke(self, context: TextRecognizeContext):
+        current = context.current().lower()
+        if self.pattern.match(current):
+            context.consume()
         else:
             context.fail()
 
@@ -150,7 +193,7 @@ class MoveCommandExecutor(CommandExecutor):
         target = shapes.get_by_id(identifier)
         if target is None:
             raise ShapeError(f'No shape with identifier {target}')
-        val = search.find_ith(3).value()
+        val = search.find_ith(4).value()
         target.x = int(val[0])
         target.y = int(val[1])
 
@@ -183,15 +226,15 @@ def canvas_grammar(plugin_register: PluginRegister):
     namespace_init = plugin_register.add_namespace("canvas", "canvas")
 
     namespace_init.add_command("add", "(ADD, DRAW, INSERT) { color } shape AT coordinates", AddCommandExecutor())
-    namespace_init.add_command("set_color", "SET number COLOR color", SetterCommandExecutor('color'))
-    namespace_init.add_command("set_coord", "SET number COORDINATES coordinates", SetterCommandExecutor('coord'))
-    namespace_init.add_command("set_x", "SET number X number", SetterCommandExecutor('x'))
-    namespace_init.add_command("set_y", "SET number Y number", SetterCommandExecutor('y'))
-    namespace_init.add_command("set_shape", "SET number SHAPE shape", SetterCommandExecutor('shape'))
-    namespace_init.add_command("set_angle", "SET number ANGLE number", SetterCommandExecutor('angle'))
-    namespace_init.add_command("move", "MOVE number TO coordinates", MoveCommandExecutor())
+    namespace_init.add_command("set_color", "SET shape_id COLOR color", SetterCommandExecutor('color'))
+    namespace_init.add_command("set_coord", "SET shape_id COORDINATES coordinates", SetterCommandExecutor('coord'))
+    namespace_init.add_command("set_x", "SET shape_id X number", SetterCommandExecutor('x'))
+    namespace_init.add_command("set_y", "SET shape_id Y number", SetterCommandExecutor('y'))
+    namespace_init.add_command("set_shape", "SET shape_id SHAPE shape", SetterCommandExecutor('shape'))
+    namespace_init.add_command("set_angle", "SET shape_id ANGLE number", SetterCommandExecutor('angle'))
+    namespace_init.add_command("move", "MOVE shape_id TO {COORDINATES} coordinates", MoveCommandExecutor())
 
-    namespace_init.add_command("delete1", "(DELETE, REMOVE) number", DeleteCommandExecutor())
+    namespace_init.add_command("delete1", "(DELETE, REMOVE) shape_id", DeleteCommandExecutor())
     namespace_init.add_command("clear", "CLEAR { ALL }", ClearCommandExecutor())
 
     namespace_init.add_matching("color", ColorContextAnalyzer())
