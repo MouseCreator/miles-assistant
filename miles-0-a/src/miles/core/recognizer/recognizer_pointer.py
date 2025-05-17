@@ -1,4 +1,4 @@
-from typing import Self, List
+from typing import Self, List, Any
 
 from click import argument
 
@@ -81,6 +81,7 @@ class RecPointer:
             node=node,
             prev_point=self._current_position,
             included=context.get_consumed(),
+            result=context.get_result(),
             next_point=new_position
         )
         return RecPointer(

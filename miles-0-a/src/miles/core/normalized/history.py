@@ -1,4 +1,4 @@
-from typing import List, Self
+from typing import List, Self, Any
 
 from src.miles.core.recognizer.normalized_matcher import NormalizedNode
 from src.miles.utils.decorators import auto_str
@@ -11,11 +11,13 @@ class HistoryItem:
                  node: NormalizedNode,
                  prev_point: int,
                  included: List[str],
-                 next_point: int):
+                 next_point: int,
+                 result: Any):
         self.node = node
         self.prev_point = prev_point
         self.included = included
         self.next_point = next_point
+        self.result = result
 
     def __eq__(self, other):
         if not isinstance(other, HistoryItem):

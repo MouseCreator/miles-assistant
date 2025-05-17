@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Self
+from typing import List, Self, Any
 
 from src.miles.shared.context.flags import Flags
 
@@ -21,6 +21,7 @@ class CommandNode:
     _value: List[str]
     _parent: Self | None
     _number: int | None
+    _result: Any
     def __init__(self,
                  identity: int,
                  node_type: NodeType,
@@ -29,7 +30,8 @@ class CommandNode:
                  name: None | str = None,
                  children: None | List[Self] = None,
                  number: None | int = None,
-                 argument: None | str = None
+                 argument: None | str = None,
+                 result: Any = None
                  ):
         self._argument = argument
         self._number = number
@@ -38,6 +40,7 @@ class CommandNode:
         self._value = value
         self._name = name
         self._parent = parent
+        self._result = result
         if children is None:
             self._children = []
         else:
@@ -51,6 +54,8 @@ class CommandNode:
             f"value={self._value}, "
             f"number={self._number}, "
             f"children_count={len(self._children)})"
+            f"argument={self._argument})"
+            f"result={self._result})"
         )
     def __eq__(self, other):
         if not isinstance(other, CommandNode):
@@ -96,6 +101,12 @@ class CommandNode:
 
     def size(self):
         return len(self._children)
+    def result(self) -> Any:
+        if self._result is not None:
+            return self._result
+        if self._children:
+            return list(self._children)
+        return None
 
 
 class NamespaceStructure:

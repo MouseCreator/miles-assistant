@@ -38,7 +38,7 @@ class StructFactory:
         root_node = CommandNode(
             identity=self._next_index(),
             node_type=NodeType.ITEM,
-            value=None,
+            value=None
         )
         stack = [ root_node ]
         item_queue = list(items)
@@ -142,7 +142,8 @@ class StructFactory:
                     node_type=NodeType.WORD,
                     value=included_tokens,
                     name=node.name,
-                    parent=parent
+                    parent=parent,
+                    result=item.result
                 )
                 parent.append(struct)
             elif node.node_type == HistoryNodeType.MATCHING:
@@ -152,7 +153,8 @@ class StructFactory:
                     node_type=NodeType.MATCHING,
                     value=included_tokens,
                     name=node.name,
-                    parent=parent
+                    parent=parent,
+                    result=item.result
                 )
                 parent.append(struct)
 

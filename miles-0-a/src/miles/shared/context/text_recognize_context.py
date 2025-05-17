@@ -1,4 +1,4 @@
-from typing import List, Callable, Self, TypeVar
+from typing import List, Callable, Self, TypeVar, Any
 
 from src.miles.shared.context.flags import Flags
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
@@ -28,6 +28,7 @@ class TextRecognizeContext:
     _consumed: List[str]
     _stack: RecognizerStack
     _last_certainty: float
+    _result: Any
 
     def __init__(self,
                  tokens: List[str],
@@ -44,6 +45,7 @@ class TextRecognizeContext:
         self._on_interrupt = on_interrupt
         self._consumed = []
         self._node = node
+        self._result = None
         self._last_certainty = 0.0
         if stack is None:
             stack = RecognizerStack()
@@ -66,15 +68,19 @@ class TextRecognizeContext:
     def interrupt(self):
         self._on_interrupt(self)
 
-    def consume(self, items:int = 1, interrupted: bool = False, certainty: float=100) -> None:
-        if self._fail_flag:
-            return
+    def get_result(self):
+        return self._result
+
+    def consume(self, items:int = 1, interrupted=False, certainty: float=100) -> List[str]:
         c_range = ConsumedRange(self._position, self._position + items)
+        if self._fail_flag:
+            return c_range.apply_to(self._tokens)
         self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
         self._last_certainty = certainty
         if interrupted:
             self.interrupt()
+        return c_range.apply_to(self._tokens)
 
     def variant(self, items: int = 1, certainty: float=100) -> None:
         prev_position = self._position
@@ -135,3 +141,8 @@ class TextRecognizeContext:
 
     def node(self) -> SharedNode:
         return self._node
+
+    def set_result(self, param: Any, interrupted: bool=False):
+        self._result = param
+        if interrupted:
+            self.interrupt()

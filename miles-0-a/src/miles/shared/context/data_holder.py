@@ -1,6 +1,6 @@
 
 from collections.abc import Callable
-from typing import List
+from typing import List, Any
 
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack

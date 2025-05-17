@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
@@ -7,10 +8,14 @@ from src.miles.core.recognizer.optimization import RecOptimizationStrategy
 class GenericContextAnalyzer(ABC):
 
     @abstractmethod
-    def invoke(self, context: TextRecognizeContext):
+    def invoke(self, context: TextRecognizeContext) -> None:
         pass
 
-    def process(self, context: TextRecognizeContext):
+    @abstractmethod
+    def has_result(self) -> bool:
+        pass
+
+    def process(self, context: TextRecognizeContext) -> None:
         if context.is_empty():
             context.fail()
         else:
@@ -26,10 +31,13 @@ class AutomaticContextAnalyzer(GenericContextAnalyzer):
     def __init__(self):
         pass
 
-    def process(self, context: TextRecognizeContext):
+    def has_result(self) -> bool:
+        return False
+
+    def process(self, context: TextRecognizeContext) -> None:
         pass
 
-    def invoke(self, context: TextRecognizeContext):
+    def invoke(self, context: TextRecognizeContext) -> None:
         pass
 
 class TypedContextAnalyzer(GenericContextAnalyzer):
@@ -38,11 +46,14 @@ class TypedContextAnalyzer(GenericContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
         pass
 
-    def process(self, context: TextRecognizeContext):
+    def process(self, context: TextRecognizeContext) ->  None:
         if context.is_empty():
             context.fail()
         else:
             self.invoke(context)
+
+    def has_result(self) -> bool:
+        return True
 
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.NONE
@@ -55,10 +66,11 @@ class WordContextAnalyzer(TypedContextAnalyzer):
     def __init__(self, word: str):
         self.word = word.lower()
 
-    def invoke(self, context: TextRecognizeContext):
+    def invoke(self, context: TextRecognizeContext) -> Any:
         current_token = context.current()
         if current_token.lower() == self.word:
             context.consume()
+            context.set_result(current_token)
         else:
             context.fail()
 
@@ -77,8 +89,9 @@ class AnyWordContextAnalyzer(TypedContextAnalyzer):
     Matches one and only one word
     """
 
-    def invoke(self, context: TextRecognizeContext):
-        context.consume()
+    def invoke(self, context: TextRecognizeContext) -> None:
+        current = context.consume()[0]
+        context.set_result(current)
 
 class TextContextAnalyzer(TypedContextAnalyzer):
     """
@@ -88,8 +101,10 @@ class TextContextAnalyzer(TypedContextAnalyzer):
         pass
 
     def invoke(self, context: TextRecognizeContext):
+        result = []
         while context.has_any():
-            context.consume(interrupted=True)
+            context.consume()
+            context.set_result(list(result), interrupted=True)
 
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.SHORTEST_FIRST
