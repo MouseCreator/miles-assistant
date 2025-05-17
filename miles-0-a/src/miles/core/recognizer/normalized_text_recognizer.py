@@ -541,4 +541,7 @@ def recognize_extended(title: str,
     if pointer is None:
         return None
     struct_factory = StructFactory()
-    return struct_factory.convert_command(ns, tokens, pointer)
+
+    token_subset = tokens[start_from:pointer.get_position()]
+
+    return struct_factory.convert_command(ns, token_subset, pointer)

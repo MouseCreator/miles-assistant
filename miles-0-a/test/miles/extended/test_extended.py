@@ -43,8 +43,8 @@ class RecursionAnalyzer(TypedContextAnalyzer):
 
     def __init__(self):
         commands = [
-            ('c1', 'recursion Z'),
-            ('c2', 'recursion Y'),
+            ('c1', 'Z recursion'),
+            ('c2', 'Y recursion'),
             ('c3', 'Z'),
             ('c4', 'Y'),
         ]

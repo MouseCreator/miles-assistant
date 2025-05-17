@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Self, Any
+from typing import List, Self, Any, TypeVar, Type, cast
 
 from src.miles.shared.context.flags import Flags
 
@@ -12,6 +12,7 @@ class NodeType(Enum):
     CHOICE = 4
     ITEM=5
 
+T = TypeVar('T')
 
 class CommandNode:
     _id: int
@@ -70,6 +71,8 @@ class CommandNode:
 
     def __len__(self):
         return len(self._children)
+    def __getitem__(self, item):
+        return self._children.__getitem__(item)
 
     def has_parent(self) -> bool:
         return self._parent is not None
@@ -101,12 +104,30 @@ class CommandNode:
 
     def size(self):
         return len(self._children)
+
     def result(self) -> Any:
         if self._result is not None:
             return self._result
         if self._children:
-            return list(self._children)
-        return None
+            res = []
+            for c in self._children:
+                res.append(c.result())
+            return res
+        if len(self._value) == 0:
+            return None
+        if len(self._value) == 1:
+            return self._value
+        return list(self._value)
+
+    def raw_result(self) -> Any:
+        return self._result
+
+    def typed_result(self, expected_type: Type[T]) -> T:
+        if isinstance(self._result, expected_type):
+            return cast(T, self._result)
+        else:
+            raise TypeError(f"Expected result of type {expected_type.__name__}, "
+                            f"but got {type(self._result).__name__}")
 
 
 class NamespaceStructure:

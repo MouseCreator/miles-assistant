@@ -166,7 +166,7 @@ class StructFactory:
                 pointer: RecPointer,
                 ) -> CommandStructure:
         history = pointer.get_history()
-        pointer_flags = pointer.flags()
+        pointer_flags = pointer.flags().copy()
         root_node = self._convert(history)
         return CommandStructure(
             root_node=root_node,

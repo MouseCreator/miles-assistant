@@ -34,8 +34,7 @@ class ExtendedCore:
         self._stored = stored
 
 
-
-    def recognize_extended(self, context: TextRecognizeContext) -> CommandStructure | None:
+    def _select_namespace(self) -> NamespaceOfCommands:
         reg = MilesRegister()
         plugins = map_register_to_definition(reg)
         plugin = None
@@ -46,16 +45,19 @@ class ExtendedCore:
             raise ValueError(f'Unknown plugin: {self._plugin}')
         for n in plugin.namespaces():
             if n.name == self._namespace:
-                self._namespace = n
+                return n
+        raise ValueError(f'Unknown namespace: {self._namespace}')
+    def recognize_extended(self, context: TextRecognizeContext) -> CommandStructure | None:
+        selected = self._select_namespace()
 
         custom_namespace = NamespaceOfCommands(name=self._title,
                                                      prefix=None,
                                                      commands=self._stored,
-                                                     priority_manager=self._namespace.priority_manager,
-                                                     dynamic_priorities=self._namespace.dynamic_priorities,
-                                                     definition_set=self._namespace.definition_set,
-                                                     word_analyzer_factory=self._namespace.word_analyzer_factory,
-                                                     certainty_effect=self._namespace.certainty_effect)
+                                                     priority_manager=selected.priority_manager,
+                                                     dynamic_priorities=selected.dynamic_priorities,
+                                                     definition_set=selected.definition_set,
+                                                     word_analyzer_factory=selected.word_analyzer_factory,
+                                                     certainty_effect=selected.certainty_effect)
         position = context.position()
         if context.stack().contains(self._title, position):
             return None # fails to avoid infinite loop

@@ -1,6 +1,6 @@
 from src.miles.core.command.command import RootComponent, SequenceComponent, WordComponent, ListComponent
 from src.miles.core.formatter.prints import print_matcher
-from src.miles.core.matcher.matcher import MatcherFactory
+from src.miles.core.matcher.matcher_factory import MatcherFactory
 from src.miles.utils.string_builder import lines
 from test.miles.core.matcher.simple_pool_factory import SimpleCommandPoolFactory
 
