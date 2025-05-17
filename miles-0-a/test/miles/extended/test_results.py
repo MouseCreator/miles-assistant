@@ -3,7 +3,7 @@ from typing import List
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure
-from src.miles.shared.extended import ExtendedCore
+from src.miles.shared.extended import ExtendedCore, single_variant
 from src.miles.shared.matching_core import MatchingCore
 from src.miles.shared.matching_core_factory import create_matching_core
 from src.miles.shared.collector import PluginCollector
@@ -54,7 +54,8 @@ class StudentAnalyzer(TypedContextAnalyzer):
         self._core.init_commands(commands)
 
     def invoke(self, context: TextRecognizeContext):
-        structure = self._core.recognize_extended(context=context)
+        structures = self._core.recognize_extended(context=context)
+        structure = single_variant(structures)
         if structure is None:
             context.fail()
             return
@@ -76,7 +77,8 @@ class StudentListAnalyzer(TypedContextAnalyzer):
         self._core.init_commands(commands)
 
     def invoke(self, context: TextRecognizeContext):
-        structure = self._core.recognize_extended(context=context)
+        structures = self._core.recognize_extended(context=context)
+        structure = single_variant(structures)
         if structure is None:
             context.fail()
             return

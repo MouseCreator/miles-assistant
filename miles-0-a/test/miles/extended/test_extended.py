@@ -33,11 +33,13 @@ class PairAnalyzer(TypedContextAnalyzer):
         self._core.init_commands(commands)
 
     def invoke(self, context: TextRecognizeContext):
-        structure = self._core.recognize_extended(context=context)
-        if structure is None:
+        structures = self._core.recognize_extended(context=context)
+        if not structures:
             context.fail()
             return
-        context.consume(2)
+
+        for s in structures:
+            context.variant(s.size())
 
 class RecursionAnalyzer(TypedContextAnalyzer):
 
@@ -52,11 +54,12 @@ class RecursionAnalyzer(TypedContextAnalyzer):
         self._core.init_commands(commands)
 
     def invoke(self, context: TextRecognizeContext):
-        structure = self._core.recognize_extended(context=context)
-        if structure is None:
+        structures = self._core.recognize_extended(context=context)
+        if not structures:
             context.fail()
             return
-        context.consume(structure.size())
+        for s in structures:
+            context.variant(s.size())
 
 
 class SimplePluginCollector(PluginCollector):

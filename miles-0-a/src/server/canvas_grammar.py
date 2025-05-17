@@ -6,7 +6,7 @@ from src.miles.shared.context_analyzer import TypedContextAnalyzer, \
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure, NodeType
 from src.miles.shared.executor.executor_utils import CommandStructureSearch
-from src.miles.shared.extended import ExtendedCore
+from src.miles.shared.extended import ExtendedCore, single_variant
 from src.miles.shared.register import PluginRegister
 from src.server.canvas_context import RequestContext, Shape
 from src.server.shape_error import ShapeError
@@ -93,9 +93,10 @@ class CoordinatesContextAnalyzer(TypedContextAnalyzer):
         ])
 
     def invoke(self, context: TextRecognizeContext):
-        command_structure = self._core.recognize_extended(context=context)
-        if command_structure is None:
+        command_structures = self._core.recognize_extended(context=context)
+        if not command_structures:
             context.fail()
+        command_structure = single_variant(command_structures)
         search = CommandStructureSearch(command_structure.get_root())
         x = search.find_all_named('x')[0].any()
         y = search.find_all_named('y')[0].any()

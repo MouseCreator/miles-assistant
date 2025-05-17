@@ -108,16 +108,8 @@ class _ExtendedCommandReader:
         self._cache.clear()
         self._failed_max_pointer = None
         self._recognize_tokens()
-        return self._select_max_pointer()
-
-    def _select_max_pointer(self):
-        max_pointer = None
-        for pointer in self._reached_pointers:
-            if max_pointer is None:
-                max_pointer = pointer
-            elif pointer.get_position() > max_pointer.get_position():
-                max_pointer = pointer
-        return max_pointer
+        result = list (self._reached_pointers)
+        return sorted(result, key=lambda p: p.get_position(), reverse=True)
 
 
     def _recognize_tokens(self):
@@ -529,19 +521,21 @@ def recognize_extended(title: str,
                        nc: NamespaceComponent,
                        start_from: int,
                        stack: RecognizerStack,
-                       flags: Flags) -> CommandStructure | None:
+                       flags: Flags) -> List[CommandStructure]:
     of_data = TextDataHolder(tokens)
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     certainty_effect = nc.certainty_effect
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
     reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities, certainty_effect, stack, flags)
-    pointer: RecPointer = reader.recognize()
+    pointers: List[RecPointer] = reader.recognize()
     ns = NamespaceStructure(identifier=title, tokens=[])
-    if pointer is None:
-        return None
     struct_factory = StructFactory()
 
-    token_subset = tokens[start_from:pointer.get_position()]
+    result = []
+    for p in pointers:
+        token_subset = tokens[ start_from: p.get_position() ]
+        struct = struct_factory.convert_command(ns, token_subset, p)
+        result.append(struct)
 
-    return struct_factory.convert_command(ns, token_subset, pointer)
+    return result

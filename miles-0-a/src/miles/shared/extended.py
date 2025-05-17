@@ -1,5 +1,6 @@
 from typing import List, Tuple
 
+from src.miles.core.recognizer.recognizer_error import RecognizerError
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.plugin.pipeline import create_normalized_matcher_from_definitions
 from src.miles.core.plugin.plugin_definition import PluginDefinition, NamespaceOfCommands, StoredCommand
@@ -8,6 +9,7 @@ from src.miles.core.recognizer.normalized_text_recognizer import recognize_exten
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure
 from src.miles.shared.register import MilesRegister
+from src.miles.utils.strings import print_list
 
 
 class _MockExecutor(CommandExecutor):
@@ -47,7 +49,7 @@ class ExtendedCore:
             if n.name == self._namespace:
                 return n
         raise ValueError(f'Unknown namespace: {self._namespace}')
-    def recognize_extended(self, context: TextRecognizeContext) -> CommandStructure | None:
+    def recognize_extended(self, context: TextRecognizeContext) -> List[CommandStructure]:
         selected = self._select_namespace()
 
         custom_namespace = NamespaceOfCommands(name=self._title,
@@ -60,7 +62,7 @@ class ExtendedCore:
                                                      certainty_effect=selected.certainty_effect)
         position = context.position()
         if context.stack().contains(self._title, position):
-            return None # fails to avoid infinite loop
+            return [] # fails to avoid infinite loop
 
         temp_plugin = PluginDefinition(name=self._title, namespaces=[custom_namespace])
         temp_plugin_structure = create_normalized_matcher_from_definitions(temp_plugin)
@@ -69,11 +71,13 @@ class ExtendedCore:
         stack = context.stack().copy()
         stack.push(self._title, position)
 
-        flags = context.flags().copy()
-
         result = recognize_extended(self._title, context.all_tokens(), ns, position, stack, context.flags())
 
-        if result is not None:
-            context.set_flags(flags)
-
         return result
+
+def single_variant(lst: List[CommandStructure]) -> CommandStructure | None:
+    if len(lst) == 0:
+        return None
+    if len(lst) != 1:
+        raise RecognizerError(f'Expected to have only one command structure, but got {len(lst)}: {print_list(lst)}')
+    return lst[0]
