@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from src.miles.core.recognizer.recognizer_error import RecognizerError
+from src.miles.shared.context.flags import Flags
 from src.miles.shared.matching_core_factory import create_matching_core
 from src.miles.shared.register import MilesRegister
 from src.server.canvas_context import Shape, RequestContext
@@ -24,10 +25,12 @@ matching_core = create_matching_core()
 
 
 
-def _process_shapes(id_count: int, shape_objects: List[Shape], command: str):
+def _process_shapes(id_count: int, shape_objects: List[Shape], command: str, origin: str):
     try:
         context = RequestContext(shape_objects, id_count)
-        matching_core.recognize_and_execute(command, 'canvas', context)
+        flags = Flags()
+        flags.set_flag('source', origin)
+        matching_core.recognize_and_execute(command, 'canvas', context, flags)
 
         response_data = {
             "id_count": context.identity(),
@@ -42,7 +45,7 @@ def _process_shapes(id_count: int, shape_objects: List[Shape], command: str):
     except ShapeError as e:
         message = str(e)
         return jsonify({'error': message}), 400
-    except Exception:
+    except Exception as e:
         message = 'Server Error!'
         return jsonify({'error': message}), 500
 
@@ -72,7 +75,7 @@ def process_shapes_audio():
     try:
         command = recognize_and_format(temp_file_path)
         print(command)
-        return _process_shapes(id_count, shape_objects, command)
+        return _process_shapes(id_count, shape_objects, command, 'audio')
     finally:
         os.remove(temp_file_path)
 
@@ -97,7 +100,7 @@ def process_shapes_text():
 
     command = data['command']
     print(command)
-    return _process_shapes(int(data['id_count']), shape_objects, command)
+    return _process_shapes(int(data['id_count']), shape_objects, command, 'text')
 
 
 if __name__ == '__main__':

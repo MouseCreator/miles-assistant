@@ -27,17 +27,22 @@ class ShapeList:
     def __iter__(self):
         return iter(self._list)
 
-    def get_by_id(self, number: int) -> Shape | None:
+    def get_by_id(self, identifier: str) -> Shape | None:
         for s in self._list:
-            if s.identity == number:
+            if s.identity.lower() == identifier.lower():
                 return s
         return None
 
-    def remove_by_id(self, target: int):
-        self._list = [el for el in self._list if el.identity != target]
+    def remove_by_id(self, target: str):
+        self._list = [el for el in self._list if el.identity.lower() != target.lower()]
 
     def clear(self):
         self._list = []
+
+    def size(self):
+        return len(self._list)
+    def __len__(self):
+        return len(self._list)
 
     def add(self, shape: Shape) -> None:
         self._list.append(shape)

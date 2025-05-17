@@ -23,3 +23,26 @@ def test_wrong_word():
     flags = Flags()
     flags.set_flag('source', 'audio')
     matching_core.recognize_and_execute('Add pink square  add 100 100', 'canvas', context, flags)
+
+def test_correct_audio_command():
+    plugin = MilesRegister().create_plugin_register('app')
+    canvas_grammar(plugin)
+    matching_core = create_matching_core()
+    context = RequestContext([], 0)
+    flags = Flags()
+    flags.set_flag('source', 'audio')
+    matching_core.recognize_and_execute('Insert yellow square at 100 200', 'canvas', context, flags)
+    assert context.shapes().size() == 1
+
+def test_move_audio_command():
+    plugin = MilesRegister().create_plugin_register('app')
+    canvas_grammar(plugin)
+    matching_core = create_matching_core()
+    context = RequestContext([], 0)
+    flags = Flags()
+    flags.set_flag('source', 'audio')
+    matching_core.recognize_and_execute('Insert yellow square at 100 200', 'canvas', context, flags)
+    matching_core.recognize_and_execute('Move A to coordinates 70 17', 'canvas', context, flags)
+    assert context.shapes().size() == 1
+    assert context.shapes().get_by_id('A').x == 70
+    assert context.shapes().get_by_id('A').y == 17

@@ -124,7 +124,7 @@ class ShapeIdContextAnalyzer(TypedContextAnalyzer):
         self.pattern = re.compile(r'^[A-Z][0-9]*$')
 
     def invoke(self, context: TextRecognizeContext):
-        current = context.current().lower()
+        current = context.current().upper()
         if self.pattern.match(current):
             context.consume()
         else:
@@ -143,6 +143,7 @@ class CoordinatesContextAnalyzer(TypedContextAnalyzer):
         command_structures = self._core.recognize_extended(context=context)
         if not command_structures:
             context.fail()
+            return
         command_structure = single_variant(command_structures)
         search = CommandStructureSearch(command_structure.get_root())
         x = search.find_all_named('x')[0].any()
@@ -157,7 +158,7 @@ class SetterCommandExecutor(CommandExecutor):
 
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
-        identifier = int(search.find_ith(1).any())
+        identifier = search.find_ith(1).any()
 
         shapes = context.shapes()
         target = shapes.get_by_id(identifier)
@@ -187,8 +188,7 @@ class MoveCommandExecutor(CommandExecutor):
         pass
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
-        identifier = int(search.find_ith(1).any())
-
+        identifier = search.find_ith(1).any()
         shapes = context.shapes()
         target = shapes.get_by_id(identifier)
         if target is None:
@@ -202,7 +202,7 @@ class DeleteCommandExecutor(CommandExecutor):
         pass
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
-        target = int(search.find_matching('number')[0].any())
+        target = search.find_matching('number')[0].any()
 
         has_target = False
         for shape in context.shapes():
@@ -238,6 +238,7 @@ def canvas_grammar(plugin_register: PluginRegister):
     namespace_init.add_command("clear", "CLEAR { ALL }", ClearCommandExecutor())
 
     namespace_init.add_matching("color", ColorContextAnalyzer())
+    namespace_init.add_matching("shape_id", ShapeIdContextAnalyzer())
     namespace_init.add_matching("shape", ShapeContextAnalyzer())
     namespace_init.add_matching("coordinates", CoordinatesContextAnalyzer())
     namespace_init.add_matching("number", NumberContextAnalyzer())
