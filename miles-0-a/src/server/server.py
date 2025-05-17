@@ -36,8 +36,9 @@ def _process_shapes(id_count: int, shape_objects: List[Shape], command: str, ori
             "id_count": context.identity(),
             "shapes": [shape.to_dict() for shape in context.shapes()]
         }
-
-        return jsonify(response_data), 200
+        print(response_data)
+        output = jsonify(response_data)
+        return output, 200
 
     except RecognizerError as e:
         message = str(e)

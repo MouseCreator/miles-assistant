@@ -67,7 +67,7 @@ class ColorContextAnalyzer(TypedContextAnalyzer):
             context.fail()
             return
         context.ignore(certainty=certainty)
-        context.write(word)
+        context.write([word])
 
 class ShapeContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
@@ -77,20 +77,29 @@ class ShapeContextAnalyzer(TypedContextAnalyzer):
             context.fail()
             return
         context.ignore(certainty=certainty)
-        context.write(word)
+        context.write([word])
 
 
 def is_audio_recognition_error(context: TextRecognizeContext):
     current = context.current().lower()
-    word, certainty = rule_is_one_of(current, ['one', 'two', 'ten'], 'audio')
+    num_dict = {
+        'zero': 0,
+        'one': 1,
+        'two': 2,
+        'three': 3,
+        'four': 4,
+        'five': 5,
+        'six': 6,
+        'seven': 7,
+        'eight': 8,
+        'nine': 9,
+        'ten': 10,
+    }
+    word, certainty = rule_is_one_of(current, list(num_dict.keys()), 'audio')
     if certainty == 0:
         context.fail()
         return
-    num_dict = {
-        'one': 1,
-        'two': 2,
-        'ten': 10
-    }
+
     after = context.look(1)
     n = num_dict[word]
     if after == '100':
