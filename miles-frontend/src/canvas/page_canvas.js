@@ -25,6 +25,7 @@ export default function Canvas() {
                 return response.json();
             })
             .then(data => {
+                setError('')
                 if (data == null) {
                     return;
                 }

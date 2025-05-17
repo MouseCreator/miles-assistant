@@ -18,6 +18,8 @@ def find_closest_sounding_word(target:str, arr: List[str]) -> (str | None, float
     closest = None
     min_distance = 100
     for word in arr:
+        if word == target:
+            return word, 0
         dist = sound_similarity(word, target)
         if dist < min_distance:
             min_distance = dist
