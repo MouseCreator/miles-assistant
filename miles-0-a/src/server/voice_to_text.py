@@ -1,5 +1,4 @@
 import string
-import tempfile
 
 import whisper
 
@@ -14,13 +13,9 @@ class VoiceModel(metaclass=Singleton):
         return self._model
 
 
-def recognize_and_format(sound_data) -> str:
-
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
-        tmp.write(sound_data)
-        tmp.flush()
-        model = whisper.load_model("base")
-        result = model.transcribe(tmp.name, without_timestamps=True, initial_prompt=None)
-        text = result["text"]
-        text = text.translate(str.maketrans('', '', string.punctuation))
-        return text.strip()
+def recognize_and_format(filepath) -> str:
+    model = whisper.load_model("base")
+    result = model.transcribe(filepath, without_timestamps=True, initial_prompt=None)
+    text = result["text"]
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return text.strip()

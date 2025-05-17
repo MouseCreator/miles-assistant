@@ -1,3 +1,6 @@
+import json
+import os
+import tempfile
 from typing import List
 
 from flask import Flask, request, jsonify
@@ -49,8 +52,8 @@ def process_shapes_audio():
         return jsonify({'error': 'No audio file provided'}), 400
 
     audio = request.files['audio']
-    data = request.get_json()
-    id_count = int(data['id_count'])
+    id_count = int(request.form['id_count'])
+    shapes = json.loads(request.form['shapes'])
     shape_objects = [
         Shape(
             identity=shape['identity'],
@@ -60,10 +63,17 @@ def process_shapes_audio():
             color=shape['color'],
             angle=shape['angle']
         )
-        for shape in data['shapes']
+        for shape in shapes
     ]
-    command = recognize_and_format(audio)
-    return _process_shapes(id_count, shape_objects, command)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_file:
+        temp_file_path = temp_file.name
+        audio.save(temp_file_path)
+    try:
+        command = recognize_and_format(temp_file_path)
+        print(command)
+        return _process_shapes(id_count, shape_objects, command)
+    finally:
+        os.remove(temp_file_path)
 
 @app.route('/canvas/text', methods=['POST'])
 def process_shapes_text():
