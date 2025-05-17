@@ -9,6 +9,7 @@ from src.miles.shared.register import MilesRegister
 from src.server.canvas_context import Shape, RequestContext
 from src.server.canvas_grammar import canvas_grammar
 from src.server.shape_error import ShapeError
+from src.server.voice_to_text import recognize_and_format
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
@@ -42,10 +43,6 @@ def _process_shapes(id_count: int, shape_objects: List[Shape], command: str):
         return jsonify({'error': message}), 500
 
 
-def _get_command_text_from_audio(audio) -> str:
-    return ''
-
-
 @app.route('/canvas/audio', methods=['POST'])
 def process_shapes_audio():
     if 'audio' not in request.files:
@@ -65,7 +62,7 @@ def process_shapes_audio():
         )
         for shape in data['shapes']
     ]
-    command = _get_command_text_from_audio(audio)
+    command = recognize_and_format(audio)
     return _process_shapes(id_count, shape_objects, command)
 
 @app.route('/canvas/text', methods=['POST'])
