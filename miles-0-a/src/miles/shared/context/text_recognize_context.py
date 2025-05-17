@@ -46,7 +46,7 @@ class TextRecognizeContext:
         self._consumed = []
         self._node = node
         self._result = None
-        self._last_certainty = 0.0
+        self._last_certainty = 100
         if stack is None:
             stack = RecognizerStack()
         self._stack = stack

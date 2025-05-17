@@ -10,7 +10,7 @@ from src.miles.shared.extended import ExtendedCore, single_variant
 from src.miles.shared.register import PluginRegister
 from src.server.canvas_context import RequestContext, Shape
 from src.server.shape_error import ShapeError
-from src.server.typos import TypoManager
+from src.server.word_rules import rule_is_one_of, rule_is_equal_words
 
 SHAPES = ['arrow', 'circle', 'square', 'triangle', 'hexagon', 'oval', 'line']
 COLORS = ['red', 'orange', 'yellow', 'green', 'cyan', 'blue', 'violet', 'pink', 'brown']
@@ -28,11 +28,10 @@ class TypoWordAnalyzer(TypedContextAnalyzer):
     def __init__(self, word: str):
         super().__init__()
         self.word = word.lower()
-        self.typo_manager = TypoManager()
 
     def invoke(self, context: TextRecognizeContext):
         current = context.current().lower()
-        word_comparison = self.typo_manager.compare_words(current, self.word)
+        word_comparison = rule_is_equal_words(current, self.word, context.flags()['source'])
         context.consume(certainty=word_comparison)
 
 class TypoWordAnalyzerFactory(WordContextAnalyzerFactory):
@@ -60,26 +59,31 @@ class AddCommandExecutor(CommandExecutor):
         request_context.shapes().add(shape)
 
 class ColorContextAnalyzer(TypedContextAnalyzer):
-    def __init__(self):
-        self._typos = TypoManager()
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current().lower()
-        certainty = self._typos.is_one_of(current_word, COLORS)
-        context.consume(certainty=certainty)
+        word, certainty = rule_is_one_of(current_word, COLORS, context.flags()['source'])
+        if certainty <= 0:
+            context.fail()
+            return
+        context.ignore(certainty=certainty)
+        context.write(word)
 
 class ShapeContextAnalyzer(TypedContextAnalyzer):
-    def __init__(self):
-        self._typos = TypoManager()
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current().lower()
-        certainty = self._typos.is_one_of(current_word, SHAPES)
-        context.consume(certainty=certainty)
+        word, certainty = rule_is_one_of(current_word, SHAPES, context.flags()['source'])
+        if certainty <= 0:
+            context.fail()
+            return
+        context.ignore(certainty=certainty)
+        context.write(word)
 
 class NumberContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current()
         if is_number(current_word):
             context.consume()
+            context.set_result(int(current_word))
         else:
             context.fail()
 

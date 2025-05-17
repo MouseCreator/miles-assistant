@@ -1,6 +1,5 @@
-from src.server.typos import TypoManager
+from src.server.typos import compare_words
 
 
 def test_typos():
-    tm = TypoManager()
-    assert round(tm.compare_words('insert', 'insetr')) == 67
+    assert round(compare_words('insert', 'insetr')) == 67

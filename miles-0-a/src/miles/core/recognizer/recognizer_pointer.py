@@ -87,7 +87,8 @@ class RecPointer:
             of_data=self._of_data,
             current_position=new_position,
             history=self._history.extend(new_item),
-            certainty=certainty
+            certainty=certainty,
+            flags=self._flags.copy()
         )
 
     def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:

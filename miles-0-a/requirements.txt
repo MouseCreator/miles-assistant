@@ -3,3 +3,5 @@ lark==1.2.2
 Flask==3.1.1
 flask-cors==5.0.1
 openai-whisper==20240930
+Levenshtein==0.27.1
+Metaphone==0.6

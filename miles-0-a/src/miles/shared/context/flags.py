@@ -10,6 +10,9 @@ class Flags:
             _map = {}
         self._flags = _map
 
+    def __getitem__(self, item):
+        return self._flags.__getitem__(item)
+
     def set_flag(self, name: str, value: Any):
         self._flags[name] = value
 

@@ -241,7 +241,8 @@ class _CommandReader:
                  start_from: int,
                  analyzer_provider: AnalyzerProvider,
                  certainty_effect: CertaintyEffect,
-                 dynamic_priorities: DynamicPriorityRuleSet | None):
+                 dynamic_priorities: DynamicPriorityRuleSet | None,
+                 flags: Flags):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
@@ -250,7 +251,9 @@ class _CommandReader:
         self._failed_max_pointer = None
         self._start_from = start_from
         self._cache = _DynamicCache()
-
+        if flags is None:
+            flags=Flags()
+        self._initial_flags = flags
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
         self._analyzers = analyzer_provider
@@ -269,7 +272,10 @@ class _CommandReader:
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
-        first_pointer = RecPointer(initial, self._input_data, current_position=self._start_from)
+        first_pointer = RecPointer(initial,
+                                   self._input_data,
+                                   current_position=self._start_from,
+                                   flags=self._initial_flags.copy())
         self._failed_max_pointer = first_pointer
         self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
@@ -394,10 +400,12 @@ class _NamespaceReader:
 
     def __init__(self,
                  matcher: NormalizedMatcher,
-                 input_data: TextDataHolder):
+                 input_data: TextDataHolder,
+                 flags: Flags):
         self._matcher = matcher
         self._input_data = input_data
         self._pointers = []
+        self._initial_flags = flags
         self._reached_pointer = None
         self._previous_reached = None
         self._cache = _DynamicCache()
@@ -416,7 +424,7 @@ class _NamespaceReader:
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
-        first_pointer = RecPointer(initial, self._input_data)
+        first_pointer = RecPointer(initial, self._input_data, flags=self._initial_flags.copy())
         self._failed_max_pointer = first_pointer
         self._cache.add_to_cache(first_pointer)
         self._pointers.append(first_pointer)
@@ -498,20 +506,23 @@ class _NamespaceReader:
             result.append(r)
         return result
 
-def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str]) -> NamespaceStructure:
+def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str], flags: Flags|None = None) -> NamespaceStructure:
     of_data = TextDataHolder(tokens)
-    reader = _NamespaceReader(matcher, of_data)
+    reader = _NamespaceReader(matcher, of_data, flags=flags)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_namespace(tokens, pointer)
 
-def recognize_command(nc: NamespaceComponent, tokens: List[str], ns: NamespaceStructure) -> CommandStructure:
+def recognize_command(nc: NamespaceComponent,
+                      tokens: List[str],
+                      ns: NamespaceStructure,
+                      flags: Flags|None=None) -> CommandStructure:
     of_data = TextDataHolder(tokens)
     shift = ns.size()
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, nc.certainty_effect, dynamic_priorities)
+    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, nc.certainty_effect, dynamic_priorities, flags=flags)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)

@@ -122,6 +122,13 @@ class CommandNode:
     def raw_result(self) -> Any:
         return self._result
 
+    def results(self) -> List[Any]:
+        result_list = []
+        for ch in self.children():
+            ch_res = ch.result()
+            result_list.append(ch_res)
+        return result_list
+
     def typed_result(self, expected_type: Type[T]) -> T:
         if isinstance(self._result, expected_type):
             return cast(T, self._result)
@@ -184,4 +191,7 @@ class CommandStructure:
 
     def flags(self) -> Flags:
         return self._flags
+
+    def results(self) -> List[Any]:
+        return self._root_node.results()
 
