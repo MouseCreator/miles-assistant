@@ -75,6 +75,7 @@ class TextRecognizeContext:
         c_range = ConsumedRange(self._position, self._position + items)
         if self._fail_flag:
             return c_range.apply_to(self._tokens)
+
         self._consumed.extend(c_range.apply_to(self._tokens))
         self._position = min(self._total, self._position + items)
         self._last_certainty = certainty

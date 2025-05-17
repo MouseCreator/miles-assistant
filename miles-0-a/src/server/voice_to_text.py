@@ -15,7 +15,7 @@ class VoiceModel(metaclass=Singleton):
 
 def recognize_and_format(filepath) -> str:
     model = whisper.load_model("base")
-    result = model.transcribe(filepath, without_timestamps=True, initial_prompt=None)
+    result = model.transcribe(filepath, without_timestamps=True, initial_prompt=None, fp16=False, language='en')
     text = result["text"]
     translator = str.maketrans({key: ' ' for key in string.punctuation})
     text = text.translate(translator)

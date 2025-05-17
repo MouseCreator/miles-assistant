@@ -1,6 +1,4 @@
-from typing import Self, List, Any
-
-from click import argument
+from typing import Self, List
 
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
 from src.miles.shared.context.data_holder import TextDataHolder
@@ -72,7 +70,7 @@ class RecPointer:
             return None
         new_position = context.index()
         certainty = context.last_certainty()
-        if certainty < 0:
+        if certainty <= 1e-8:
             return None
         if certainty > 100:
             certainty = 100
@@ -95,6 +93,7 @@ class RecPointer:
     def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
         result_pointers: List[RecPointer] = []
         def _on_interrupt(ctx: TextRecognizeContext):
+
             next_pointer = self._create_next_pointer(ctx, node)
             if next_pointer is not None:
                 result_pointers.append(next_pointer)
