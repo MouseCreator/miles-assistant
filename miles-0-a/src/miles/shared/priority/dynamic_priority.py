@@ -72,12 +72,16 @@ class DynamicPriorityRule(ABC):
     def ordered(self):
         return 0
 
+
 class DynamicPriorityRuleSet:
     def __init__(self):
         self._rules = []
+
     def append(self, rule: DynamicPriorityRule):
         self._rules.append(rule)
+
     def extend(self, rules: List[DynamicPriorityRule]):
         self._rules.extend(rules)
+
     def get_rules(self) -> List[DynamicPriorityRule]:
         return list(self._rules)

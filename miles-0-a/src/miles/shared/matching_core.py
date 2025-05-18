@@ -1,13 +1,12 @@
 from typing import List, Any
 
 from src.miles.core.plugin.plugin_structure import PluginStructure
-from src.miles.shared.context.flags import Flags
-from src.miles.shared.executor.command_structure import NamespaceStructure
 from src.miles.core.recognizer.history_to_struct import StructFactory
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.core.recognizer.normalized_text_recognizer import recognize_namespace, recognize_command
+from src.miles.shared.context.flags import Flags
+from src.miles.shared.executor.command_structure import NamespaceStructure
 from src.miles.shared.tokenizer import Tokenizer
-
 
 
 class MatchingCore:
@@ -24,7 +23,6 @@ class MatchingCore:
         self._plugin_structures = list(plugin_structures)
         self._struct_factory = StructFactory()
         self._tokenizer = Tokenizer()
-
 
     def recognize_and_execute(self,
                               command: str,
@@ -48,8 +46,5 @@ class MatchingCore:
         executor = p_namespace.executors_map.get(command_structure.get_command_name())
         executor.on_recognize(command_structure, context)
 
-
     def _tokenize(self, command: str) -> List[str]:
         return self._tokenizer.tokenize(command)
-
-

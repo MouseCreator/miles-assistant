@@ -1,7 +1,5 @@
-
 from collections import Counter
 from typing import List
-
 
 
 def compare_words(target: str, actual: str) -> float:
@@ -46,6 +44,7 @@ def compare_words(target: str, actual: str) -> float:
 
     return 100 * correct_chars / t_size
 
+
 def is_one_of(current_word: str, group: List[str]) -> (str | None, float):
     max_certainty = 0
     closest = None
@@ -55,5 +54,3 @@ def is_one_of(current_word: str, group: List[str]) -> (str | None, float):
             max_certainty = certainty
             closest = candidate
     return closest, max_certainty
-
-

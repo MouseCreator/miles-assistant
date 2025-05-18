@@ -1,17 +1,16 @@
 from typing import Self, List
 
+from src.miles.core.normalized.history import NorHistory, HistoryItem
+from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode, HistoryNodeType
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
 from src.miles.shared.context.data_holder import TextDataHolder
 from src.miles.shared.context.flags import Flags
 from src.miles.shared.context.shared_node import SharedNode
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
-from src.miles.core.normalized.history import NorHistory, HistoryItem
 from src.miles.shared.context_analyzer import GenericContextAnalyzer
-from src.miles.core.recognizer.normalized_matcher import NormalizedState, NormalizedNode, HistoryNodeType
 
 
 class RecPointer:
-
     _history: NorHistory
     _of_data: TextDataHolder
 
@@ -21,11 +20,11 @@ class RecPointer:
     def __init__(self,
                  at_state: NormalizedState,
                  of_data: TextDataHolder,
-                 current_position = 0,
+                 current_position=0,
                  history: NorHistory | None = None,
                  flags: Flags | None = None,
                  stack: RecognizerStack | None = None,
-                 certainty: float=100):
+                 certainty: float = 100):
         self._at_state = at_state
         self._current_position = current_position
         self._certainty = certainty
@@ -63,8 +62,10 @@ class RecPointer:
             flags=self._flags.copy(),
             certainty=self._certainty
         )
+
     def get_position(self):
         return self._current_position
+
     def _create_next_pointer(self, context: TextRecognizeContext, node: NormalizedNode) -> Self:
         if context.is_failed():
             return None
@@ -91,8 +92,9 @@ class RecPointer:
             flags=self._flags.copy()
         )
 
-    def advance_with_analyzer(self, node : NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
+    def advance_with_analyzer(self, node: NormalizedNode, analyzer: GenericContextAnalyzer) -> List[Self]:
         result_pointers: List[RecPointer] = []
+
         def _on_interrupt(ctx: TextRecognizeContext):
 
             next_pointer = self._create_next_pointer(ctx, node)

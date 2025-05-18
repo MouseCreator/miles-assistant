@@ -14,6 +14,7 @@ def rule_is_equal_words(word1: str, word2: str, origin: str) -> float:
             return 100
     return 0
 
+
 def rule_is_one_of(word: str, arr: List[str], origin: str) -> (str | None, float):
     word = word.lower()
     if origin == 'text':

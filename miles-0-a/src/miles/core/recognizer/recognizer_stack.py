@@ -5,13 +5,16 @@ class RecStackItem:
     def __init__(self, title: str, position: int):
         self.title = title
         self.position = position
+
     def __eq__(self, other):
         if not isinstance(other, RecStackItem):
             return False
         return self.position == other.position and self.title == other.title
 
+
 class RecognizerStack:
     _stack: List[RecStackItem]
+
     def __init__(self, items: List[RecStackItem] | None = None):
         if items is None:
             items = []

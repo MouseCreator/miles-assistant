@@ -1,14 +1,13 @@
-
 from xmlrpc.client import Error
-
-from src.miles.core.command.command_processor_error import CommandProcessorError
-from src.miles.core.command.command import Command, RootComponent, \
-    WordComponent, MatchingComponent, ChoiceComponent, ListComponent, OptionalComponent, SequenceComponent, \
-    NamedComponent
 
 from lark import Lark, Transformer
 
+from src.miles.core.command.command import Command, RootComponent, \
+    WordComponent, MatchingComponent, ChoiceComponent, ListComponent, OptionalComponent, SequenceComponent, \
+    NamedComponent
+from src.miles.core.command.command_processor_error import CommandProcessorError
 from src.miles.utils.singleton import Singleton
+
 
 class _GenericCommandTransformer(Transformer):
 
@@ -17,6 +16,7 @@ class _GenericCommandTransformer(Transformer):
 
     def start(self, items):
         return items[0]
+
     def skip(self, items):
         return items[0]
 

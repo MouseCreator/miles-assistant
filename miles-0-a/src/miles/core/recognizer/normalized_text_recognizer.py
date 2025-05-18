@@ -1,21 +1,21 @@
 from random import shuffle
 from typing import List, Set, Tuple
 
+from src.miles.core.plugin.plugin_structure import NamespaceComponent
+from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
+from src.miles.core.recognizer.history_to_struct import StructFactory
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
+from src.miles.core.recognizer.optimization import RecOptimizationStrategy
+from src.miles.core.recognizer.recognizer_error import RecognizerError
+from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
 from src.miles.shared.certainty import CertaintyDecision, CertaintyItem, CertaintyEffect
 from src.miles.shared.context.data_holder import TextDataHolder
-from src.miles.core.plugin.plugin_structure import NamespaceComponent
-from src.miles.core.recognizer.recognizer_error import RecognizerError
 from src.miles.shared.context.flags import Flags
+from src.miles.shared.context_analyzer import GenericContextAnalyzer, DefaultWordContextAnalyzerFactory
 from src.miles.shared.executor.command_structure import NamespaceStructure, CommandStructure
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
-from src.miles.core.recognizer.history_to_struct import StructFactory
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection
-from src.miles.shared.context_analyzer import GenericContextAnalyzer, DefaultWordContextAnalyzerFactory
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
-from src.miles.core.recognizer.optimization import RecOptimizationStrategy
-from src.miles.core.recognizer.recognizer_pointer import RecPointer
 from src.miles.utils.decorators import auto_str
 
 
@@ -41,6 +41,7 @@ def _optimized_route(next_gen_pointers: List[RecPointer], analyzer: GenericConte
 
 class _DynamicCache:
     _cache: Set[Tuple[int, int]]
+
     def __init__(self):
         self._cache = set()
 
@@ -50,8 +51,8 @@ class _DynamicCache:
         return state_id, position
 
     def add_to_cache(self, pointer: RecPointer):
-
         self._cache.add(self._pair(pointer))
+
     def is_in_cache(self, pointer: RecPointer):
         return self._pair(pointer) in self._cache
 
@@ -108,9 +109,8 @@ class _ExtendedCommandReader:
         self._cache.clear()
         self._failed_max_pointer = None
         self._recognize_tokens()
-        result = list (self._reached_pointers)
+        result = list(self._reached_pointers)
         return sorted(result, key=lambda p: p.get_position(), reverse=True)
-
 
     def _recognize_tokens(self):
         initial = self._matcher.initial_state()
@@ -176,7 +176,7 @@ class _ExtendedCommandReader:
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
         nodes = connection.get_nodes()
-        previous_generation = [ pointer ]
+        previous_generation = [pointer]
 
         for node in nodes:
             this_generation = []
@@ -185,7 +185,7 @@ class _ExtendedCommandReader:
                 advance = p.advance_with_analyzer(node, analyzer)
                 advance = _optimized_route(advance, analyzer)
 
-                if len(advance) == 0: # failed pointer
+                if len(advance) == 0:  # failed pointer
                     position = p.get_position()
                     prev_max = self._failed_max_pointer.get_position()
                     if position > prev_max:
@@ -252,7 +252,7 @@ class _CommandReader:
         self._start_from = start_from
         self._cache = _DynamicCache()
         if flags is None:
-            flags=Flags()
+            flags = Flags()
         self._initial_flags = flags
         if analyzer_provider is None:
             analyzer_provider = MatchingDefinitionSet()
@@ -292,7 +292,7 @@ class _CommandReader:
             position = self._failed_max_pointer.get_position()
             if position < self._input_data.size():
                 error_token = self._input_data[position]
-                message = f'Unable to recognize command! Error at position {position+1}: {error_token}'
+                message = f'Unable to recognize command! Error at position {position + 1}: {error_token}'
                 raise RecognizerError(message)
             else:
                 raise RecognizerError(f'Unable to recognize command! Unexpected end of input.')
@@ -343,7 +343,7 @@ class _CommandReader:
 
     def _go_through_connection(self, pointer: RecPointer, connection: NormalizedConnection) -> List[RecPointer]:
         nodes = connection.get_nodes()
-        previous_generation = [ pointer ]
+        previous_generation = [pointer]
 
         for node in nodes:
             this_generation = []
@@ -352,7 +352,7 @@ class _CommandReader:
                 advance = p.advance_with_analyzer(node, analyzer)
                 advance = _optimized_route(advance, analyzer)
 
-                if len(advance) == 0: # failed pointer
+                if len(advance) == 0:  # failed pointer
                     position = p.get_position()
                     prev_max = self._failed_max_pointer.get_position()
                     if position > prev_max:
@@ -390,6 +390,7 @@ class _CommandReader:
             priority_map[c] = priority
 
         return sorted(connections_from_state, key=lambda x: priority_map[x], reverse=True)
+
 
 @auto_str
 class _NamespaceReader:
@@ -438,7 +439,7 @@ class _NamespaceReader:
                     position = self._failed_max_pointer.get_position()
                     if position < self._input_data.size():
                         error_token = self._input_data[position]
-                        message = f'Unable to recognize namespace! Error at position {position+1}: {error_token}'
+                        message = f'Unable to recognize namespace! Error at position {position + 1}: {error_token}'
                     else:
                         message = f'Unable to recognize namespace! Unexpected end of input.'
                     raise RecognizerError(message)
@@ -506,26 +507,31 @@ class _NamespaceReader:
             result.append(r)
         return result
 
-def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str], flags: Flags|None = None) -> NamespaceStructure:
+
+def recognize_namespace(matcher: NormalizedMatcher, tokens: List[str],
+                        flags: Flags | None = None) -> NamespaceStructure:
     of_data = TextDataHolder(tokens)
     reader = _NamespaceReader(matcher, of_data, flags=flags)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_namespace(tokens, pointer)
 
+
 def recognize_command(nc: NamespaceComponent,
                       tokens: List[str],
                       ns: NamespaceStructure,
-                      flags: Flags|None=None) -> CommandStructure:
+                      flags: Flags | None = None) -> CommandStructure:
     of_data = TextDataHolder(tokens)
     shift = ns.size()
     matcher = nc.command_matcher
     dynamic_priorities = nc.dynamic_priorities
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, nc.certainty_effect, dynamic_priorities, flags=flags)
+    reader = _CommandReader(matcher, of_data, shift, analyzer_provider, nc.certainty_effect, dynamic_priorities,
+                            flags=flags)
     pointer: RecPointer = reader.recognize()
     struct_factory = StructFactory()
     return struct_factory.convert_command(ns, tokens, pointer)
+
 
 def recognize_extended(title: str,
                        tokens: List[str],
@@ -538,14 +544,15 @@ def recognize_extended(title: str,
     dynamic_priorities = nc.dynamic_priorities
     certainty_effect = nc.certainty_effect
     analyzer_provider = AnalyzerProvider(nc.definitions, nc.word_analyzer_factory)
-    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities, certainty_effect, stack, flags)
+    reader = _ExtendedCommandReader(matcher, of_data, start_from, analyzer_provider, dynamic_priorities,
+                                    certainty_effect, stack, flags)
     pointers: List[RecPointer] = reader.recognize()
     ns = NamespaceStructure(identifier=title, tokens=[])
     struct_factory = StructFactory()
 
     result = []
     for p in pointers:
-        token_subset = tokens[ start_from: p.get_position() ]
+        token_subset = tokens[start_from: p.get_position()]
         struct = struct_factory.convert_command(ns, token_subset, p)
         result.append(struct)
 

@@ -1,10 +1,11 @@
 from typing import List, Callable, Self, TypeVar, Any
 
-from src.miles.shared.context.flags import Flags
 from src.miles.core.recognizer.recognizer_stack import RecognizerStack
+from src.miles.shared.context.flags import Flags
 from src.miles.shared.context.shared_node import SharedNode
 
 T = TypeVar('T')
+
 
 class ConsumedRange:
     def __init__(self, from_index: int, to_index: int):
@@ -15,8 +16,7 @@ class ConsumedRange:
         return range(self.from_index, self.to_index)
 
     def apply_to(self, lst: List[T]) -> List[T]:
-        return lst[self.from_index : self.to_index]
-
+        return lst[self.from_index: self.to_index]
 
 
 class TextRecognizeContext:
@@ -36,8 +36,8 @@ class TextRecognizeContext:
                  node: SharedNode,
                  start_at=0,
                  failed=False,
-                 flags: Flags|None = None,
-                 stack: RecognizerStack|None = None):
+                 flags: Flags | None = None,
+                 stack: RecognizerStack | None = None):
         self._tokens = list(tokens)
         self._position = start_at
         self._total = len(self._tokens)
@@ -64,8 +64,9 @@ class TextRecognizeContext:
 
     def lookahead(self, items: int) -> List[str]:
         return self._tokens[self._position:self._position + items]
+
     def look(self, at_item: int) -> str:
-        return self._tokens[self._position+at_item]
+        return self._tokens[self._position + at_item]
 
     def interrupt(self):
         self._on_interrupt(self)
@@ -73,7 +74,7 @@ class TextRecognizeContext:
     def get_result(self):
         return self._result
 
-    def consume(self, items:int = 1, interrupted=False, certainty: float=100) -> List[str]:
+    def consume(self, items: int = 1, interrupted=False, certainty: float = 100) -> List[str]:
         c_range = ConsumedRange(self._position, self._position + items)
         if self._fail_flag:
             return c_range.apply_to(self._tokens)
@@ -85,7 +86,7 @@ class TextRecognizeContext:
             self.interrupt()
         return c_range.apply_to(self._tokens)
 
-    def variant(self, items: int = 1, certainty: float=100) -> None:
+    def variant(self, items: int = 1, certainty: float = 100) -> None:
         prev_position = self._position
         prev_consumed = list(self._consumed)
         prev_certainty = self._last_certainty
@@ -101,7 +102,7 @@ class TextRecognizeContext:
         self._position = prev_position
         self._consumed = prev_consumed
 
-    def ignore(self, items: int = 1, interrupted: bool = False, certainty: float=100) -> None:
+    def ignore(self, items: int = 1, interrupted: bool = False, certainty: float = 100) -> None:
         self._position = min(self._total, self._position + items)
         self._last_certainty = certainty
         if interrupted:
@@ -109,6 +110,7 @@ class TextRecognizeContext:
 
     def last_certainty(self):
         return self._last_certainty
+
     def remaining_count(self) -> int:
         return self._total - self._position
 
@@ -145,7 +147,7 @@ class TextRecognizeContext:
     def node(self) -> SharedNode:
         return self._node
 
-    def set_result(self, param: Any, interrupted: bool=False):
+    def set_result(self, param: Any, interrupted: bool = False):
         self._result = param
         if interrupted:
             self.interrupt()

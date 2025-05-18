@@ -1,5 +1,3 @@
-
-
 class SharedNode:
 
     def __init__(self, connection_type: str, argument: str, name: str):
@@ -16,4 +14,4 @@ class SharedNode:
                 self.argument == other.argument
                 and
                 self.name == other.name
-                )
+        )

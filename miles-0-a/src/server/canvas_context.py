@@ -20,6 +20,7 @@ class Shape:
             "angle": self.angle
         }
 
+
 class ShapeList:
     def __init__(self, lst: List[Shape]):
         self._list = lst
@@ -41,11 +42,13 @@ class ShapeList:
 
     def size(self):
         return len(self._list)
+
     def __len__(self):
         return len(self._list)
 
     def add(self, shape: Shape) -> None:
         self._list.append(shape)
+
 
 def _next_shape_id(number: int) -> str:
     if number < 1:
@@ -57,10 +60,12 @@ def _next_shape_id(number: int) -> str:
 
     return letter if suffix == 0 else f"{letter}{suffix - 1}"
 
+
 class RequestContext:
     def __init__(self, shapes: List[Shape], identity_count: int):
         self._shapes = ShapeList(shapes)
         self._id_count = identity_count
+
     def shapes(self) -> ShapeList:
         return self._shapes
 

@@ -1,12 +1,11 @@
 from typing import List
 
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
 from src.miles.shared.certainty import CertaintyEffect
 from src.miles.shared.context_analyzer import WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutorsMap
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
-
 
 
 class NamespaceComponent:
@@ -28,6 +27,6 @@ class NamespaceComponent:
 
 
 class PluginStructure:
-    def __init__(self, plugin_name : str, namespaces: List[NamespaceComponent]):
+    def __init__(self, plugin_name: str, namespaces: List[NamespaceComponent]):
         self.plugin_name = plugin_name
         self.namespaces = namespaces

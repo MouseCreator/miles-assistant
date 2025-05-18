@@ -27,17 +27,19 @@ class HistoryItem:
                 and self.prev_point == other.prev_point
                 and self.included == other.included
                 and self.next_point == other.next_point
-                )
+        )
 
     def __str__(self):
         return super().__str__()
+
     def step(self) -> int:
         return self.next_point - self.prev_point
 
 
 class NorHistory:
     _items: List[HistoryItem]
-    def __init__(self, items: List[HistoryItem] | None=None):
+
+    def __init__(self, items: List[HistoryItem] | None = None):
         if items is None:
             self._items = []
         else:
@@ -53,6 +55,7 @@ class NorHistory:
         if not isinstance(other, NorHistory):
             return False
         return self._items == other._items
+
     def __str__(self):
         return print_list(self._items)
 

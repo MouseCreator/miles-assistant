@@ -1,5 +1,7 @@
-import whisper
 import os
+
+import whisper
+
 
 def transcribe_audio(model, file_path):
     if not os.path.exists(file_path):
@@ -13,6 +15,7 @@ def transcribe_audio(model, file_path):
     print(result['text'])
     return result["text"]
 
+
 if __name__ == "__main__":
     print("Loading model...")
     model = whisper.load_model("base")
@@ -23,7 +26,7 @@ if __name__ == "__main__":
 
     for filename in os.listdir(directory):
         if filename.endswith('.mp3'):
-            full_name= os.path.join(directory, filename)
+            full_name = os.path.join(directory, filename)
             mp3_files.append(full_name)
 
     for filename in mp3_files:

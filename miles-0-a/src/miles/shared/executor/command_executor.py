@@ -9,8 +9,10 @@ class CommandExecutor(ABC):
     def on_recognize(self, command_structure: CommandStructure, context):
         pass
 
+
 class CommandExecutorsMap:
     _map: Dict[str, CommandExecutor]
+
     def __init__(self):
         self._map = {}
 

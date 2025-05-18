@@ -14,6 +14,6 @@ class CommandPool:
 
     def extend(self, commands: List[CommandDefinition]):
         self.definitions.extend(commands)
-            
+
     def __iter__(self):
         return self.definitions.__iter__()

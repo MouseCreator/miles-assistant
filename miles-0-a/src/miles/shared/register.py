@@ -1,20 +1,22 @@
 from typing import List
 
-from src.miles.shared.certainty import SortCertaintyEffect, CertaintyEffect
-from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
 from src.miles.core.priority.priority_config import PriorityStrategy
-from src.miles.shared.priority.priority_rule import PriorityRule
-from src.miles.shared.executor.command_executor import CommandExecutor
+from src.miles.core.recognizer.matching_definition import MatchingDefinition
+from src.miles.shared.certainty import SortCertaintyEffect, CertaintyEffect
 from src.miles.shared.context_analyzer import TypedContextAnalyzer, DefaultWordContextAnalyzerFactory, \
     WordContextAnalyzerFactory
-from src.miles.core.recognizer.matching_definition import MatchingDefinition
+from src.miles.shared.executor.command_executor import CommandExecutor
+from src.miles.shared.priority.dynamic_priority import DynamicPriorityRule
+from src.miles.shared.priority.priority_rule import PriorityRule
 from src.miles.utils.singleton import Singleton
 
 
 class _PrefixSet:
     _prefixes: List[str]
+
     def __init__(self):
         self._prefixes = []
+
     def remember_and_validate(self, new_prefix: str):
         for old_prefix in self._prefixes:
             if old_prefix.startswith(new_prefix):
@@ -23,15 +25,18 @@ class _PrefixSet:
                 raise ValueError(f'Prefix conflict: "{old_prefix}" is part of "{new_prefix}"')
         self._prefixes.append(new_prefix)
 
+
 class CommandInitializer:
     def __init__(self, name: str, syntax: str, executor: CommandExecutor):
         self.name = name
         self.syntax = syntax
         self.executor = executor
 
+
 class NamespaceInitializer:
     _static_priority_rules: List[PriorityRule]
     _matchings: List[MatchingDefinition]
+
     def __init__(self, name: str, prefix: str):
         self._name = name
         self._prefix = prefix
@@ -96,11 +101,13 @@ class NamespaceInitializer:
 
     def get_word_analyzer_factory(self) -> WordContextAnalyzerFactory:
         return self._word_analyzer_factory
-    def set_word_analyzer_factory(self, factory : WordContextAnalyzerFactory):
+
+    def set_word_analyzer_factory(self, factory: WordContextAnalyzerFactory):
         self._word_analyzer_factory = factory
 
     def get_certainty_effect(self):
         return self._certainty_effect
+
     def set_certainty_effect(self, ce: CertaintyEffect):
         self._certainty_effect = ce
 
@@ -134,6 +141,7 @@ class PluginRegister:
 
 class MilesRegister(metaclass=Singleton):
     _plugins: List[PluginRegister]
+
     def __init__(self):
         self._plugins = []
         self._prefix_set = _PrefixSet()

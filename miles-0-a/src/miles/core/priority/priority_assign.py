@@ -1,20 +1,24 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
 from src.miles.core.priority.priority_manager import PriorityManager, PriorityStrategy
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedConnection, NormalizedState
 
 
 class _Path:
     def __init__(self, state: NormalizedState, connection: NormalizedConnection):
         self.state = state
         self.connection = connection
+
     def __str__(self):
         return f'path {self.state} --> {self.connection}'
+
+
 class ConnectionPrioritizer(ABC):
     @abstractmethod
     def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         pass
+
 
 class FirstConnectionPrioritizer(ConnectionPrioritizer):
     def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
@@ -23,12 +27,14 @@ class FirstConnectionPrioritizer(ConnectionPrioritizer):
         first = connection.get_nodes()[0]
         return priority_manager.get_priority(first)
 
+
 class FindMaxConnectionPrioritizer(ConnectionPrioritizer):
     def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
         if connection.empty():
             return priority_manager.default_priority()
-        priorities = map(lambda c: priority_manager.get_priority(c) ,connection.get_nodes())
+        priorities = map(lambda c: priority_manager.get_priority(c), connection.get_nodes())
         return max(priorities)
+
 
 class AllDefaultConnectionPrioritizer(ConnectionPrioritizer):
     def get_priority(self, priority_manager: PriorityManager, connection: NormalizedConnection) -> int:
@@ -43,6 +49,7 @@ def _prioritizer(strategy: PriorityStrategy) -> ConnectionPrioritizer:
     if strategy == PriorityStrategy.ALL_DEFAULT:
         return AllDefaultConnectionPrioritizer()
     raise ValueError(f'Unknown strategy prioritizer strategy: {strategy}')
+
 
 class PriorityAssigner:
 
@@ -81,7 +88,6 @@ class PriorityAssigner:
         prioritizer = _prioritizer(strategy)
         return prioritizer.get_priority(self._priority_manager, connection)
 
-
     def _refresh_priorities(self, matcher):
         states: List[NormalizedState] = self._all_states(matcher)
         for state in states:
@@ -92,9 +98,3 @@ class PriorityAssigner:
         self._refresh_priorities(matcher)
         strategy = self._priority_manager.get_strategy()
         self._assign_priorities(matcher, strategy)
-
-
-
-
-
-

@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from src.miles.shared.context_analyzer import TypedContextAnalyzer
 
+
 class MatchingDefinition:
 
     def __init__(self, name: str, analyzer: TypedContextAnalyzer):
@@ -14,13 +15,15 @@ class MatchingDefinition:
     def name(self) -> str:
         return self._name
 
+
 class MatchingDefinitionSet:
     _def_dict: Dict[str, MatchingDefinition]
+
     def __init__(self):
         self._def_dict = {}
 
     def append_definition(self, definition: MatchingDefinition):
-        self._def_dict[ (definition.name() ) ] = definition
+        self._def_dict[(definition.name())] = definition
 
     def append_all_definitions(self, definitions: List[MatchingDefinition]):
         for d in definitions:
@@ -28,10 +31,7 @@ class MatchingDefinitionSet:
 
     def get_matching(self, name: str) -> MatchingDefinition:
         _key = name
-        definition = self._def_dict.get( _key )
+        definition = self._def_dict.get(_key)
         if definition is None:
             raise KeyError(f'No matching definition found for {_key}')
         return definition
-
-
-

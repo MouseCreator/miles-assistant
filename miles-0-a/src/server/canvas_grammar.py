@@ -35,6 +35,7 @@ class TypoWordAnalyzer(TypedContextAnalyzer):
         word_comparison = rule_is_equal_words(current, self.word, context.flags()['source'])
         context.consume(certainty=word_comparison)
 
+
 class TypoWordAnalyzerFactory(WordContextAnalyzerFactory):
 
     def build(self, word: str) -> TypedContextAnalyzer:
@@ -59,6 +60,7 @@ class AddCommandExecutor(CommandExecutor):
         )
         request_context.shapes().add(shape)
 
+
 class ColorContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
         current_word = context.current().lower()
@@ -68,6 +70,7 @@ class ColorContextAnalyzer(TypedContextAnalyzer):
             return
         context.ignore(certainty=certainty)
         context.write([word])
+
 
 class ShapeContextAnalyzer(TypedContextAnalyzer):
     def invoke(self, context: TextRecognizeContext):
@@ -104,7 +107,7 @@ def is_audio_recognition_error(context: TextRecognizeContext):
     n = num_dict[word]
     if after == '100':
         context.consume(2)
-        context.set_result(n*100)
+        context.set_result(n * 100)
     elif after == '1000':
         context.consume(2)
         context.set_result(n * 1000)
@@ -125,8 +128,6 @@ class NumberContextAnalyzer(TypedContextAnalyzer):
             context.fail()
 
 
-
-
 class ShapeIdContextAnalyzer(TypedContextAnalyzer):
 
     def __init__(self):
@@ -138,6 +139,7 @@ class ShapeIdContextAnalyzer(TypedContextAnalyzer):
             context.consume()
         else:
             context.fail()
+
 
 class CoordinatesContextAnalyzer(TypedContextAnalyzer):
 
@@ -192,9 +194,11 @@ class SetterCommandExecutor(CommandExecutor):
         else:
             raise ShapeError(f'Unknown setter method: {setter}')
 
+
 class MoveCommandExecutor(CommandExecutor):
     def __init__(self):
         pass
+
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         identifier = search.find_ith(1).any()
@@ -206,9 +210,11 @@ class MoveCommandExecutor(CommandExecutor):
         target.x = int(val[0])
         target.y = int(val[1])
 
+
 class DeleteCommandExecutor(CommandExecutor):
     def __init__(self):
         pass
+
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         target = search.find_matching('number')[0].any()
@@ -223,9 +229,11 @@ class DeleteCommandExecutor(CommandExecutor):
 
         context.shapes().remove_by_id(target)
 
+
 class ClearCommandExecutor(CommandExecutor):
     def __init__(self):
         pass
+
     def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
         context.shapes().clear()
         context.clear_identity()

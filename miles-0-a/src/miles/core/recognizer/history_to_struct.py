@@ -1,10 +1,10 @@
-from typing import List
 import re
+from typing import List
 
 from src.miles.core.normalized.history import NorHistory
-from src.miles.shared.executor.command_structure import CommandNode, NodeType, CommandStructure, NamespaceStructure
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
 from src.miles.core.recognizer.recognizer_pointer import RecPointer
+from src.miles.shared.executor.command_structure import CommandNode, NodeType, CommandStructure, NamespaceStructure
 from src.miles.utils.id_generator import IdGenerator
 
 
@@ -15,7 +15,6 @@ class StructFactory:
 
     def _process_labels(self, label: str):
         pass
-
 
     def _next_index(self):
         return self.id_generator.next('command_node')
@@ -40,7 +39,7 @@ class StructFactory:
             node_type=NodeType.ITEM,
             value=None
         )
-        stack = [ root_node ]
+        stack = [root_node]
         item_queue = list(items)
 
         while item_queue:
@@ -49,7 +48,7 @@ class StructFactory:
 
             included_tokens = item.included
 
-            parent=stack[0]
+            parent = stack[0]
             if node.node_type == HistoryNodeType.AUTOMATIC:
                 label: str = node.argument
                 if label == 'skip optional':
@@ -100,9 +99,9 @@ class StructFactory:
                     stack.insert(0, first_item)
                     list_struct.append(first_item)
                 elif label == 'repeat list':
-                    stack.pop(0) # pop previous item
+                    stack.pop(0)  # pop previous item
                     list_struct = stack[0]
-                    new_item = CommandNode( # begin new item
+                    new_item = CommandNode(  # begin new item
                         identity=self._next_index(),
                         node_type=NodeType.ITEM,
                         value=None,
@@ -112,8 +111,8 @@ class StructFactory:
                     stack.insert(0, new_item)
                     parent.append(new_item)
                 elif label == 'end list':
-                    stack.pop(0) # pops item node
-                    stack.pop(0) # pops list node
+                    stack.pop(0)  # pops item node
+                    stack.pop(0)  # pops list node
                 elif label == 'begin choice':
                     if not item_queue:
                         raise ValueError(f'Expected to have choice option selected, but got end of input')
@@ -161,10 +160,10 @@ class StructFactory:
         return root_node
 
     def convert_command(self,
-                namespace_structure: NamespaceStructure,
-                tokens: List[str],
-                pointer: RecPointer,
-                ) -> CommandStructure:
+                        namespace_structure: NamespaceStructure,
+                        tokens: List[str],
+                        pointer: RecPointer,
+                        ) -> CommandStructure:
         history = pointer.get_history()
         pointer_flags = pointer.flags().copy()
         root_node = self._convert(history)
@@ -207,10 +206,3 @@ class StructFactory:
         if label is None:
             return False
         return label.startswith('recognize ')
-
-
-
-
-
-
-

@@ -1,11 +1,11 @@
 from typing import List, Tuple
 
-from src.miles.core.recognizer.recognizer_error import RecognizerError
-from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.plugin.pipeline import create_normalized_matcher_from_definitions
 from src.miles.core.plugin.plugin_definition import PluginDefinition, NamespaceOfCommands, StoredCommand
 from src.miles.core.plugin.register_to_definitions import map_register_to_definition
 from src.miles.core.recognizer.normalized_text_recognizer import recognize_extended
+from src.miles.core.recognizer.recognizer_error import RecognizerError
+from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.executor.command_structure import CommandStructure
 from src.miles.shared.register import MilesRegister
@@ -35,7 +35,6 @@ class ExtendedCore:
             stored.append(stored_command)
         self._stored = stored
 
-
     def _select_namespace(self) -> NamespaceOfCommands:
         reg = MilesRegister()
         plugins = map_register_to_definition(reg)
@@ -49,20 +48,21 @@ class ExtendedCore:
             if n.name == self._namespace:
                 return n
         raise ValueError(f'Unknown namespace: {self._namespace}')
+
     def recognize_extended(self, context: TextRecognizeContext) -> List[CommandStructure]:
         selected = self._select_namespace()
 
         custom_namespace = NamespaceOfCommands(name=self._title,
-                                                     prefix=None,
-                                                     commands=self._stored,
-                                                     priority_manager=selected.priority_manager,
-                                                     dynamic_priorities=selected.dynamic_priorities,
-                                                     definition_set=selected.definition_set,
-                                                     word_analyzer_factory=selected.word_analyzer_factory,
-                                                     certainty_effect=selected.certainty_effect)
+                                               prefix=None,
+                                               commands=self._stored,
+                                               priority_manager=selected.priority_manager,
+                                               dynamic_priorities=selected.dynamic_priorities,
+                                               definition_set=selected.definition_set,
+                                               word_analyzer_factory=selected.word_analyzer_factory,
+                                               certainty_effect=selected.certainty_effect)
         position = context.position()
         if context.stack().contains(self._title, position):
-            return [] # fails to avoid infinite loop
+            return []  # fails to avoid infinite loop
 
         temp_plugin = PluginDefinition(name=self._title, namespaces=[custom_namespace])
         temp_plugin_structure = create_normalized_matcher_from_definitions(temp_plugin)
@@ -74,6 +74,7 @@ class ExtendedCore:
         result = recognize_extended(self._title, context.all_tokens(), ns, position, stack, context.flags())
 
         return result
+
 
 def single_variant(lst: List[CommandStructure]) -> CommandStructure | None:
     if len(lst) == 0:

@@ -6,6 +6,7 @@ class PriorityStrategy(Enum):
     FIND_MAX = 1
     ALL_DEFAULT = 2
 
+
 class PriorityConfig:
     def get_strategy(self) -> PriorityStrategy:
         pass

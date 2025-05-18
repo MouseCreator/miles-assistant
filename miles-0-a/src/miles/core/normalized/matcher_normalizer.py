@@ -1,14 +1,13 @@
 from typing import Set, List, Self, Dict
 
 from src.miles.core.matcher.matcher import Matcher, MatchState, MatchConnection, ConnectionType
-from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedState, NormalizedNode, HistoryNodeType, \
+from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher, NormalizedState, NormalizedNode, \
+    HistoryNodeType, \
     NormalizedConnection
 from src.miles.utils.decorators import auto_str
 from src.miles.utils.pretty import PrintableStructure
 from src.miles.utils.string_builder import StringBuilder
 from src.miles.utils.strings import print_list
-
-
 
 """
 For priority control, it is essential to use Normalized Matchers.
@@ -21,11 +20,14 @@ This approach provides several important advantages:
     - Automatic connections are still possible because of final states.
     For example, (state) --auto--> (final) cannot be rewritten as word or matching connection
 """
+
+
 @auto_str
 class _PathNode:
-    def __init__(self, state: MatchState, connection : MatchConnection):
+    def __init__(self, state: MatchState, connection: MatchConnection):
         self.state = state
         self.connection = connection
+
 
 class _Path:
     def __init__(self, path: List[_PathNode] | None = None):
@@ -41,6 +43,7 @@ class _Path:
             return None
         last_node = self._path[-1]
         return last_node.state.get_destination(last_node.connection)
+
     def __str__(self):
         return print_list(self._path)
 
@@ -55,6 +58,7 @@ class _StackItem:
         self.count = count
         self.path = path
 
+
 class _NormalizedPaths(PrintableStructure):
     def sprint(self):
         sb = StringBuilder()
@@ -67,6 +71,7 @@ class _NormalizedPaths(PrintableStructure):
             if i != len(self.paths) - 1:
                 sb.append("\n")
         return sb.to_string()
+
     def __init__(self, origin: MatchState, paths: List[_Path]):
         self.origin = origin
         self.paths = paths
@@ -74,14 +79,17 @@ class _NormalizedPaths(PrintableStructure):
     def __str__(self):
         return f"Normalized Path: {self.origin} -> {print_list(self.paths)}"
 
+
 class _NormalizedCollection(PrintableStructure):
     def __init__(self, paths: List[_NormalizedPaths]):
         self._paths = paths
+
     def sprint(self):
         lst = []
         for p in self._paths:
             lst.append(p.sprint())
         return "\n".join(lst)
+
     def all_paths(self) -> List[_NormalizedPaths]:
         return list(self._paths)
 
@@ -108,22 +116,23 @@ def _find_all_reachable_paths(from_state: MatchState) -> List[_Path]:
         if destination.is_final():
             terminate = True
 
-        if destination in [ s.state for s in stack ] and not terminate : # loopback
+        if destination in [s.state for s in stack] and not terminate:  # loopback
             continue
 
         new_path = current.path.extend(_PathNode(current.state, connection))
 
         if terminate:
-            paths.append(new_path) # reached final state, remember the path and continue
+            paths.append(new_path)  # reached final state, remember the path and continue
         else:
-            stack.append(_StackItem(destination, 0, new_path)) # continue from this node
+            stack.append(_StackItem(destination, 0, new_path))  # continue from this node
     return paths
+
 
 def _get_normalized_collection(matcher: Matcher) -> _NormalizedCollection:
     initial = matcher.get_initial_state()
-    key_states: Set[MatchState] = { initial }
+    key_states: Set[MatchState] = {initial}
 
-    queue: List[MatchState] = [ initial ]
+    queue: List[MatchState] = [initial]
     n_paths: List[_NormalizedPaths] = []
     while len(queue) > 0:
         current = queue.pop(0)
@@ -131,7 +140,7 @@ def _get_normalized_collection(matcher: Matcher) -> _NormalizedCollection:
 
         last_destinations = []
         for r in reachable:
-            last_destinations.append( r.destination() )
+            last_destinations.append(r.destination())
 
         for dest in last_destinations:
             if dest not in key_states:
@@ -142,6 +151,7 @@ def _get_normalized_collection(matcher: Matcher) -> _NormalizedCollection:
             n_paths.append(_NormalizedPaths(current, reachable))
 
     return _NormalizedCollection(n_paths)
+
 
 class _ConnectionPrototype:
     def __init__(self, from_id: int, path: _Path, to_id: int):
@@ -215,4 +225,3 @@ def _build_normalized_matcher(matcher: Matcher, collection: _NormalizedCollectio
 def normalize(origin: Matcher) -> NormalizedMatcher:
     collection = _get_normalized_collection(origin)
     return _build_normalized_matcher(origin, collection)
-

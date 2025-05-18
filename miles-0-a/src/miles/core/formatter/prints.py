@@ -8,6 +8,7 @@ from src.miles.utils.string_builder import StringBuilder
 def _format_connection(connection: MatchConnection) -> str:
     return f'---{connection.sprint()}-->'
 
+
 def _print_from_state(sb: StringBuilder, state: MatchState, space_level: int, visited: List[MatchState]):
     connections = state.all_connections()
     prev_index = index_of(visited, state)
@@ -28,6 +29,7 @@ def _print_from_state(sb: StringBuilder, state: MatchState, space_level: int, vi
         spaces = space_level + len(connection_str)
         dest = state.get_destination(conn)
         _print_from_state(sb, dest, spaces, visited + [state])
+
 
 def print_matcher(matcher: Matcher) -> str:
     initial_state = matcher.get_initial_state()

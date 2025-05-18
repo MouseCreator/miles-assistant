@@ -1,11 +1,11 @@
 from collections.abc import Callable
 from typing import Generic, List, TypeVar
 
-
-
 from src.miles.shared.executor.command_structure import CommandNode, NodeType
 
 T = TypeVar('T')
+
+
 class _ResultList(Generic[T]):
     def __init__(self):
         self._lst: List[T] = []
@@ -16,11 +16,13 @@ class _ResultList(Generic[T]):
     def append(self, element: T) -> None:
         self._lst.append(element)
 
+
 class CommandStructureSearch:
     def __init__(self, node: CommandNode):
         self._node = node
 
-    def _find(self, current: CommandNode, predicate: Callable[[CommandNode], bool], result_list: _ResultList[CommandNode]) -> None:
+    def _find(self, current: CommandNode, predicate: Callable[[CommandNode], bool],
+              result_list: _ResultList[CommandNode]) -> None:
         if current is None:
             return
         if predicate(current):

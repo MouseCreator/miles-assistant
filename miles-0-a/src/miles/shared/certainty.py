@@ -12,20 +12,27 @@ class CertaintyItem:
         self.origin = origin
         self.certainty = certainty
         self.flags = flags
+
+
 @auto_str
 class CertaintyDecision:
     _all: List[List[CertaintyItem]]
+
     def __init__(self):
         self._all = []
+
     def add(self, items: List[CertaintyItem]):
         self._all.append(items)
+
     def plain(self) -> List[CertaintyItem]:
         result = []
         for i in self._all:
             result.extend(i)
         return result
+
     def size(self) -> int:
         return len(self._all)
+
     def get(self, i: int) -> List[CertaintyItem]:
         return self._all[i]
 
@@ -43,6 +50,7 @@ class CertaintyDecision:
                 if abs(item.certainty - certainty) < 1e-8:
                     result.append(item)
         return result
+
     def __iter__(self):
         return self._all.__iter__()
 
@@ -52,16 +60,19 @@ class CertaintyEffect(ABC):
     def apply(self, decision: CertaintyDecision) -> List[CertaintyItem]:
         pass
 
+
 class SortCertaintyEffect(CertaintyEffect):
 
     def apply(self, decision: CertaintyDecision) -> List[CertaintyItem]:
         items = decision.plain()
-        return sorted(items, key=lambda p : p.certainty, reverse=True)
+        return sorted(items, key=lambda p: p.certainty, reverse=True)
+
 
 class OnlyMostCertainEffect(CertaintyEffect):
     def apply(self, decision: CertaintyDecision) -> List[CertaintyItem]:
         max_certainty = decision.max_certainty()
         return decision.get_by_certainty(max_certainty)
+
 
 class OnePerGroupCertaintyEffect(CertaintyEffect):
     def apply(self, decision: CertaintyDecision) -> List[CertaintyItem]:

@@ -6,5 +6,6 @@ def decapitalize(s: str) -> str:
         return s[0].lower() + s[1:]
     return s
 
-def print_list(lst: List,separator=', ') -> str:
+
+def print_list(lst: List, separator=', ') -> str:
     return "[" + separator.join(map(str, lst)) + "]"

@@ -1,7 +1,8 @@
 from typing import List
 
-from metaphone import doublemetaphone
 import Levenshtein
+from metaphone import doublemetaphone
+
 
 def sound_similarity(w1: str, w2: str) -> int:
     mp1 = doublemetaphone(w1)
@@ -14,7 +15,8 @@ def sound_similarity(w1: str, w2: str) -> int:
                 distances.append(Levenshtein.distance(code1, code2))
     return min(distances) if distances else 100
 
-def find_closest_sounding_word(target:str, arr: List[str]) -> (str | None, float):
+
+def find_closest_sounding_word(target: str, arr: List[str]) -> (str | None, float):
     closest = None
     min_distance = 100
     for word in arr:

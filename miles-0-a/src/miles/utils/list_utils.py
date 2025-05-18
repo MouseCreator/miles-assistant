@@ -8,7 +8,9 @@ def index_of(lst: List, element) -> int:
             return i
     return -1
 
+
 T = TypeVar('T')
+
 
 def get_elements_by_indexes(elements: List[T], indexes: List[int]) -> List[T]:
     if not indexes:

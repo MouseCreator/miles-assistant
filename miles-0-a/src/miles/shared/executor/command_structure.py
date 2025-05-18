@@ -10,9 +10,11 @@ class NodeType(Enum):
     OPTIONAL = 2
     LIST = 3
     CHOICE = 4
-    ITEM=5
+    ITEM = 5
+
 
 T = TypeVar('T')
+
 
 class CommandNode:
     _id: int
@@ -23,6 +25,7 @@ class CommandNode:
     _parent: Self | None
     _number: int | None
     _result: Any
+
     def __init__(self,
                  identity: int,
                  node_type: NodeType,
@@ -58,6 +61,7 @@ class CommandNode:
             f"argument={self._argument})"
             f"result={self._result})"
         )
+
     def __eq__(self, other):
         if not isinstance(other, CommandNode):
             return False
@@ -71,25 +75,34 @@ class CommandNode:
 
     def __len__(self):
         return len(self._children)
+
     def __getitem__(self, item):
         return self._children.__getitem__(item)
 
     def has_parent(self) -> bool:
         return self._parent is not None
+
     def children(self) -> List[Self]:
         return list(self._children)
+
     def name(self):
         return self._name
+
     def value(self):
         return self._value
+
     def parent(self):
         return self._parent
+
     def node_type(self):
         return self._node_type
+
     def is_empty(self):
         return not self._children
+
     def number(self) -> int | None:
         return self._number
+
     def argument(self):
         return self._argument
 
@@ -168,7 +181,7 @@ class CommandStructure:
         self._root_node = root_node
         self._input = tokens
         self._command_name = command_name
-        self._namespace_structure=namespace_structure
+        self._namespace_structure = namespace_structure
         self._flags = flags
 
     def get_root(self) -> CommandNode:
@@ -194,4 +207,3 @@ class CommandStructure:
 
     def results(self) -> List[Any]:
         return self._root_node.results()
-

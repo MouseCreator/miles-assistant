@@ -2,12 +2,12 @@ from typing import List
 
 from src.miles.core.command.command import WordComponent
 from src.miles.core.matcher.comand_defintion import CommandNamespace
+from src.miles.core.priority.priority_manager import PriorityManager
+from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.shared.certainty import CertaintyEffect
 from src.miles.shared.context_analyzer import WordContextAnalyzerFactory
 from src.miles.shared.executor.command_executor import CommandExecutor
 from src.miles.shared.priority.dynamic_priority import DynamicPriorityRuleSet
-from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
-from src.miles.core.priority.priority_manager import PriorityManager
 
 
 class StoredCommand:
@@ -16,6 +16,7 @@ class StoredCommand:
         self.syntax = syntax
         self.executor = executor
 
+
 class NamespaceOfCommands:
     def __init__(self,
                  name: str,
@@ -23,12 +24,12 @@ class NamespaceOfCommands:
                  commands: List[StoredCommand],
                  priority_manager: PriorityManager,
                  dynamic_priorities: DynamicPriorityRuleSet,
-                 definition_set : MatchingDefinitionSet,
+                 definition_set: MatchingDefinitionSet,
                  word_analyzer_factory: WordContextAnalyzerFactory,
                  certainty_effect: CertaintyEffect):
         self.name = name
         if prefix is None:
-            prefix=''
+            prefix = ''
         self.prefix = prefix
         self.commands = commands
         self.dynamic_priorities = dynamic_priorities
@@ -47,11 +48,12 @@ class NamespaceOfCommands:
             arguments=components
         )
 
+
 class PluginDefinition:
     def __init__(self,
                  name: str,
                  namespaces: List[NamespaceOfCommands],
-                 display: str|None = None):
+                 display: str | None = None):
         self._namespaces = namespaces
         self._name = name
         if display is None:

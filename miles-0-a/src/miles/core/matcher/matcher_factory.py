@@ -3,6 +3,7 @@ from src.miles.core.command.command import WordComponent, ComponentVisitor, Name
 from src.miles.core.matcher.comand_defintion import CommandNamespace
 from src.miles.core.matcher.matcher import Matcher, MatchState, MatchConnection, ConnectionType
 
+
 class MatcherFactory:
 
     def __init__(self):
@@ -17,7 +18,6 @@ class MatcherFactory:
         new_state = MatchState(self._state_index_count, is_final=final)
         self._all_states.append(new_state)
         return new_state
-
 
     def _move_and_add_word(self,
                            state: MatchState,
@@ -60,7 +60,7 @@ class MatcherFactory:
             parent: MatcherFactory
             command_name: str
 
-            def __init__(self, initial_state : MatchState, command_name: str, parent: MatcherFactory):
+            def __init__(self, initial_state: MatchState, command_name: str, parent: MatcherFactory):
                 self.initial_state = initial_state
                 self.previous_state_buffer = initial_state
                 self.parent = parent
@@ -69,6 +69,7 @@ class MatcherFactory:
 
             def _new_state(self):
                 return self.parent._create_empty_state()
+
             def _use_buffered_name(self):
                 if self.name_buffer is not None:
                     result = self.name_buffer
@@ -90,13 +91,11 @@ class MatcherFactory:
                 for elem in content:
                     elem.accept_visitor(self)
 
-
             def visit_word(self, word: WordComponent):
                 connection_name = self._use_buffered_name()
                 prev = self.previous_state_buffer
                 moved_to = self.parent._move_and_add_word(prev, word, connection_name)
                 self.previous_state_buffer = moved_to
-
 
             def visit_matching(self, matching: MatchingComponent):
                 connection_name = self._use_buffered_name()
@@ -119,7 +118,6 @@ class MatcherFactory:
                 self.parent._move_automatically(after_optional, ends_at, 'end optional', name)
 
                 self.previous_state_buffer = ends_at
-
 
             def visit_list(self, lst: ListComponent):
                 name = self._use_buffered_name()
@@ -163,7 +161,7 @@ class MatcherFactory:
         sig = SignatureVisitor(from_state, c_name, self)
         command.accept_visitor(sig)
 
-    def create_namespace(self, matcher : Matcher, namespace : CommandNamespace):
+    def create_namespace(self, matcher: Matcher, namespace: CommandNamespace):
         arguments = namespace.get_arguments()
         initial = matcher.get_initial_state()
 
@@ -176,14 +174,14 @@ class MatcherFactory:
         final_state = self._create_empty_state(final=True)
         self._move_automatically(state, final_state, f'recognize {namespace.namespace_name}', None)
 
-    def create_command(self, command : Command, name: str) -> Matcher:
+    def create_command(self, command: Command, name: str) -> Matcher:
         initial = self._create_empty_state()
         self._append_command_signature(command, name, initial)
         return Matcher(initial)
 
     def empty_matcher(self):
         initial = self._create_empty_state()
-        return Matcher(initial) # does not match anything
+        return Matcher(initial)  # does not match anything
 
     def add_command(self, matcher: Matcher, command: Command, name: str):
         initial = matcher.get_initial_state()

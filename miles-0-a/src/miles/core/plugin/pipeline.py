@@ -1,14 +1,13 @@
 from typing import List
 
 from src.miles.core.command.generic_command_processor import GenericCommandProcessor
-from src.miles.shared.executor.command_executor import CommandExecutorsMap
-
 from src.miles.core.matcher.matcher_factory import MatcherFactory
 from src.miles.core.normalized.matcher_normalizer import normalize
 from src.miles.core.plugin.plugin_definition import PluginDefinition
 from src.miles.core.plugin.plugin_structure import PluginStructure, NamespaceComponent
 from src.miles.core.priority.priority_assign import PriorityAssigner
 from src.miles.core.recognizer.normalized_matcher import NormalizedMatcher
+from src.miles.shared.executor.command_executor import CommandExecutorsMap
 
 
 def create_normalized_matcher_from_definitions(plugin_definition: PluginDefinition) -> PluginStructure:
@@ -54,4 +53,3 @@ def create_normalized_matcher_for_namespaces(all_plugins: List[PluginDefinition]
             component = namespace.as_command_namespace()
             matcher_factory.create_namespace(matcher, component)
     return normalize(matcher)
-

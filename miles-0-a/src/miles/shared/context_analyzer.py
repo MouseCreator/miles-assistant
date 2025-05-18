@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.core.recognizer.optimization import RecOptimizationStrategy
+from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 
 
 class GenericContextAnalyzer(ABC):
@@ -24,10 +24,12 @@ class GenericContextAnalyzer(ABC):
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.NONE
 
+
 class AutomaticContextAnalyzer(GenericContextAnalyzer):
     """
     Automatic Context Analyzer implements matching for automatic transitions, e.g. unconditional pointer moving with no token consumption
     """
+
     def __init__(self):
         pass
 
@@ -40,13 +42,14 @@ class AutomaticContextAnalyzer(GenericContextAnalyzer):
     def invoke(self, context: TextRecognizeContext) -> None:
         pass
 
+
 class TypedContextAnalyzer(GenericContextAnalyzer):
 
     @abstractmethod
     def invoke(self, context: TextRecognizeContext):
         pass
 
-    def process(self, context: TextRecognizeContext) ->  None:
+    def process(self, context: TextRecognizeContext) -> None:
         if context.is_empty():
             context.fail()
         else:
@@ -58,11 +61,13 @@ class TypedContextAnalyzer(GenericContextAnalyzer):
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.NONE
 
+
 class WordContextAnalyzer(TypedContextAnalyzer):
     """
     Word Context Analyzer implements matching for a single word
     It checks if the current token equals to the expected one. The token is consumed if it is expected, else the recognition fails
     """
+
     def __init__(self, word: str):
         self.word = word.lower()
 
@@ -74,15 +79,18 @@ class WordContextAnalyzer(TypedContextAnalyzer):
         else:
             context.fail()
 
+
 class WordContextAnalyzerFactory(ABC):
     @abstractmethod
     def build(self, word: str) -> TypedContextAnalyzer:
         pass
 
+
 class DefaultWordContextAnalyzerFactory(WordContextAnalyzerFactory):
 
     def build(self, word: str) -> TypedContextAnalyzer:
         return WordContextAnalyzer(word)
+
 
 class AnyWordContextAnalyzer(TypedContextAnalyzer):
     """
@@ -93,10 +101,12 @@ class AnyWordContextAnalyzer(TypedContextAnalyzer):
         current = context.consume()[0]
         context.set_result(current)
 
+
 class TextContextAnalyzer(TypedContextAnalyzer):
     """
     Text Context Analyzer implements matching for unbounded text
     """
+
     def __init__(self):
         pass
 
@@ -108,5 +118,3 @@ class TextContextAnalyzer(TypedContextAnalyzer):
 
     def optimization_strategy(self) -> RecOptimizationStrategy:
         return RecOptimizationStrategy.SHORTEST_FIRST
-
-

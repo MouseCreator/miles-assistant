@@ -1,8 +1,7 @@
-
-from src.miles.shared.context_analyzer import (AutomaticContextAnalyzer,
-                                               GenericContextAnalyzer, WordContextAnalyzerFactory)
 from src.miles.core.recognizer.matching_definition import MatchingDefinitionSet
 from src.miles.core.recognizer.normalized_matcher import HistoryNodeType
+from src.miles.shared.context_analyzer import (AutomaticContextAnalyzer,
+                                               GenericContextAnalyzer, WordContextAnalyzerFactory)
 
 
 class AnalyzerProvider:

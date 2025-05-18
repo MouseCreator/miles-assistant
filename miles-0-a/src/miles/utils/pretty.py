@@ -5,4 +5,3 @@ class PrintableStructure(ABC):
     @abstractmethod
     def sprint(self) -> str:
         pass
-

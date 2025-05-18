@@ -2,6 +2,7 @@ from typing import TypeVar, Any, Optional, Type, Dict, Self
 
 T = TypeVar('T')
 
+
 class Flags:
     _flags: Dict[str, Any]
 
@@ -28,11 +29,9 @@ class Flags:
             return type_to_cast(value)
         except (ValueError, TypeError):
             return None
+
     def has_flag(self, name: str) -> bool:
         return name in self._flags
 
     def copy(self) -> Self:
         return Flags(self._flags.copy())
-
-
-

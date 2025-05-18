@@ -18,11 +18,9 @@ from src.server.voice_to_text import recognize_and_format
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
 
-
 plugin = MilesRegister().create_plugin_register('app')
 canvas_grammar(plugin)
 matching_core = create_matching_core()
-
 
 
 def _process_shapes(id_count: int, shape_objects: List[Shape], command: str, origin: str):
@@ -79,6 +77,7 @@ def process_shapes_audio():
         return _process_shapes(id_count, shape_objects, command, 'audio')
     finally:
         os.remove(temp_file_path)
+
 
 @app.route('/canvas/text', methods=['POST'])
 def process_shapes_text():
