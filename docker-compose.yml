@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./miles-0-a
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./miles-0-a:/app
+    working_dir: /app
+    command: python src/server/server.py
+    depends_on:
+      - frontend
+
+  frontend:
+    build:
+      context: ./miles-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./miles-frontend:/app
+    working_dir: /app
+    command: npm start
