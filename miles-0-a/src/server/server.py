@@ -32,6 +32,8 @@ def _process_shapes(id_count: int, shape_objects: List[Shape], command: str, ori
 
         response_data = {
             "id_count": context.identity(),
+            "command": command,
+            "recognized": context.get_recognized(),
             "shapes": [shape.to_dict() for shape in context.shapes()]
         }
         print(response_data)

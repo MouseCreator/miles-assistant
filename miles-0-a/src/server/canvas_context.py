@@ -65,9 +65,16 @@ class RequestContext:
     def __init__(self, shapes: List[Shape], identity_count: int):
         self._shapes = ShapeList(shapes)
         self._id_count = identity_count
+        self._recognized = ''
 
     def shapes(self) -> ShapeList:
         return self._shapes
+
+    def set_recognized(self, command: str):
+        self._recognized = command
+
+    def get_recognized(self) -> str:
+        return self._recognized
 
     def new_identity(self) -> str:
         self._id_count += 1

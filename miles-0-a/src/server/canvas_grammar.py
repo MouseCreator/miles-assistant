@@ -1,5 +1,6 @@
 import random
 import re
+from abc import abstractmethod, ABC
 
 from src.miles.shared.context.text_recognize_context import TextRecognizeContext
 from src.miles.shared.context_analyzer import TypedContextAnalyzer, \
@@ -42,23 +43,17 @@ class TypoWordAnalyzerFactory(WordContextAnalyzerFactory):
         return TypoWordAnalyzer(word)
 
 
-class AddCommandExecutor(CommandExecutor):
-    def on_recognize(self, command_structure: CommandStructure, request_context: RequestContext):
-        search = CommandStructureSearch(command_structure.get_root())
-        optional_color = search.find_by_type(NodeType.OPTIONAL)[0]
-        if optional_color:
-            color = optional_color.children()[0].any()
-        else:
-            color = random.choice(COLORS)
-        shape = Shape(
-            identity=request_context.new_identity(),
-            category=search.find_matching('shape')[0].any(),
-            x=int(search.find_matching('coordinates')[0].value()[0]),
-            y=int(search.find_matching('coordinates')[0].value()[1]),
-            color=color,
-            angle=0
-        )
-        request_context.shapes().add(shape)
+class RequestCommandExecutor(CommandExecutor, ABC):
+
+    def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
+        all_tokens = command_structure.get_input()
+        recognized = ' '.join(all_tokens)
+        context.set_recognized(recognized)
+        self.recognize_request(command_structure, context)
+
+    @abstractmethod
+    def recognize_request(self, command_structure: CommandStructure, request_context: RequestContext):
+        pass
 
 
 class ColorContextAnalyzer(TypedContextAnalyzer):
@@ -106,13 +101,16 @@ def is_audio_recognition_error(context: TextRecognizeContext):
     after = context.look(1)
     n = num_dict[word]
     if after == '100':
-        context.consume(2)
+        context.ignore(2)
+        context.write([str(n * 100)])
         context.set_result(n * 100)
     elif after == '1000':
-        context.consume(2)
+        context.ignore(2)
+        context.write([str(n * 1000)])
         context.set_result(n * 1000)
     else:
-        context.consume()
+        context.ignore()
+        context.write([str(n)])
         context.set_result(n)
 
 
@@ -163,11 +161,29 @@ class CoordinatesContextAnalyzer(TypedContextAnalyzer):
         context.write([x, y])
 
 
-class SetterCommandExecutor(CommandExecutor):
+class AddCommandExecutor(RequestCommandExecutor):
+    def recognize_request(self, command_structure: CommandStructure, request_context: RequestContext):
+        search = CommandStructureSearch(command_structure.get_root())
+        optional_color = search.find_by_type(NodeType.OPTIONAL)[0]
+        if optional_color:
+            color = optional_color.children()[0].any()
+        else:
+            color = random.choice(COLORS)
+        shape = Shape(
+            identity=request_context.new_identity(),
+            category=search.find_matching('shape')[0].any(),
+            x=int(search.find_matching('coordinates')[0].value()[0]),
+            y=int(search.find_matching('coordinates')[0].value()[1]),
+            color=color,
+            angle=0
+        )
+        request_context.shapes().add(shape)
+
+class SetterCommandExecutor(RequestCommandExecutor):
     def __init__(self, setter_for: str):
         self.setter_for = setter_for
 
-    def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
+    def recognize_request(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         identifier = search.find_ith(1).any()
 
@@ -195,11 +211,11 @@ class SetterCommandExecutor(CommandExecutor):
             raise ShapeError(f'Unknown setter method: {setter}')
 
 
-class MoveCommandExecutor(CommandExecutor):
+class MoveCommandExecutor(RequestCommandExecutor):
     def __init__(self):
         pass
 
-    def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
+    def recognize_request(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         identifier = search.find_ith(1).any()
         shapes = context.shapes()
@@ -211,11 +227,11 @@ class MoveCommandExecutor(CommandExecutor):
         target.y = int(val[1])
 
 
-class DeleteCommandExecutor(CommandExecutor):
+class DeleteCommandExecutor(RequestCommandExecutor):
     def __init__(self):
         pass
 
-    def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
+    def recognize_request(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
         target = search.find_matching('number')[0].any()
 
@@ -230,11 +246,11 @@ class DeleteCommandExecutor(CommandExecutor):
         context.shapes().remove_by_id(target)
 
 
-class ClearCommandExecutor(CommandExecutor):
+class ClearCommandExecutor(RequestCommandExecutor):
     def __init__(self):
         pass
 
-    def on_recognize(self, command_structure: CommandStructure, context: RequestContext):
+    def recognize_request(self, command_structure: CommandStructure, context: RequestContext):
         context.shapes().clear()
         context.clear_identity()
 
