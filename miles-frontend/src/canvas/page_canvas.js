@@ -3,6 +3,7 @@ import CanvasShapes from "./canvas";
 import InputRow from "../inputs/inputRow";
 import {Shape} from "./shape";
 import {ErrorBox} from "./error_box";
+import {Guide} from "./guide";
 
 export default function Canvas() {
     const canvasRef = useRef();
@@ -41,6 +42,7 @@ export default function Canvas() {
             .catch(error => {
                 console.error('Error:', error.message);
                 setMessage('Error!')
+                setColor('red')
             });
     }
     function onSubmit(text) {
@@ -72,10 +74,13 @@ export default function Canvas() {
     }
 
     return (
-        <div>
+        <div className={"main-component"}>
             <InputRow onSubmit={onSubmit} onRecorded={onRecorded} />
             <ErrorBox message={message} color={color} />
-            <CanvasShapes ref={canvasRef} shapes={shapes} />
+            <div className={"root-flex"}>
+                <CanvasShapes ref={canvasRef} shapes={shapes} />
+                <Guide />
+            </div>
         </div>
     )
 }

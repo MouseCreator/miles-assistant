@@ -42,13 +42,13 @@ def _process_shapes(id_count: int, shape_objects: List[Shape], command: str, ori
 
     except RecognizerError as e:
         message = str(e)
-        return jsonify({'error': message}), 400
+        return jsonify({'error': f'Input: {command}. Error: {message}'}), 400
     except ShapeError as e:
         message = str(e)
-        return jsonify({'error': message}), 400
+        return jsonify({'error': f'Input: {command}. Error: {message}'}), 400
     except Exception as e:
         message = 'Server Error!'
-        return jsonify({'error': message}), 500
+        return jsonify({'error': f'Input: {command}. Error: {message}'}), 500
 
 
 @app.route('/canvas/audio', methods=['POST'])

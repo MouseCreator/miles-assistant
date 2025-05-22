@@ -130,8 +130,7 @@ class _ExtendedCommandReader:
         while len(self._pointers) > 0:
             first = self._pointers.pop(0)
             advanced = self._advance_pointer(first)
-            only = [ advanced[0] ]
-            self._add_to_pointers(only)
+            self._add_to_pointers(advanced)
 
     def _add_to_pointers(self, new_pointers: List[RecPointer]):
         new_items: List[RecPointer] = []

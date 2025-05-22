@@ -1,0 +1,22 @@
+.guide-main {
+    background-color: #b9ffff;
+    border-radius: 16px;
+    padding: 32px;
+    color: darkcyan;
+    font-family: sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.guide-header {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 24px;
+}
+
+.guide-rule {
+    text-align: left;
+    font-size: 18px;
+    line-height: 1.6;
+}
