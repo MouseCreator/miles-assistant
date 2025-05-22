@@ -1,5 +1,7 @@
 from typing import List
 
+from src.server.shape_error import ShapeError
+
 
 class Shape:
     def __init__(self, identity: str, category: str, x: int, y: int, color: str, angle: int):
@@ -35,6 +37,13 @@ class ShapeList:
         return None
 
     def remove_by_id(self, target: str):
+        has_target = False
+        for shape in self._list:
+            if shape.identity.lower() == target.lower():
+                has_target = True
+
+        if not has_target:
+            raise ShapeError(f'No shape with identifier {target}')
         self._list = [el for el in self._list if el.identity.lower() != target.lower()]
 
     def clear(self):

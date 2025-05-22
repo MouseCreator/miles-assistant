@@ -113,11 +113,11 @@ if __name__ == '__main__':
 
 
     plt.figure()
-    plt.plot(lengths, result_miles_correct, label='Correct Input', color='green')
-    plt.plot(lengths, results_miles_incorrect, label='Incorrect Input', color='orangered')
+    plt.plot(lengths, results_lark_correct, label='Lark', color='green')
+    plt.plot(lengths, results_miles_incorrect, label='Miles', color='orangered')
     plt.xlabel("Input Size (Number of words in a string)")
     plt.ylabel("Time (ms)")
-    plt.title("Miles: Benchmark")
+    plt.title("Miles vs Lark: Benchmark")
     plt.legend()
     plt.grid(True)
     plt.show()

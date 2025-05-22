@@ -233,15 +233,7 @@ class DeleteCommandExecutor(RequestCommandExecutor):
 
     def recognize_request(self, command_structure: CommandStructure, context: RequestContext):
         search = CommandStructureSearch(command_structure.get_root())
-        target = search.find_matching('number')[0].any()
-
-        has_target = False
-        for shape in context.shapes():
-            if shape.identity == target:
-                has_target = True
-
-        if not has_target:
-            raise ShapeError(f'No shape with identifier {target}')
+        target = search.find_matching('shape_id')[0].any()
 
         context.shapes().remove_by_id(target)
 

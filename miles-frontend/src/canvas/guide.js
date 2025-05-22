@@ -18,5 +18,7 @@ export function Guide() {
                 <div key={idx}>{cmd}</div>
             ))}
         </div>
+        <div className={"guide-hint"}><strong>Shapes:</strong> arrow, circle, square, triangle, hexagon, oval,<br/> line.</div>
+        <div className={"guide-hint"}><strong>Colors:</strong> red, orange, yellow, green, cyan, blue, violet,<br/>pink, brown.</div>
     </div>)
 }

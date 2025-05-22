@@ -20,3 +20,8 @@
     font-size: 18px;
     line-height: 1.6;
 }
+
+.guide-hint {
+    text-align: left;
+    margin-top: 20px;
+}

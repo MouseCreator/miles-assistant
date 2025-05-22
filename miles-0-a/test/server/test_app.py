@@ -59,3 +59,13 @@ def test_invalid_input():
     flags.set_flag('source', 'text')
     with pytest.raises(RecognizerError) as exc_info:
         matching_core.recognize_and_execute('r', 'canvas', context, flags)
+
+def test_removal():
+    plugin = MilesRegister().create_plugin_register('app')
+    canvas_grammar(plugin)
+    matching_core = create_matching_core()
+    context = RequestContext([], 0)
+    flags = Flags()
+    flags.set_flag('source', 'text')
+    matching_core.recognize_and_execute('add square at 1 1', 'canvas', context, flags)
+    matching_core.recognize_and_execute('remove a', 'canvas', context, flags)
