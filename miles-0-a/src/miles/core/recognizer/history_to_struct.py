@@ -109,7 +109,7 @@ class StructFactory:
                         number=len(list_struct)
                     )
                     stack.insert(0, new_item)
-                    parent.append(new_item)
+                    list_struct.append(new_item)
                 elif label == 'end list':
                     stack.pop(0)  # pops item node
                     stack.pop(0)  # pops list node
