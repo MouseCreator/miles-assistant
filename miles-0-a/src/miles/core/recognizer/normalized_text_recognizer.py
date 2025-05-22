@@ -1,5 +1,6 @@
+from collections import deque
 from random import shuffle
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Deque
 
 from src.miles.core.plugin.plugin_structure import NamespaceComponent
 from src.miles.core.recognizer.analyzer_provider import AnalyzerProvider
@@ -129,7 +130,8 @@ class _ExtendedCommandReader:
         while len(self._pointers) > 0:
             first = self._pointers.pop(0)
             advanced = self._advance_pointer(first)
-            self._add_to_pointers(advanced)
+            only = [ advanced[0] ]
+            self._add_to_pointers(only)
 
     def _add_to_pointers(self, new_pointers: List[RecPointer]):
         new_items: List[RecPointer] = []
@@ -227,7 +229,7 @@ class _ExtendedCommandReader:
 
 @auto_str
 class _CommandReader:
-    _pointers: List[RecPointer]
+    _pointers: Deque[RecPointer]
     _reached_pointer: RecPointer | None
     _failed_max_pointer: RecPointer | None
     _analyzers: AnalyzerProvider
@@ -245,7 +247,7 @@ class _CommandReader:
                  flags: Flags):
         self._matcher = matcher
         self._input_data = input_data
-        self._pointers = []
+        self._pointers = deque()
         self._certainty_effect = certainty_effect
         self._reached_pointer = None
         self._failed_max_pointer = None
@@ -263,7 +265,7 @@ class _CommandReader:
         self._dynamic_priorities = dynamic_priorities
 
     def recognize(self):
-        self._pointers = []
+        self._pointers = deque()
         self._reached_pointer = None
         self._cache.clear()
         self._failed_max_pointer = None
@@ -284,7 +286,7 @@ class _CommandReader:
 
     def _run_token_recognition_loop(self):
         while len(self._pointers) > 0 and self._reached_pointer is None:
-            first = self._pointers.pop(0)
+            first = self._pointers.popleft()
             advanced = self._advance_pointer(first)
             self._add_to_pointers(advanced)
 
@@ -306,7 +308,7 @@ class _CommandReader:
         for item in new_items:
             self._cache.add_to_cache(item)
 
-        self._pointers[:0] = new_items
+        self._pointers.extendleft(new_items)
 
     def _advance_pointer(self, pointer: RecPointer) -> List[RecPointer]:
         if pointer.is_finished():

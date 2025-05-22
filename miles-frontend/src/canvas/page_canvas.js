@@ -9,8 +9,8 @@ export default function Canvas() {
 
     const [shapes, setShapes] = useState([]);
     const [idCount, setIdCount] = useState(0);
-    const [error, setError] = useState('')
-    const [lastInput, setLastInput] = useState('')
+    const [message, setMessage] = useState('Welcome!')
+    const [color, setColor] = useState('black')
 
     function requestServerCommandProcessor(address, init_params) {
         fetch(address, init_params)
@@ -18,14 +18,15 @@ export default function Canvas() {
                 if (!response.ok) {
                     return response.json().then(err => {
                         console.error('Server Error:', err.error);
-                        setError(err.error)
+                        setMessage(err.error)
+                        setColor('red')
                         return null;
                     });
                 }
                 return response.json();
             })
             .then(data => {
-                setError('')
+
                 if (data == null) {
                     return;
                 }
@@ -34,15 +35,17 @@ export default function Canvas() {
                     new Shape(item.identity, item.category, item.x, item.y, item.color, item.angle)
                 );
                 setShapes(mappedShapes);
+                setMessage('Done!')
+                setColor('green')
             })
             .catch(error => {
                 console.error('Error:', error.message);
-                setError('Error!')
+                setMessage('Error!')
             });
     }
     function onSubmit(text) {
-        setError('');
-        setLastInput(text);
+        setMessage('Processing...');
+        setColor('black')
         requestServerCommandProcessor('http://localhost:5000/canvas/text', {
             method: 'POST',
             headers: {
@@ -56,6 +59,8 @@ export default function Canvas() {
         })
     }
     function onRecorded(audio) {
+        setMessage('Processing...');
+        setColor('black')
         const formData = new FormData();
         formData.append('audio', audio, 'recording.webm');
         formData.append('id_count', idCount);
@@ -69,7 +74,7 @@ export default function Canvas() {
     return (
         <div>
             <InputRow onSubmit={onSubmit} onRecorded={onRecorded} />
-            <ErrorBox error={error} lastInput={lastInput} />
+            <ErrorBox message={message} color={color} />
             <CanvasShapes ref={canvasRef} shapes={shapes} />
         </div>
     )
