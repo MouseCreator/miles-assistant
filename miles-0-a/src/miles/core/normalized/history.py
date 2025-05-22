@@ -46,7 +46,7 @@ class NorHistory:
             self._items = list(items)
 
     def extend(self, item: HistoryItem) -> Self:
-        return NorHistory(self._items)
+        return NorHistory(self._items + [item])
 
     def all_items(self) -> List[HistoryItem]:
         return list(self._items)
