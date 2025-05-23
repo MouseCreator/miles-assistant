@@ -1,7 +1,7 @@
 import './guide.css'
 export function Guide() {
     const commands = [
-        "ADD { color } shape AT coordinates",
+        "ADD { color } shape AT number number",
         "SET id COLOR color",
         "SET id SHAPE shape",
         "SET id ANGLE number",

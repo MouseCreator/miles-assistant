@@ -101,6 +101,19 @@ class AnyWordContextAnalyzer(TypedContextAnalyzer):
         current = context.consume()[0]
         context.set_result(current)
 
+class NumberContextAnalyzer(TypedContextAnalyzer):
+    """
+    Matches one and only numbers
+    """
+
+    def invoke(self, context: TextRecognizeContext) -> None:
+        current = context.current()
+        try:
+            a = int(current)
+            context.set_result(a)
+            context.consume()
+        except Exception:
+            context.fail()
 
 class TextContextAnalyzer(TypedContextAnalyzer):
     """
