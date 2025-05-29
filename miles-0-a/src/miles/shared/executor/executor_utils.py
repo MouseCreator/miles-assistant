@@ -41,6 +41,10 @@ class CommandStructureSearch:
         matching = matching.lower()
         return self.find_all(lambda node: node.node_type() == NodeType.MATCHING and node.argument().lower() == matching)
 
+    def find_one_matching(self, matching: str) -> CommandNode:
+        all_matchings = self.find_matching(matching)
+        return all_matchings[0]
+
     def find_by_type(self, of_type: NodeType) -> List[CommandNode]:
         return self.find_all(lambda node: node.node_type() == of_type)
 
